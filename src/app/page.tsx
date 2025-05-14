@@ -76,7 +76,7 @@ export default function Home() {
             <div
               className="card"
               key={branch.code}
-              style={{ marginBottom: "4px" }}
+              style={{ marginBottom: "4px", cursor: "pointer" }}
             >
               <div className="card-body">
                 <h5 className="card-title">{branch.name}</h5>
@@ -85,7 +85,9 @@ export default function Home() {
             </div>
           ))}
           {branches.length === 0 && (
-            <div className="text-muted">지점을 검색해주세요 🔎</div>
+            <div className="text-muted w-full h-1/2 flex justify-center items-center">
+              지점을 검색해주세요 🔎
+            </div>
           )}
         </div>
       </div>

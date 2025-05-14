@@ -1,3 +1,4 @@
+@layer reset, base, tokens, recipes, utilities;
 @import "@tabler/core/dist/css/tabler.min.css";
 
 :root {
