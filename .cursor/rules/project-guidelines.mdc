@@ -1,0 +1,21 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# 프로젝트 개발 규칙
+
+## 테마 컬러
+- 기본 테마 컬러는 **#e60033**을 사용합니다.
+
+## 라이브러리 관리
+- 새로운 라이브러리를 설치하기 전 반드시 [package.json](mdc:package.json)을 확인하고, 이미 설치된 라이브러리를 최대한 재활용합니다.
+- 패키지 매니저는 **pnpm**을 사용합니다.
+
+## UI 프레임워크
+- UI 프레임워크로 **Tabler UI**를 사용합니다.
+- Tabler UI 관련 개발 시 공식 문서([Tabler UI 문서](mdc:https:/docs.tabler.io/ui))를 참고합니다.
+- Tabler 관련 컴포넌트, 유틸리티, 레이아웃, 플러그인 등은 Tabler에서 제공하는 기능을 우선적으로 사용합니다.
+
+## 기타
+- 규칙 파일은 `.cursor/rules` 디렉토리에 `.mdc` 확장자로 저장합니다.

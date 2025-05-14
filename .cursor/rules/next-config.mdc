@@ -1,0 +1,24 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Next.js 설정 파일 가이드
+
+이 프로젝트는 Next.js의 공식 권장사항에 따라 `next.config.js`를 사용합니다.
+
+## 주요 설정 파일
+- [next.config.js](mdc:next.config.js): Next.js의 주요 설정 파일
+- [tsconfig.json](mdc:tsconfig.json): TypeScript 설정 파일
+
+## 설정 파일 사용 시 주의사항
+1. 모든 Next.js 관련 설정은 `next.config.js`에 작성합니다.
+2. JSDoc을 사용하여 TypeScript 타입 안정성을 보장합니다.
+3. 설정 변경 시 TypeScript 타입 체크가 자동으로 수행됩니다.
+
+## 자주 사용되는 설정
+- 이미지 도메인 설정
+- 환경 변수 설정
+- 웹팩 설정 커스터마이징
+- API 라우트 설정
+- 빌드 최적화 설정
