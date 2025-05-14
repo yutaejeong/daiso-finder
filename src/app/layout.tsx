@@ -1,3 +1,5 @@
+import { css } from "@styled-system/css";
+import clsx from "clsx";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
@@ -32,8 +34,10 @@ export default function RootLayout({
         <link rel="icon" href="/ms-icon-150x150.png" />
       </head>
       <body
-        className={pretendard.className}
-        style={{ padding: "24px", height: "100dvh" }}
+        className={clsx(
+          pretendard.className,
+          css({ padding: "24px", height: "100dvh" }),
+        )}
       >
         {children}
       </body>
