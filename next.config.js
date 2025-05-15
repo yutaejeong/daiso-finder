@@ -6,6 +6,14 @@ const withPWA = require("next-pwa")({
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "cdn.daisomall.co.kr",
+      },
+    ],
+  },
 };
 
 module.exports = withPWA(nextConfig); 

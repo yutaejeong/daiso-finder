@@ -1,13 +1,12 @@
 import { BranchResponse } from "../types";
 
-export async function GET(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const keyword = searchParams.get("keyword");
-    const currentPage = searchParams.get("currentPage");
-    const pageSize = searchParams.get("pageSize");
-    const pageIndex = searchParams.get("pageIndex");
+export async function GET(
+  _request: Request,
+  { params }: { params: { code: string } },
+) {
+  const code = params.code;
 
+  try {
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/ms/msg/selStr`,
       {
@@ -16,10 +15,7 @@ export async function GET(request: Request) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          keyword,
-          currentPage: currentPage || 1,
-          pageSize: pageSize || 10,
-          pageIndex: pageIndex || 0,
+          inclusiveStrCd: code,
         }),
       },
     );
@@ -31,17 +27,15 @@ export async function GET(request: Request) {
     const data: BranchResponse = await response.json();
 
     return new Response(
-      JSON.stringify(
-        data.data.map((branch) => ({
-          code: branch.strCd,
-          name: branch.strNm,
-          lat: branch.strLttd,
-          lng: branch.strLitd,
-          address: branch.strAddr,
-          openTime: branch.opngTime,
-          closeTime: branch.clsngTime,
-        })),
-      ),
+      JSON.stringify({
+        code: data.data[0].strCd,
+        name: data.data[0].strNm,
+        lat: data.data[0].strLttd,
+        lng: data.data[0].strLitd,
+        address: data.data[0].strAddr,
+        openTime: data.data[0].opngTime,
+        closeTime: data.data[0].clsngTime,
+      }),
       {
         headers: {
           "Content-Type": "application/json",

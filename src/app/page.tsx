@@ -6,7 +6,8 @@ import clsx from "clsx";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { SimplifiedBranchResponse } from "./api/branches/search/types";
+import { SimplifiedBranchResponse } from "./api/branches/types";
+import { Search } from "@/components/Search";
 
 export default function Home() {
   const [searchInput, setSearchInput] = useState("");
@@ -92,45 +93,15 @@ export default function Home() {
         })}
       />
       <h1>당신이 있는 매장의 상품을 찾아드립니다</h1>
-      <span
-        className={clsx(
-          "text-muted",
-          css({
-            fontSize: "1.1rem",
-            marginBottom: "16px",
-          }),
-        )}
-      >
-        매장을 선택해주세요
-      </span>
-      <form
-        className={clsx("input-group", css({ marginBottom: "16px" }))}
+      <Search
+        title="매장을 선택해주세요"
+        placeholder="주소 혹은 지점명을 입력하세요"
+        searchInput={searchInput}
+        onSearchInputChange={(value) => setSearchInput(value)}
         onSubmit={handleSearch}
-      >
-        <input
-          type="text"
-          className="form-control"
-          placeholder="주소 혹은 지점명을 입력하세요"
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          required
-        />
-        <button className="btn btn-red" type="submit">
-          검색
-        </button>
-      </form>
-      <div
-        className={css({
-          display: "flex",
-          flexDirection: "column",
-          gap: "4px",
-          overflowY: "auto",
-          flex: 1,
-          padding: "8px",
-          border: "1px solid #ccc",
-          backgroundColor: "#f8f8f8",
-          borderRadius: "4px",
-        })}
+        isFetching={isFetching}
+        hasResults={branches.length > 0}
+        keyword={keyword}
       >
         {branches?.map((branch) => (
           <Link
@@ -145,17 +116,7 @@ export default function Home() {
           </Link>
         ))}
         <div ref={ref} className={css({ width: "100%", height: "10px" })} />
-        <div
-          className={clsx(
-            "text-muted",
-            css({ textAlign: "center", marginTop: "16px" }),
-          )}
-        >
-          {isFetching && "검색 중..."}
-          {branches.length === 0 && !keyword && "검색어를 입력해주세요"}
-          {branches.length === 0 && !!keyword && "검색 결과가 없습니다"}
-        </div>
-      </div>
+      </Search>
     </main>
   );
 }

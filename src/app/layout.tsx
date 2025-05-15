@@ -37,7 +37,7 @@ export default function RootLayout({
       <body
         className={clsx(
           pretendard.className,
-          css({ padding: "24px", height: "100dvh" }),
+          css({ padding: "24px !important", height: "100dvh" }),
         )}
       >
         <Provider>{children}</Provider>
