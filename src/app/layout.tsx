@@ -3,6 +3,7 @@ import clsx from "clsx";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import Provider from "./provider";
 
 const pretendard = localFont({
   src: "./PretendardVariable.woff2",
@@ -39,7 +40,7 @@ export default function RootLayout({
           css({ padding: "24px", height: "100dvh" }),
         )}
       >
-        {children}
+        <Provider>{children}</Provider>
       </body>
     </html>
   );

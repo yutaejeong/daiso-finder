@@ -1,36 +1,69 @@
 "use client";
 
 import { css } from "@styled-system/css";
+import { InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
 import clsx from "clsx";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { SimplifiedBranchResponse } from "./api/branches/search/types";
 
 export default function Home() {
-  const [branch, setBranch] = useState("");
-  const [branches, setBranches] = useState<SimplifiedBranchResponse>([]);
+  const [searchInput, setSearchInput] = useState("");
+  const [keyword, setKeyword] = useState("");
   const ref = useRef<HTMLDivElement>(null);
+  const { data, fetchNextPage, isFetching } = useInfiniteQuery<
+    SimplifiedBranchResponse,
+    Error,
+    InfiniteData<SimplifiedBranchResponse>,
+    ["branches", string],
+    number
+  >({
+    queryKey: ["branches", keyword],
+    enabled: false,
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, _pages, lastPageParam) =>
+      lastPage.length < 10 ? undefined : lastPageParam + 1,
+    queryFn: async ({ pageParam = 1 }) => {
+      const url = new URL("/api/branches/search", window.location.origin);
+      url.searchParams.set("keyword", keyword);
+      url.searchParams.set("currentPage", pageParam.toString());
+      url.searchParams.set("pageSize", "10");
+      url.searchParams.set("pageIndex", "0");
+      const response = await fetch(url);
+      const data: SimplifiedBranchResponse = await response.json();
+      return data;
+    },
+  });
+  const branches = useMemo(
+    () => data?.pages.flatMap((page) => page) ?? [],
+    [data],
+  );
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    const url = new URL("/api/branches/search", window.location.origin);
-    url.searchParams.set("keyword", branch);
-    url.searchParams.set("currentPage", "1");
-    url.searchParams.set("pageSize", "10");
-    url.searchParams.set("pageIndex", "0");
-    const response = await fetch(url);
-    const data = await response.json();
-
-    setBranches(data);
+    setKeyword(searchInput);
   };
 
   useEffect(() => {
-    if (ref.current) {
-      // @todo: Intersection Observer 추가
+    if (keyword) {
+      fetchNextPage();
     }
-  }, []);
+  }, [keyword, fetchNextPage]);
+
+  useEffect(() => {
+    if (ref.current) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && branches.length > 0) {
+            fetchNextPage();
+          }
+        });
+      });
+      observer.observe(ref.current);
+      return () => observer.disconnect();
+    }
+  }, [fetchNextPage, branches]);
 
   return (
     <main
@@ -78,8 +111,8 @@ export default function Home() {
           type="text"
           className="form-control"
           placeholder="주소 혹은 지점명을 입력하세요"
-          value={branch}
-          onChange={(e) => setBranch(e.target.value)}
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
           required
         />
         <button className="btn btn-red" type="submit">
@@ -99,7 +132,7 @@ export default function Home() {
           borderRadius: "4px",
         })}
       >
-        {branches.map((branch) => (
+        {branches?.map((branch) => (
           <Link
             href={`/branch/${branch.code}`}
             className="card"
@@ -111,17 +144,17 @@ export default function Home() {
             </div>
           </Link>
         ))}
-        {branches.length === 0 && (
-          <div
-            className={clsx(
-              "text-muted",
-              css({ textAlign: "center", marginTop: "16px" }),
-            )}
-          >
-            지점을 검색해주세요 🔎
-          </div>
-        )}
         <div ref={ref} className={css({ width: "100%", height: "10px" })} />
+        <div
+          className={clsx(
+            "text-muted",
+            css({ textAlign: "center", marginTop: "16px" }),
+          )}
+        >
+          {isFetching && "검색 중..."}
+          {branches.length === 0 && !keyword && "검색어를 입력해주세요"}
+          {branches.length === 0 && !!keyword && "검색 결과가 없습니다"}
+        </div>
       </div>
     </main>
   );
