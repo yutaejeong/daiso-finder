@@ -79,9 +79,10 @@ export async function GET(request: NextRequest) {
 
     const products = await searchProductsByKeyword(keyword, currentPage);
     const stock = await checkProductStock(products, branchCode);
-    const existingProducts = await Promise.all(
-      products
-        .map((product) => ({
+    const existingProducts = (
+      await Promise.all(
+        products
+          .map((product) => ({
           id: product.pdNo,
           name: product.pdNm,
           price: parseInt(product.pdPrc),
@@ -100,34 +101,35 @@ export async function GET(request: NextRequest) {
             return 0;
           })(),
         }))
-        .filter((product) => product.stock > 0)
-        .map(async (product) => {
-          try {
-            const response = await fetch(
-              `${process.env.NEXT_PUBLIC_API_URL}/pdo/selPdStDispInfo`,
-              {
-                method: "POST",
-                body: JSON.stringify({
-                  pdNo: product.id,
-                  strCd: branchCode,
-                }),
-                headers: {
-                  "Content-Type": "application/json",
+          .filter((product) => product.stock > 0)
+          .map(async (product) => {
+            try {
+              const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/pdo/selPdStDispInfo`,
+                {
+                  method: "POST",
+                  body: JSON.stringify({
+                    pdNo: product.id,
+                    strCd: branchCode,
+                  }),
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
                 },
-              },
-            );
-            const data: ProductEquippingResponse = await response.json();
-            return {
-              ...product,
-              stairNo: parseInt(data.data[0].stairNo),
-              zoneNo: parseInt(data.data[0].zoneNo),
-            } satisfies SimplifiedProduct;
-          } catch (error) {
-            console.error("API 오류:", error);
-            return [];
-          }
-        }),
-    );
+              );
+              const data: ProductEquippingResponse = await response.json();
+              return {
+                ...product,
+                stairNo: parseInt(data.data[0].stairNo),
+                zoneNo: parseInt(data.data[0].zoneNo),
+              } satisfies SimplifiedProduct;
+            } catch (error) {
+              console.error("API 오류:", error);
+              return null;
+            }
+          }),
+      )
+    ).filter((product): product is SimplifiedProduct => product !== null);
     return new Response(
       JSON.stringify({
         products: existingProducts,
