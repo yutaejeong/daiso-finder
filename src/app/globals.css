@@ -26,6 +26,20 @@ body {
 body {
   color: rgb(var(--foreground-rgb));
   background: rgb(var(--background-rgb));
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+input,
+textarea,
+[contenteditable="true"],
+[contenteditable=""] {
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
 }
 
 a {
