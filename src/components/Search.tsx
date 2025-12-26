@@ -1,6 +1,7 @@
 "use client";
 
 import { css } from "@styled-system/css";
+import { IconLocation, IconSearch } from "@tabler/icons-react";
 import clsx from "clsx";
 import { ReactNode } from "react";
 
@@ -9,11 +10,12 @@ interface SearchProps {
   placeholder: string;
   searchInput: string;
   onSearchInputChange: (value: string) => void;
-  onSubmit: (e: React.FormEvent) => void;
+  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   children: ReactNode;
   isFetching?: boolean;
   hasResults?: boolean;
   keyword?: string;
+  withLocation?: boolean;
 }
 
 export function Search({
@@ -26,6 +28,7 @@ export function Search({
   isFetching,
   hasResults,
   keyword,
+  withLocation = false,
 }: SearchProps) {
   return (
     <>
@@ -50,11 +53,25 @@ export function Search({
           placeholder={placeholder}
           value={searchInput}
           onChange={(e) => onSearchInputChange(e.target.value)}
-          required
         />
-        <button className="btn btn-red" type="submit">
-          검색
+        <button
+          className="btn btn-red"
+          type="submit"
+          name="action"
+          value="keyword"
+        >
+          <IconSearch width={20} height={20} />
         </button>
+        {withLocation && (
+          <button
+            className="btn btn-red"
+            name="action"
+            value="location"
+            type="submit"
+          >
+            <IconLocation width={20} height={20} />
+          </button>
+        )}
       </form>
       <div
         className={css({

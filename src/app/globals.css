@@ -8,8 +8,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --foreground-rgb: 235, 236, 240;
-    --background-rgb: 35, 39, 47;
+    --foreground-rgb: 64, 71, 86;
+    --background-rgb: 255, 255, 255;
   }
 }
 
