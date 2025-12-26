@@ -5,13 +5,17 @@ import { InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
 import clsx from "clsx";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { SimplifiedBranchResponse } from "./api/branches/types";
 import { Search } from "@/components/Search";
 
 export default function Home() {
   const [searchInput, setSearchInput] = useState("");
   const [keyword, setKeyword] = useState("");
+  const [location, setLocation] = useState<{
+    curLitd: number;
+    curLttd: number;
+  } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const { data, fetchNextPage, isFetching } = useInfiniteQuery<
     SimplifiedBranchResponse,
@@ -27,7 +31,12 @@ export default function Home() {
       lastPage.length < 10 ? undefined : lastPageParam + 1,
     queryFn: async ({ pageParam = 1 }) => {
       const url = new URL("/api/branches/search", window.location.origin);
-      url.searchParams.set("keyword", keyword);
+      if (location) {
+        url.searchParams.set("curLttd", location.curLttd.toFixed(14));
+        url.searchParams.set("curLitd", location.curLitd.toFixed(14));
+      } else {
+        url.searchParams.set("keyword", keyword);
+      }
       url.searchParams.set("currentPage", pageParam.toString());
       url.searchParams.set("pageSize", "10");
       url.searchParams.set("pageIndex", "0");
@@ -41,9 +50,36 @@ export default function Home() {
     [data],
   );
 
-  const handleSearch = async (e: React.FormEvent) => {
+  const getCurrentPosition = async () => {
+    return new Promise<GeolocationPosition>((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(resolve, reject);
+    });
+  };
+
+  const handleSearch = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setKeyword(searchInput);
+    const button = (e.nativeEvent as SubmitEvent)
+      .submitter as HTMLButtonElement;
+    const action = button.value;
+    console.log(action);
+
+    if (action === "location") {
+      try {
+        const position = await getCurrentPosition();
+        setLocation({
+          curLitd: position.coords.longitude,
+          curLttd: position.coords.latitude,
+        });
+        setKeyword(
+          `${position.coords.longitude.toFixed(14)},${position.coords.latitude.toFixed(14)}`,
+        );
+      } catch (error) {
+        console.error(error);
+        alert("위치 정보를 가져오는데 실패했습니다. 다시 시도해주세요.");
+      }
+    } else {
+      setKeyword(searchInput);
+    }
   };
 
   useEffect(() => {
@@ -102,6 +138,7 @@ export default function Home() {
         isFetching={isFetching}
         hasResults={branches.length > 0}
         keyword={keyword}
+        withLocation
       >
         {branches?.map((branch) => (
           <Link
