@@ -33,7 +33,17 @@ export default function Branch() {
 
   const { data: branch } = useQuery<SimplifiedBranch>({
     queryKey: ["branch", code],
-    queryFn: () => fetch(`/api/branches/${code}`).then((res) => res.json()),
+    queryFn: async () => {
+      const res = await fetch(`/api/branches/${code}`);
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(
+          body?.error || "매장 정보를 불러오는 중 오류가 발생했습니다.",
+          { cause: body?.detail },
+        );
+      }
+      return res.json();
+    },
   });
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isFetching } =
@@ -49,6 +59,12 @@ export default function Branch() {
         const response = await fetch(
           `/api/products?keyword=${keyword}&currentPage=${pageParam}&branchCode=${code}`,
         );
+        if (!response.ok) {
+          const body = await response.json().catch(() => null);
+          throw new Error(body?.error || "상품 검색 중 오류가 발생했습니다.", {
+            cause: body?.detail,
+          });
+        }
         return response.json();
       },
       getNextPageParam: (lastPage, allPages) => {

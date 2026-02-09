@@ -31,11 +31,13 @@ async function searchProductsByKeyword(
     },
   );
 
+  const responseText = await response.text();
+
   if (!response.ok) {
-    throw new Error(`API 요청 실패: ${response.status}`);
+    throw new Error(responseText);
   }
 
-  const data: ProductResponse = await response.json();
+  const data: ProductResponse = JSON.parse(responseText);
 
   return data.data;
 }
@@ -57,11 +59,13 @@ async function checkProductStock(products: Product[], branchCode: string) {
     },
   );
 
+  const responseText = await response.text();
+
   if (!response.ok) {
-    throw new Error(`API 요청 실패: ${response.status}`);
+    throw new Error(responseText);
   }
 
-  const data: ProductStockResponse = await response.json();
+  const data: ProductStockResponse = JSON.parse(responseText);
 
   return data.data;
 }
@@ -144,12 +148,13 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("API 오류:", error);
     return new Response(
-      JSON.stringify({ error: "서버 오류가 발생했습니다." }),
+      JSON.stringify({
+        error: "서버 오류가 발생했습니다.",
+        detail: error instanceof Error ? error.message : String(error),
+      }),
       {
         status: 500,
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       },
     );
   }

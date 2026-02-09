@@ -41,6 +41,12 @@ export default function Home() {
       url.searchParams.set("pageSize", "10");
       url.searchParams.set("pageIndex", "0");
       const response = await fetch(url);
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.error || "매장 검색 중 오류가 발생했습니다.", {
+          cause: body?.detail,
+        });
+      }
       const data: SimplifiedBranchResponse = await response.json();
       return data;
     },
