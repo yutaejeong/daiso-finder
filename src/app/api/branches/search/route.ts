@@ -24,11 +24,22 @@ export async function GET(request: Request) {
       },
     );
 
+    const responseText = await response.text();
+
     if (!response.ok) {
-      throw new Error(`API 요청 실패: ${response.status}`);
+      return new Response(
+        JSON.stringify({
+          error: "매장 검색 중 오류가 발생했습니다.",
+          detail: responseText,
+        }),
+        {
+          status: response.status,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
     }
 
-    const data: BranchResponse = await response.json();
+    const data: BranchResponse = JSON.parse(responseText);
 
     return new Response(
       JSON.stringify(
@@ -51,12 +62,13 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error("API 오류:", error);
     return new Response(
-      JSON.stringify({ error: "서버 오류가 발생했습니다." }),
+      JSON.stringify({
+        error: "서버 오류가 발생했습니다.",
+        detail: error instanceof Error ? error.message : String(error),
+      }),
       {
         status: 500,
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       },
     );
   }
