@@ -160,7 +160,10 @@ export default function Home() {
         alt="logo"
         width={200}
         height={80}
+        draggable={false}
+        style={{ WebkitUserDrag: 'none' } as React.CSSProperties}
         className={css({
+          userSelect: 'none',
           marginBottom: "24px",
           width: "150px",
           height: "60px",
