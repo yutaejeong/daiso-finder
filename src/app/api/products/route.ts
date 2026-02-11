@@ -81,63 +81,81 @@ export async function GET(request: NextRequest) {
       throw new Error("branchCode가 필요합니다.");
     }
 
-    const products = await searchProductsByKeyword(keyword, currentPage);
-    const stock = await checkProductStock(products, branchCode);
-    const existingProducts = (
-      await Promise.all(
-        products
-          .map((product) => ({
-          id: product.pdNo,
-          name: product.pdNm,
-          price: parseInt(product.pdPrc),
-          image: product.atchFileUrl
-            ? `https://cdn.daisomall.co.kr${product.atchFileUrl}`
-            : null,
-          stock: (() => {
-            const stockInfo = stock.find((s) => s.pdNo === product.pdNo);
-            if (stockInfo) {
-              const stockNumber = parseInt(stockInfo.stck);
-              if (isNaN(stockNumber)) {
-                return 0;
+    let page = currentPage;
+    let existingProducts: SimplifiedProduct[] = [];
+    let hasMore = true;
+
+    while (hasMore) {
+      const products = await searchProductsByKeyword(keyword, page);
+      hasMore = products.length === 10;
+
+      if (products.length === 0) break;
+
+      const stock = await checkProductStock(products, branchCode);
+      const pageProducts = (
+        await Promise.all(
+          products
+            .map((product) => ({
+            id: product.pdNo,
+            name: product.pdNm,
+            price: parseInt(product.pdPrc),
+            image: product.atchFileUrl
+              ? `https://cdn.daisomall.co.kr${product.atchFileUrl}`
+              : null,
+            stock: (() => {
+              const stockInfo = stock.find((s) => s.pdNo === product.pdNo);
+              if (stockInfo) {
+                const stockNumber = parseInt(stockInfo.stck);
+                if (isNaN(stockNumber)) {
+                  return 0;
+                }
+                return stockNumber;
               }
-              return stockNumber;
-            }
-            return 0;
-          })(),
-        }))
-          .filter((product) => product.stock > 0)
-          .map(async (product) => {
-            try {
-              const response = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/pdo/selPdStDispInfo`,
-                {
-                  method: "POST",
-                  body: JSON.stringify({
-                    pdNo: product.id,
-                    strCd: branchCode,
-                  }),
-                  headers: {
-                    "Content-Type": "application/json",
+              return 0;
+            })(),
+          }))
+            .filter((product) => product.stock > 0)
+            .map(async (product) => {
+              try {
+                const response = await fetch(
+                  `${process.env.NEXT_PUBLIC_API_URL}/pdo/selPdStDispInfo`,
+                  {
+                    method: "POST",
+                    body: JSON.stringify({
+                      pdNo: product.id,
+                      strCd: branchCode,
+                    }),
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
                   },
-                },
-              );
-              const data: ProductEquippingResponse = await response.json();
-              return {
-                ...product,
-                stairNo: parseInt(data.data[0].stairNo),
-                zoneNo: parseInt(data.data[0].zoneNo),
-              } satisfies SimplifiedProduct;
-            } catch (error) {
-              console.error("API 오류:", error);
-              return null;
-            }
-          }),
-      )
-    ).filter((product): product is SimplifiedProduct => product !== null);
+                );
+                const data: ProductEquippingResponse = await response.json();
+                return {
+                  ...product,
+                  stairNo: parseInt(data.data[0].stairNo),
+                  zoneNo: parseInt(data.data[0].zoneNo),
+                } satisfies SimplifiedProduct;
+              } catch (error) {
+                console.error("API 오류:", error);
+                return null;
+              }
+            }),
+        )
+      ).filter((product): product is SimplifiedProduct => product !== null);
+
+      existingProducts = pageProducts;
+
+      if (existingProducts.length > 0) break;
+
+      page++;
+    }
+
     return new Response(
       JSON.stringify({
         products: existingProducts,
-        hasMore: products.length === 10,
+        hasMore,
+        nextPage: page + 1,
       }),
       {
         headers: {

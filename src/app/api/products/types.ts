@@ -68,4 +68,5 @@ export interface SimplifiedProduct {
 export interface ProductApiResponse {
   products: SimplifiedProduct[];
   hasMore: boolean;
+  nextPage: number;
 }
