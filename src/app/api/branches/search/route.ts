@@ -3,10 +3,13 @@ import { BranchResponse } from "../types";
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const keyword = searchParams.get("keyword");
+    const keyword = searchParams.get("keyword") || "";
     const currentPage = searchParams.get("currentPage");
     const pageSize = searchParams.get("pageSize");
-    const pageIndex = searchParams.get("pageIndex");
+    const curLttd = searchParams.get("curLttd");
+    const curLitd = searchParams.get("curLitd");
+
+    const hasLocation = curLttd && curLitd;
 
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/ms/msg/selStr`,
@@ -17,9 +20,15 @@ export async function GET(request: Request) {
         },
         body: JSON.stringify({
           keyword,
-          currentPage: currentPage || 1,
-          pageSize: pageSize || 10,
-          pageIndex: pageIndex || 0,
+          ...(hasLocation && {
+            curLttd: parseFloat(curLttd),
+            curLitd: parseFloat(curLitd),
+            geolocationAgrYn: "Y",
+          }),
+          srchBassPkupStrYn: "Y",
+          srchYn: "N",
+          currentPage: currentPage ? parseInt(currentPage) : 1,
+          pageSize: pageSize ? parseInt(pageSize) : 10,
         }),
       },
     );
