@@ -67,9 +67,9 @@ export default function Branch() {
         }
         return response.json();
       },
-      getNextPageParam: (lastPage, allPages) => {
+      getNextPageParam: (lastPage) => {
         if (!lastPage.hasMore) return undefined;
-        return allPages.length + 1;
+        return lastPage.nextPage;
       },
       enabled: !!keyword,
       initialPageParam: 1,
