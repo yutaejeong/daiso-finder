@@ -5,7 +5,7 @@ export function middleware(request: NextRequest) {
   if (accept.includes("text/markdown")) {
     const url = request.nextUrl.clone();
     const originalPath = request.nextUrl.pathname;
-    url.pathname = "/_md";
+    url.pathname = "/md";
     url.searchParams.set("path", originalPath);
     return NextResponse.rewrite(url);
   }
@@ -13,5 +13,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next|_md|favicon|manifest|sitemap|robots|\\.well-known|.*\\..*).*)"],
+  matcher: ["/((?!api|_next|md|favicon|manifest|sitemap|robots|\\.well-known|.*\\..*).*)"],
 };
