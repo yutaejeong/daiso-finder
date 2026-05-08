@@ -87,9 +87,11 @@ export async function GET(request: NextRequest) {
 
     while (hasMore) {
       const products = await searchProductsByKeyword(keyword, page);
-      hasMore = products.length === 10;
 
-      if (products.length === 0) break;
+      if (products.length === 0) {
+        hasMore = false;
+        break;
+      }
 
       const stock = await checkProductStock(products, branchCode);
       const pageProducts = (
@@ -144,9 +146,19 @@ export async function GET(request: NextRequest) {
         )
       ).filter((product): product is SimplifiedProduct => product !== null);
 
-      existingProducts = pageProducts;
+      existingProducts = [...existingProducts, ...pageProducts];
 
-      if (existingProducts.length > 0) break;
+      // 외부 API 마지막 페이지면 더 이상 없음
+      if (products.length < 10) {
+        hasMore = false;
+        break;
+      }
+
+      // 10개 이상 모이면 중단
+      if (existingProducts.length >= 10) {
+        hasMore = true;
+        break;
+      }
 
       page++;
     }
