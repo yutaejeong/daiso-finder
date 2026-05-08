@@ -6,6 +6,7 @@ import {
   SimplifiedProduct,
 } from "@/app/api/products/types";
 import { Search } from "@/components/Search";
+import { trackEvent } from "@/lib/gtag";
 import { css } from "@styled-system/css";
 import { IconPhotoX } from "@tabler/icons-react";
 import {
@@ -73,6 +74,7 @@ export function BranchClient({ code, initialBranch }: Props) {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    trackEvent("product_search", { keyword: searchInput, branch_code: code });
     setKeyword(searchInput);
   };
 
@@ -258,7 +260,7 @@ export function BranchClient({ code, initialBranch }: Props) {
         ))}
         {hasNextPage && (
           <button
-            onClick={() => fetchNextPage()}
+            onClick={() => { fetchNextPage(); trackEvent("product_load_more", { branch_code: code }); }}
             disabled={isFetchingNextPage}
             className={css({
               marginTop: "16px",

@@ -8,6 +8,7 @@ import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { SimplifiedBranchResponse } from "./api/branches/types";
 import { Search } from "@/components/Search";
+import { trackEvent } from "@/lib/gtag";
 
 export default function Home() {
   const [searchInput, setSearchInput] = useState("");
@@ -111,6 +112,7 @@ export default function Home() {
         setKeyword(
           `${position.coords.longitude.toFixed(14)},${position.coords.latitude.toFixed(14)}`,
         );
+        trackEvent("branch_location_search");
       } catch (error) {
         console.error("위치 정보 오류:", error);
         const errorMessage =
@@ -120,6 +122,7 @@ export default function Home() {
         alert(errorMessage);
       }
     } else {
+      trackEvent("branch_search", { keyword: searchInput });
       setKeyword(searchInput);
     }
   };
@@ -136,6 +139,7 @@ export default function Home() {
         entries.forEach((entry) => {
           if (entry.isIntersecting && branches.length > 0) {
             fetchNextPage();
+            trackEvent("branches_load_more");
           }
         });
       });
@@ -190,6 +194,7 @@ export default function Home() {
             href={`/branch/${branch.code}`}
             className="card"
             key={branch.code}
+            onClick={() => trackEvent("branch_click", { branch_code: branch.code, branch_name: branch.name })}
           >
             <div className="card-body">
               <h5 className="card-title">{branch.name}</h5>
