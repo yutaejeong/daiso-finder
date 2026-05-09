@@ -109,11 +109,17 @@ export function BranchClient({ code, initialBranch }: Props) {
         />
       </Link>
       <h1
-        className={css({ marginBottom: "8px" })}
+        className={css({
+          marginBottom: "8px",
+          display: "flex",
+          flexWrap: "wrap",
+          columnGap: "0.25em",
+          wordBreak: "keep-all",
+        })}
       >
-        <mark>{branch?.name}</mark>
-        <span>의</span>
-        <br />
+        <span>
+          <mark>{branch?.name}</mark>의
+        </span>
         <span>상품을 찾아드려요.</span>
       </h1>
       <address
@@ -163,32 +169,47 @@ export function BranchClient({ code, initialBranch }: Props) {
               backgroundColor: "white",
               borderRadius: "4px",
               border: "1px solid #e0e0e0",
+              display: "flex",
+              flexDirection: "column",
+              gap: "12px",
             })}
           >
+            <h2
+              className={css({
+                fontSize: "1rem",
+                fontWeight: "bold",
+                wordBreak: "keep-all",
+                marginBottom: 0,
+              })}
+            >
+              {product.name}
+            </h2>
             <div
               className={css({
                 display: "flex",
                 gap: "12px",
-                alignItems: "stretch",
+                alignItems: "center",
               })}
             >
               {product.image ? (
                 <Image
                   src={product.image}
                   alt={product.name}
-                  width={80}
-                  height={80}
+                  width={90}
+                  height={120}
                   className={css({
                     borderRadius: "4px",
                     objectFit: "cover",
                     flexShrink: 0,
+                    aspectRatio: "3 / 4",
                   })}
                 />
               ) : (
                 <div
                   aria-hidden="true"
                   className={css({
-                    width: "80px",
+                    width: "90px",
+                    aspectRatio: "3 / 4",
                     backgroundColor: "#f0f0f0",
                     borderRadius: "4px",
                     flexShrink: 0,
@@ -205,71 +226,52 @@ export function BranchClient({ code, initialBranch }: Props) {
                 className={css({
                   flex: 1,
                   display: "flex",
-                  gap: "8px",
+                  flexDirection: "column",
+                  gap: "4px",
                   minWidth: 0,
                 })}
               >
-                <div
+                <p className={css({ color: "#666", marginBottom: 0 })}>
+                  {product.price.toLocaleString()}원
+                </p>
+                <p className={css({ color: "#666", marginBottom: 0 })}>
+                  재고 {product.stock}개 이하
+                </p>
+              </div>
+              <div
+                className={css({
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  gap: "8px",
+                  flexShrink: 0,
+                })}
+                aria-label={`진열 위치: ${product.stairNo < 0 ? `지하${-product.stairNo}층` : `${product.stairNo}층`} ${product.zoneNo}구역`}
+              >
+                <p
                   className={css({
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "4px",
-                    flex: 1,
-                    minWidth: 0,
+                    fontWeight: "black",
+                    fontSize: "1.5rem",
+                    color: "#ED1C24 !important",
+                    marginBottom: "0 !important",
                   })}
                 >
-                  <h2
-                    className={css({
-                      fontSize: "1rem",
-                      fontWeight: "bold",
-                      wordBreak: "break-word",
-                    })}
-                  >
-                    {product.name}
-                  </h2>
-                  <div className={css({ flex: 1 })} />
-                  <p className={css({ color: "#666" })}>
-                    {product.price.toLocaleString()}원
-                  </p>
-                  <p className={css({ color: "#666" })}>
-                    재고 {product.stock}개 이하
-                  </p>
-                </div>
-                <div
+                  {product.stairNo < 0
+                    ? `B${-product.stairNo}`
+                    : `${product.stairNo}F`}
+                </p>
+                <span
                   className={css({
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    gap: "8px",
-                    width: "100px",
+                    backgroundColor: "#ED1C24",
+                    color: "white",
+                    padding: "4px 8px",
+                    borderRadius: "4px",
+                    fontSize: "1.2rem",
+                    fontWeight: "bold",
                   })}
-                  aria-label={`진열 위치: ${product.stairNo < 0 ? `지하${-product.stairNo}층` : `${product.stairNo}층`} ${product.zoneNo}구역`}
                 >
-                  <p
-                    className={css({
-                      fontWeight: "black",
-                      fontSize: "1.5rem",
-                      color: "#ED1C24 !important",
-                      marginBottom: "0 !important",
-                    })}
-                  >
-                    {product.stairNo < 0
-                      ? `B${-product.stairNo}`
-                      : `${product.stairNo}F`}
-                  </p>
-                  <span
-                    className={css({
-                      backgroundColor: "#ED1C24",
-                      color: "white",
-                      padding: "4px 8px",
-                      borderRadius: "4px",
-                      fontSize: "1.2rem",
-                      fontWeight: "bold",
-                    })}
-                  >
-                    {product.zoneNo}
-                  </span>
-                </div>
+                  {product.zoneNo}
+                </span>
               </div>
             </div>
           </article>
