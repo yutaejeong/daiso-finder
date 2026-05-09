@@ -79,6 +79,7 @@ export function Search({
           flexDirection: "column",
           gap: "4px",
           overflowY: "auto",
+          overflowX: "hidden",
           flex: 1,
           padding: "8px",
           border: "1px solid #ccc",
