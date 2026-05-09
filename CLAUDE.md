@@ -51,7 +51,7 @@ React Query (`@tanstack/react-query`) handles all server state, caching, and pag
 
 - Package manager: **pnpm** (do not use npm/yarn)
 - Node version: 22.17.1 (see .nvmrc)
-- Prefer Tabler UI components and utilities before adding new UI libraries
+- Prefer Tabler UI components and utilities before adding new UI libraries — see https://docs.tabler.io/ui
 - Check existing dependencies in package.json before installing new packages
 - Next.js config uses `next.config.js` (not .mjs/.ts) with JSDoc types
 - Remote images allowed from `cdn.daisomall.co.kr`
