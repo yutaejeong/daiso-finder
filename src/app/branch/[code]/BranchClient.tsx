@@ -165,10 +165,11 @@ export function BranchClient({ code, initialBranch }: Props) {
           <article
             key={product.id}
             className={css({
-              padding: "12px",
+              padding: "14px",
               backgroundColor: "white",
-              borderRadius: "4px",
-              border: "1px solid #e0e0e0",
+              borderRadius: "8px",
+              border: "1px solid #e5e5e5",
+              boxShadow: "0 1px 2px rgba(0, 0, 0, 0.04)",
               display: "flex",
               flexDirection: "column",
               gap: "12px",
@@ -176,10 +177,12 @@ export function BranchClient({ code, initialBranch }: Props) {
           >
             <h2
               className={css({
-                fontSize: "1rem",
+                fontSize: "0.95rem",
                 fontWeight: "bold",
                 wordBreak: "keep-all",
-                marginBottom: 0,
+                lineHeight: 1.4,
+                color: "#1a1a1a",
+                margin: 0,
               })}
             >
               {product.name}
@@ -188,38 +191,39 @@ export function BranchClient({ code, initialBranch }: Props) {
               className={css({
                 display: "flex",
                 gap: "12px",
-                alignItems: "center",
+                alignItems: "stretch",
               })}
             >
               {product.image ? (
                 <Image
                   src={product.image}
                   alt={product.name}
-                  width={90}
-                  height={120}
+                  width={84}
+                  height={112}
                   className={css({
-                    borderRadius: "4px",
+                    borderRadius: "6px",
                     objectFit: "cover",
                     flexShrink: 0,
                     aspectRatio: "3 / 4",
+                    backgroundColor: "#f5f5f5",
                   })}
                 />
               ) : (
                 <div
                   aria-hidden="true"
                   className={css({
-                    width: "90px",
+                    width: "84px",
                     aspectRatio: "3 / 4",
-                    backgroundColor: "#f0f0f0",
-                    borderRadius: "4px",
+                    backgroundColor: "#f5f5f5",
+                    borderRadius: "6px",
                     flexShrink: 0,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    color: "#666",
+                    color: "#999",
                   })}
                 >
-                  <IconPhotoX width={40} height={40} />
+                  <IconPhotoX width={36} height={36} />
                 </div>
               )}
               <div
@@ -227,51 +231,75 @@ export function BranchClient({ code, initialBranch }: Props) {
                   flex: 1,
                   display: "flex",
                   flexDirection: "column",
+                  justifyContent: "space-between",
                   gap: "4px",
                   minWidth: 0,
                 })}
               >
-                <p className={css({ color: "#666", marginBottom: 0 })}>
-                  {product.price.toLocaleString()}원
-                </p>
-                <p className={css({ color: "#666", marginBottom: 0 })}>
-                  재고 {product.stock}개 이하
-                </p>
-              </div>
-              <div
-                className={css({
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  gap: "8px",
-                  flexShrink: 0,
-                })}
-                aria-label={`진열 위치: ${product.stairNo < 0 ? `지하${-product.stairNo}층` : `${product.stairNo}층`} ${product.zoneNo}구역`}
-              >
-                <p
+                <div
                   className={css({
-                    fontWeight: "black",
-                    fontSize: "1.5rem",
-                    color: "#ED1C24 !important",
-                    marginBottom: "0 !important",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "2px",
                   })}
                 >
-                  {product.stairNo < 0
-                    ? `B${-product.stairNo}`
-                    : `${product.stairNo}F`}
-                </p>
-                <span
+                  <p
+                    className={css({
+                      color: "#1a1a1a",
+                      fontSize: "1.125rem",
+                      fontWeight: "bold",
+                      margin: 0,
+                      fontVariantNumeric: "tabular-nums",
+                    })}
+                  >
+                    {product.price.toLocaleString()}원
+                  </p>
+                  <p
+                    className={css({
+                      color: "#888",
+                      fontSize: "0.8125rem",
+                      margin: 0,
+                    })}
+                  >
+                    재고 {product.stock}개 이하
+                  </p>
+                </div>
+                <div
                   className={css({
-                    backgroundColor: "#ED1C24",
-                    color: "white",
-                    padding: "4px 8px",
-                    borderRadius: "4px",
-                    fontSize: "1.2rem",
-                    fontWeight: "bold",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    alignSelf: "flex-end",
                   })}
+                  aria-label={`진열 위치: ${product.stairNo < 0 ? `지하${-product.stairNo}층` : `${product.stairNo}층`} ${product.zoneNo}구역`}
                 >
-                  {product.zoneNo}
-                </span>
+                  <span
+                    className={css({
+                      fontWeight: "black",
+                      fontSize: "1.25rem",
+                      color: "#ED1C24",
+                      lineHeight: 1,
+                    })}
+                  >
+                    {product.stairNo < 0
+                      ? `B${-product.stairNo}`
+                      : `${product.stairNo}F`}
+                  </span>
+                  <span
+                    className={css({
+                      backgroundColor: "#ED1C24",
+                      color: "white",
+                      padding: "3px 8px",
+                      borderRadius: "4px",
+                      fontSize: "1rem",
+                      fontWeight: "bold",
+                      lineHeight: 1.2,
+                      fontVariantNumeric: "tabular-nums",
+                    })}
+                  >
+                    {product.zoneNo}
+                  </span>
+                </div>
               </div>
             </div>
           </article>
