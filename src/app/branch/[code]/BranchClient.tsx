@@ -112,7 +112,9 @@ export function BranchClient({ code, initialBranch }: Props) {
         className={css({ marginBottom: "8px" })}
       >
         <mark>{branch?.name}</mark>
-        <span>의 상품을 찾아드려요.</span>
+        <span>의</span>
+        <br />
+        <span>상품을 찾아드려요.</span>
       </h1>
       <address
         className={css({
@@ -199,16 +201,30 @@ export function BranchClient({ code, initialBranch }: Props) {
                   <IconPhotoX width={40} height={40} />
                 </div>
               )}
-              <div className={css({ flex: 1, display: "flex", gap: "8px" })}>
+              <div
+                className={css({
+                  flex: 1,
+                  display: "flex",
+                  gap: "8px",
+                  minWidth: 0,
+                })}
+              >
                 <div
                   className={css({
                     display: "flex",
                     flexDirection: "column",
                     gap: "4px",
                     flex: 1,
+                    minWidth: 0,
                   })}
                 >
-                  <h2 className={css({ fontSize: "1rem", fontWeight: "bold" })}>
+                  <h2
+                    className={css({
+                      fontSize: "1rem",
+                      fontWeight: "bold",
+                      wordBreak: "break-word",
+                    })}
+                  >
                     {product.name}
                   </h2>
                   <div className={css({ flex: 1 })} />
