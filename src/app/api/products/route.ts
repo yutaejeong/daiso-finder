@@ -8,6 +8,31 @@ import {
 } from "./types";
 import { headers } from "next/headers";
 
+function decodeHtmlEntities(text: string): string {
+  return text.replace(
+    /&(amp|lt|gt|quot|apos|#39|nbsp);/g,
+    (match, entity) => {
+      switch (entity) {
+        case "amp":
+          return "&";
+        case "lt":
+          return "<";
+        case "gt":
+          return ">";
+        case "quot":
+          return '"';
+        case "apos":
+        case "#39":
+          return "'";
+        case "nbsp":
+          return " ";
+        default:
+          return match;
+      }
+    },
+  );
+}
+
 async function searchProductsByKeyword(
   keyword: string | null,
   currentPage: number,
@@ -99,7 +124,7 @@ export async function GET(request: NextRequest) {
           products
             .map((product) => ({
             id: product.pdNo,
-            name: product.pdNm,
+            name: decodeHtmlEntities(product.pdNm),
             price: parseInt(product.pdPrc),
             image: product.atchFileUrl
               ? `https://cdn.daisomall.co.kr${product.atchFileUrl}`
