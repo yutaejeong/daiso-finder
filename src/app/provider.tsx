@@ -1,6 +1,7 @@
 "use client";
 
 import { ErrorModalProvider, useErrorModal } from "@/contexts/ErrorModalContext";
+import { I18nProvider, useI18n } from "@/i18n/I18nProvider";
 import {
   MutationCache,
   QueryCache,
@@ -11,6 +12,7 @@ import { useState } from "react";
 
 function QueryProvider({ children }: { children: React.ReactNode }) {
   const { showError } = useErrorModal();
+  const { t } = useI18n();
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -21,7 +23,7 @@ function QueryProvider({ children }: { children: React.ReactNode }) {
                 ? error.cause
                 : undefined;
             showError(
-              error.message || "오류가 발생했습니다. 다시 시도해주세요.",
+              error.message || t("common", "defaultErrorMessage"),
               detail,
             );
           },
@@ -33,7 +35,7 @@ function QueryProvider({ children }: { children: React.ReactNode }) {
                 ? error.cause
                 : undefined;
             showError(
-              error.message || "오류가 발생했습니다. 다시 시도해주세요.",
+              error.message || t("common", "defaultErrorMessage"),
               detail,
             );
           },
@@ -53,8 +55,10 @@ function QueryProvider({ children }: { children: React.ReactNode }) {
 
 export default function Provider({ children }: { children: React.ReactNode }) {
   return (
-    <ErrorModalProvider>
-      <QueryProvider>{children}</QueryProvider>
-    </ErrorModalProvider>
+    <I18nProvider>
+      <ErrorModalProvider>
+        <QueryProvider>{children}</QueryProvider>
+      </ErrorModalProvider>
+    </I18nProvider>
   );
 }

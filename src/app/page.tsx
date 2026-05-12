@@ -2,15 +2,17 @@
 
 import { css } from "@styled-system/css";
 import { InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
-import clsx from "clsx";
 import Image from "next/image";
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { SimplifiedBranchResponse } from "./api/branches/types";
+import { LanguageSelector } from "@/components/LanguageSelector";
 import { Search } from "@/components/Search";
+import { useI18n } from "@/i18n/I18nProvider";
 import { trackEvent } from "@/lib/gtag";
 
 export default function Home() {
+  const { t } = useI18n();
   const [searchInput, setSearchInput] = useState("");
   const [keyword, setKeyword] = useState("");
   const [location, setLocation] = useState<{
@@ -44,7 +46,7 @@ export default function Home() {
       const response = await fetch(url);
       if (!response.ok) {
         const body = await response.json().catch(() => null);
-        throw new Error(body?.error || "매장 검색 중 오류가 발생했습니다.", {
+        throw new Error(body?.error || t("home", "branchSearchError"), {
           cause: body?.detail,
         });
       }
@@ -59,30 +61,29 @@ export default function Home() {
 
   const getCurrentPosition = async () => {
     if (!navigator.geolocation) {
-      throw new Error("이 브라우저는 위치 정보를 지원하지 않습니다.");
+      throw new Error(t("location", "unsupported"));
     }
 
     return new Promise<GeolocationPosition>((resolve, reject) => {
       navigator.geolocation.getCurrentPosition(
         resolve,
         (error: GeolocationPositionError) => {
-          let errorMessage = "위치 정보를 가져오는데 실패했습니다.";
+          let errorMessage = t("location", "fallback");
 
           switch (error.code) {
             case error.PERMISSION_DENIED:
-              errorMessage =
-                "위치 정보 접근 권한이 거부되었습니다. 브라우저 설정에서 위치 정보 권한을 허용해주세요.";
+              errorMessage = t("location", "permissionDenied");
               break;
             case error.POSITION_UNAVAILABLE:
-              errorMessage =
-                "위치 정보를 사용할 수 없습니다. GPS가 켜져있는지 확인하거나, 잠시 후 다시 시도해주세요.";
+              errorMessage = t("location", "positionUnavailable");
               break;
             case error.TIMEOUT:
-              errorMessage =
-                "위치 정보 요청 시간이 초과되었습니다. 다시 시도해주세요.";
+              errorMessage = t("location", "timeout");
               break;
             default:
-              errorMessage = `위치 정보 오류: ${error.message || "알 수 없는 오류가 발생했습니다."}`;
+              errorMessage = t("location", "unknown", {
+                message: error.message || t("location", "unknownFallback"),
+              });
           }
 
           reject(new Error(errorMessage));
@@ -116,9 +117,7 @@ export default function Home() {
       } catch (error) {
         console.error("위치 정보 오류:", error);
         const errorMessage =
-          error instanceof Error
-            ? error.message
-            : "위치 정보를 가져오는데 실패했습니다. 다시 시도해주세요.";
+          error instanceof Error ? error.message : t("location", "retry");
         alert(errorMessage);
       }
     } else {
@@ -161,7 +160,7 @@ export default function Home() {
     >
       <Image
         src="/logo.svg"
-        alt="다이소 파인더 로고"
+        alt={t("common", "logoAlt")}
         width={200}
         height={80}
         draggable={false}
@@ -177,10 +176,11 @@ export default function Home() {
           },
         })}
       />
-      <h1>당신이 있는 매장의 상품을 찾아드립니다</h1>
+      <LanguageSelector />
+      <h1>{t("home", "heading")}</h1>
       <Search
-        title="매장을 선택해주세요"
-        placeholder="주소 혹은 지점명을 입력하세요"
+        title={t("home", "searchTitle")}
+        placeholder={t("home", "searchPlaceholder")}
         searchInput={searchInput}
         onSearchInputChange={(value) => setSearchInput(value)}
         onSubmit={handleSearch}

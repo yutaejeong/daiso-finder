@@ -1,5 +1,6 @@
 "use client";
 
+import { useI18n } from "@/i18n/I18nProvider";
 import { css } from "@styled-system/css";
 import { IconLocation, IconSearch } from "@tabler/icons-react";
 import clsx from "clsx";
@@ -30,6 +31,7 @@ export function Search({
   keyword,
   withLocation = false,
 }: SearchProps) {
+  const { t } = useI18n();
   return (
     <>
       <span
@@ -96,10 +98,10 @@ export function Search({
             )}
           >
             {isFetching
-              ? "검색 중..."
+              ? t("search", "searching")
               : keyword
-                ? "검색 결과가 없습니다"
-                : "검색어를 입력해주세요"}
+                ? t("search", "noResults")
+                : t("search", "promptInput")}
           </div>
         )}
       </div>
