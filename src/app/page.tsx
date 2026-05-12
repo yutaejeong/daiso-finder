@@ -2,6 +2,7 @@
 
 import { css } from "@styled-system/css";
 import { InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
+import { IconMapPinFilled } from "@tabler/icons-react";
 import clsx from "clsx";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,6 +10,11 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { SimplifiedBranchResponse } from "./api/branches/types";
 import { Search } from "@/components/Search";
 import { trackEvent } from "@/lib/gtag";
+import { popularBranches } from "@/lib/seoBranches";
+
+const APP_URL = (
+  process.env.NEXT_PUBLIC_APP_URL || "https://daiso-finder.vercel.app"
+).replace(/\/$/, "");
 
 export default function Home() {
   const [searchInput, setSearchInput] = useState("");
@@ -56,6 +62,17 @@ export default function Home() {
     () => data?.pages.flatMap((page) => page) ?? [],
     [data],
   );
+  const popularBranchesJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "다이소 주요 인기 매장 바로가기",
+    itemListElement: popularBranches.map((branch, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: `다이소 ${branch.name} 재고 확인`,
+      url: `${APP_URL}/branch/${branch.code}`,
+    })),
+  };
 
   const getCurrentPosition = async () => {
     if (!navigator.geolocation) {
@@ -159,15 +176,21 @@ export default function Home() {
         flexDirection: "column",
       })}
     >
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(popularBranchesJsonLd),
+        }}
+      />
       <Image
         src="/logo.svg"
         alt="다이소 파인더 로고"
         width={200}
         height={80}
         draggable={false}
-        style={{ WebkitUserDrag: 'none' } as React.CSSProperties}
+        style={{ WebkitUserDrag: "none" } as React.CSSProperties}
         className={css({
-          userSelect: 'none',
+          userSelect: "none",
           marginBottom: "24px",
           width: "150px",
           height: "60px",
@@ -188,13 +211,68 @@ export default function Home() {
         hasResults={branches.length > 0}
         keyword={keyword}
         withLocation
+        beforeForm={
+          <nav
+            aria-label="주요 다이소 매장"
+            className={css({
+              display: "flex",
+              gap: "10px",
+              overflowX: "auto",
+              paddingBlock: 4,
+              paddingInline: 4,
+              marginBottom: "10px",
+              scrollbarWidth: "none",
+              WebkitMaskImage:
+                "linear-gradient(90deg, transparent 0, black 14px, black calc(100% - 22px), transparent 100%)",
+              maskImage:
+                "linear-gradient(90deg, transparent 0, black 14px, black calc(100% - 22px), transparent 100%)",
+              "&::-webkit-scrollbar": { display: "none" },
+            })}
+          >
+            {popularBranches.map((branch) => (
+              <Link
+                key={branch.code}
+                href={`/branch/${branch.code}`}
+                className={clsx(
+                  "badge bg-red-lt",
+                  css({
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    flexShrink: 0,
+                    minHeight: "32px",
+                    padding: "7px 11px",
+                    fontSize: "0.875rem",
+                    lineHeight: 1.2,
+                  }),
+                )}
+              >
+                <IconMapPinFilled
+                  aria-hidden="true"
+                  width={15}
+                  height={15}
+                  className={css({
+                    color: "#ED1C24",
+                    flexShrink: 0,
+                  })}
+                />
+                {branch.name}
+              </Link>
+            ))}
+          </nav>
+        }
       >
         {branches?.map((branch) => (
           <Link
             href={`/branch/${branch.code}`}
             className="card"
             key={branch.code}
-            onClick={() => trackEvent("branch_click", { branch_code: branch.code, branch_name: branch.name })}
+            onClick={() =>
+              trackEvent("branch_click", {
+                branch_code: branch.code,
+                branch_name: branch.name,
+              })
+            }
           >
             <div className="card-body">
               <h5 className="card-title">{branch.name}</h5>
