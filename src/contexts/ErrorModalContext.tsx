@@ -1,5 +1,6 @@
 "use client";
 
+import { useI18n } from "@/i18n/I18nProvider";
 import { css } from "@styled-system/css";
 import { createContext, useCallback, useContext, useState } from "react";
 
@@ -22,6 +23,7 @@ export function ErrorModalProvider({
 }: {
   children: React.ReactNode;
 }) {
+  const { t } = useI18n();
   const [error, setError] = useState<{
     isOpen: boolean;
     message: string;
@@ -49,7 +51,7 @@ export function ErrorModalProvider({
           >
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">오류</h5>
+                <h5 className="modal-title">{t("common", "error")}</h5>
                 <button
                   type="button"
                   className="btn-close"
@@ -73,7 +75,7 @@ export function ErrorModalProvider({
                   className="btn btn-red w-100"
                   onClick={closeError}
                 >
-                  확인
+                  {t("common", "confirm")}
                 </button>
               </div>
             </div>

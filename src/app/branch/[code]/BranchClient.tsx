@@ -6,6 +6,7 @@ import {
   SimplifiedProduct,
 } from "@/app/api/products/types";
 import { Search } from "@/components/Search";
+import { useI18n } from "@/i18n/I18nProvider";
 import { trackEvent } from "@/lib/gtag";
 import { css } from "@styled-system/css";
 import { IconPhotoX } from "@tabler/icons-react";
@@ -24,6 +25,7 @@ interface Props {
 }
 
 export function BranchClient({ code, initialBranch }: Props) {
+  const { t } = useI18n();
   const [searchInput, setSearchInput] = useState("");
   const [keyword, setKeyword] = useState("");
 
@@ -33,10 +35,9 @@ export function BranchClient({ code, initialBranch }: Props) {
       const res = await fetch(`/api/branches/${code}`);
       if (!res.ok) {
         const body = await res.json().catch(() => null);
-        throw new Error(
-          body?.error || "매장 정보를 불러오는 중 오류가 발생했습니다.",
-          { cause: body?.detail },
-        );
+        throw new Error(body?.error || t("branch", "branchLoadError"), {
+          cause: body?.detail,
+        });
       }
       return res.json();
     },
@@ -58,7 +59,7 @@ export function BranchClient({ code, initialBranch }: Props) {
         );
         if (!response.ok) {
           const body = await response.json().catch(() => null);
-          throw new Error(body?.error || "상품 검색 중 오류가 발생했습니다.", {
+          throw new Error(body?.error || t("branch", "productLoadError"), {
             cause: body?.detail,
           });
         }
@@ -91,10 +92,10 @@ export function BranchClient({ code, initialBranch }: Props) {
         flexDirection: "column",
       })}
     >
-      <Link href="/" aria-label="다이소 파인더 홈으로 이동">
+      <Link href="/" aria-label={t("common", "homeAriaLabel")}>
         <Image
           src="/logo.svg"
-          alt="다이소 파인더 로고"
+          alt={t("common", "logoAlt")}
           width={200}
           height={80}
           draggable={false}
@@ -111,16 +112,12 @@ export function BranchClient({ code, initialBranch }: Props) {
       <h1
         className={css({
           marginBottom: "8px",
-          display: "flex",
-          flexWrap: "wrap",
-          columnGap: "0.25em",
           wordBreak: "keep-all",
         })}
       >
-        <span>
-          <mark>{branch?.name}</mark>의
-        </span>
-        <span>상품을 찾아드려요.</span>
+        {t("branch", "headingBefore")}
+        <mark>{branch?.name}</mark>
+        {t("branch", "headingAfter")}
       </h1>
       <address
         className={css({
@@ -134,7 +131,9 @@ export function BranchClient({ code, initialBranch }: Props) {
         })}
       >
         <div>
-          <strong className={css({ marginRight: "4px" })}>주소</strong>
+          <strong className={css({ marginRight: "4px" })}>
+            {t("branch", "address")}
+          </strong>
           <a
             href={`https://map.kakao.com/link/to/다이소 ${branch?.name},${branch?.lat},${branch?.lng}`}
             target="_blank"
@@ -144,7 +143,9 @@ export function BranchClient({ code, initialBranch }: Props) {
           </a>
         </div>
         <div>
-          <strong className={css({ marginRight: "4px" })}>영업시간</strong>
+          <strong className={css({ marginRight: "4px" })}>
+            {t("branch", "openingHours")}
+          </strong>
           <time dateTime={branch?.openTime}>{branch?.openTime}</time>
           <span className={css({ margin: "0 4px" })}>~</span>
           <time dateTime={branch?.closeTime}>{branch?.closeTime}</time>
@@ -152,8 +153,8 @@ export function BranchClient({ code, initialBranch }: Props) {
       </address>
 
       <Search
-        title="상품을 검색해보세요"
-        placeholder="상품명을 입력해주세요"
+        title={t("branch", "productSearchTitle")}
+        placeholder={t("branch", "productSearchPlaceholder")}
         searchInput={searchInput}
         onSearchInputChange={setSearchInput}
         onSubmit={handleSearch}
@@ -252,7 +253,9 @@ export function BranchClient({ code, initialBranch }: Props) {
                       fontVariantNumeric: "tabular-nums",
                     })}
                   >
-                    {product.price.toLocaleString()}원
+                    {t("branch", "priceFormat", {
+                      price: product.price.toLocaleString(),
+                    })}
                   </p>
                   <p
                     className={css({
@@ -261,7 +264,7 @@ export function BranchClient({ code, initialBranch }: Props) {
                       margin: 0,
                     })}
                   >
-                    재고 {product.stock}개 이하
+                    {t("branch", "stockLessThan", { count: product.stock })}
                   </p>
                 </div>
                 <div
@@ -271,7 +274,17 @@ export function BranchClient({ code, initialBranch }: Props) {
                     gap: "6px",
                     alignSelf: "flex-end",
                   })}
-                  aria-label={`진열 위치: ${product.stairNo < 0 ? `지하${-product.stairNo}층` : `${product.stairNo}층`} ${product.zoneNo}구역`}
+                  aria-label={t("branch", "shelfAriaLabel", {
+                    floor:
+                      product.stairNo < 0
+                        ? t("branch", "floorBelowSpoken", {
+                            n: -product.stairNo,
+                          })
+                        : t("branch", "floorAboveSpoken", {
+                            n: product.stairNo,
+                          }),
+                    zone: product.zoneNo,
+                  })}
                 >
                   <span
                     className={css({
@@ -282,8 +295,8 @@ export function BranchClient({ code, initialBranch }: Props) {
                     })}
                   >
                     {product.stairNo < 0
-                      ? `B${-product.stairNo}`
-                      : `${product.stairNo}F`}
+                      ? t("branch", "floorBelow", { n: -product.stairNo })
+                      : t("branch", "floorAbove", { n: product.stairNo })}
                   </span>
                   <span
                     className={css({
@@ -318,7 +331,9 @@ export function BranchClient({ code, initialBranch }: Props) {
               "&:disabled": { opacity: 0.5, cursor: "not-allowed" },
             })}
           >
-            {isFetchingNextPage ? "로딩 중..." : "더 보기"}
+            {isFetchingNextPage
+              ? t("search", "loadingMore")
+              : t("search", "loadMore")}
           </button>
         )}
       </Search>
