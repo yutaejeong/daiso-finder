@@ -201,73 +201,6 @@ export default function Home() {
         })}
       />
       <h1>당신이 있는 매장의 상품을 찾아드립니다</h1>
-      <nav
-        aria-label="주요 다이소 매장"
-        className={css({
-          display: "flex",
-          gap: "8px",
-          overflowX: "auto",
-          padding: "2px 1px 14px",
-          marginBottom: "2px",
-          scrollbarWidth: "none",
-          WebkitMaskImage:
-            "linear-gradient(90deg, transparent 0, black 14px, black calc(100% - 22px), transparent 100%)",
-          maskImage:
-            "linear-gradient(90deg, transparent 0, black 14px, black calc(100% - 22px), transparent 100%)",
-          "&::-webkit-scrollbar": { display: "none" },
-        })}
-      >
-        {popularBranches.map((branch) => (
-          <Link
-            key={branch.code}
-            href={`/branch/${branch.code}`}
-            className={clsx(
-              "badge bg-red-lt",
-              css({
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "5px",
-                flexShrink: 0,
-                minHeight: "34px",
-                padding: "7px 11px 7px 9px",
-                borderColor: "rgba(237, 28, 36, 0.16)",
-                borderRadius: "999px",
-                boxShadow:
-                  "0 1px 2px rgba(20, 24, 32, 0.06), 0 7px 18px rgba(237, 28, 36, 0.07)",
-                fontSize: "0.825rem",
-                fontWeight: 700,
-                textDecoration: "none",
-                lineHeight: 1.2,
-                transition:
-                  "transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease, color 160ms ease",
-                _hover: {
-                  transform: "translateY(-1px)",
-                  borderColor: "rgba(237, 28, 36, 0.38)",
-                  backgroundColor: "#fff7f8",
-                  color: "#ED1C24",
-                  boxShadow:
-                    "0 4px 10px rgba(20, 24, 32, 0.08), 0 10px 24px rgba(237, 28, 36, 0.12)",
-                },
-                _focusVisible: {
-                  outline: "2px solid rgba(237, 28, 36, 0.35)",
-                  outlineOffset: "2px",
-                },
-              }),
-            )}
-          >
-            <IconMapPinFilled
-              aria-hidden="true"
-              width={13}
-              height={13}
-              className={css({
-                color: "#ED1C24",
-                flexShrink: 0,
-              })}
-            />
-            {branch.name}
-          </Link>
-        ))}
-      </nav>
       <Search
         title="매장을 선택해주세요"
         placeholder="주소 혹은 지점명을 입력하세요"
@@ -278,13 +211,68 @@ export default function Home() {
         hasResults={branches.length > 0}
         keyword={keyword}
         withLocation
+        beforeForm={
+          <nav
+            aria-label="주요 다이소 매장"
+            className={css({
+              display: "flex",
+              gap: "10px",
+              overflowX: "auto",
+              paddingBlock: 4,
+              paddingInline: 4,
+              marginBottom: "10px",
+              scrollbarWidth: "none",
+              WebkitMaskImage:
+                "linear-gradient(90deg, transparent 0, black 14px, black calc(100% - 22px), transparent 100%)",
+              maskImage:
+                "linear-gradient(90deg, transparent 0, black 14px, black calc(100% - 22px), transparent 100%)",
+              "&::-webkit-scrollbar": { display: "none" },
+            })}
+          >
+            {popularBranches.map((branch) => (
+              <Link
+                key={branch.code}
+                href={`/branch/${branch.code}`}
+                className={clsx(
+                  "badge bg-red-lt",
+                  css({
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    flexShrink: 0,
+                    minHeight: "32px",
+                    padding: "7px 11px",
+                    fontSize: "0.875rem",
+                    lineHeight: 1.2,
+                  }),
+                )}
+              >
+                <IconMapPinFilled
+                  aria-hidden="true"
+                  width={15}
+                  height={15}
+                  className={css({
+                    color: "#ED1C24",
+                    flexShrink: 0,
+                  })}
+                />
+                {branch.name}
+              </Link>
+            ))}
+          </nav>
+        }
       >
         {branches?.map((branch) => (
           <Link
             href={`/branch/${branch.code}`}
             className="card"
             key={branch.code}
-            onClick={() => trackEvent("branch_click", { branch_code: branch.code, branch_name: branch.name })}
+            onClick={() =>
+              trackEvent("branch_click", {
+                branch_code: branch.code,
+                branch_name: branch.name,
+              })
+            }
           >
             <div className="card-body">
               <h5 className="card-title">{branch.name}</h5>
