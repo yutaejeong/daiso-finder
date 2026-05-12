@@ -2,6 +2,7 @@
 
 import { css } from "@styled-system/css";
 import { InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
+import { IconMapPinFilled } from "@tabler/icons-react";
 import clsx from "clsx";
 import Image from "next/image";
 import Link from "next/link";
@@ -187,9 +188,9 @@ export default function Home() {
         width={200}
         height={80}
         draggable={false}
-        style={{ WebkitUserDrag: 'none' } as React.CSSProperties}
+        style={{ WebkitUserDrag: "none" } as React.CSSProperties}
         className={css({
-          userSelect: 'none',
+          userSelect: "none",
           marginBottom: "24px",
           width: "150px",
           height: "60px",
@@ -204,11 +205,15 @@ export default function Home() {
         aria-label="주요 다이소 매장"
         className={css({
           display: "flex",
-          gap: "6px",
+          gap: "8px",
           overflowX: "auto",
-          paddingBottom: "12px",
-          marginBottom: "4px",
+          padding: "2px 1px 14px",
+          marginBottom: "2px",
           scrollbarWidth: "none",
+          WebkitMaskImage:
+            "linear-gradient(90deg, transparent 0, black 14px, black calc(100% - 22px), transparent 100%)",
+          maskImage:
+            "linear-gradient(90deg, transparent 0, black 14px, black calc(100% - 22px), transparent 100%)",
           "&::-webkit-scrollbar": { display: "none" },
         })}
       >
@@ -217,21 +222,47 @@ export default function Home() {
             key={branch.code}
             href={`/branch/${branch.code}`}
             className={css({
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "5px",
               flexShrink: 0,
-              padding: "6px 10px",
-              border: "1px solid #e4e4e4",
+              minHeight: "34px",
+              padding: "7px 11px 7px 9px",
+              border: "1px solid rgba(237, 28, 36, 0.14)",
               borderRadius: "999px",
-              backgroundColor: "white",
-              color: "#333",
-              fontSize: "0.8125rem",
+              backgroundColor: "rgba(255, 255, 255, 0.94)",
+              color: "#272a31",
+              boxShadow:
+                "0 1px 2px rgba(20, 24, 32, 0.06), 0 7px 18px rgba(237, 28, 36, 0.07)",
+              fontSize: "0.825rem",
+              fontWeight: 700,
               textDecoration: "none",
               lineHeight: 1.2,
+              transition:
+                "transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease, color 160ms ease",
               _hover: {
-                borderColor: "#ED1C24",
+                transform: "translateY(-1px)",
+                borderColor: "rgba(237, 28, 36, 0.36)",
+                backgroundColor: "#fff7f8",
                 color: "#ED1C24",
+                boxShadow:
+                  "0 4px 10px rgba(20, 24, 32, 0.08), 0 10px 24px rgba(237, 28, 36, 0.12)",
+              },
+              _focusVisible: {
+                outline: "2px solid rgba(237, 28, 36, 0.35)",
+                outlineOffset: "2px",
               },
             })}
           >
+            <IconMapPinFilled
+              aria-hidden="true"
+              width={13}
+              height={13}
+              className={css({
+                color: "#ED1C24",
+                flexShrink: 0,
+              })}
+            />
             {branch.name}
           </Link>
         ))}
