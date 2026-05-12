@@ -221,38 +221,39 @@ export default function Home() {
           <Link
             key={branch.code}
             href={`/branch/${branch.code}`}
-            className={css({
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "5px",
-              flexShrink: 0,
-              minHeight: "34px",
-              padding: "7px 11px 7px 9px",
-              border: "1px solid rgba(237, 28, 36, 0.14)",
-              borderRadius: "999px",
-              backgroundColor: "rgba(255, 255, 255, 0.94)",
-              color: "#272a31",
-              boxShadow:
-                "0 1px 2px rgba(20, 24, 32, 0.06), 0 7px 18px rgba(237, 28, 36, 0.07)",
-              fontSize: "0.825rem",
-              fontWeight: 700,
-              textDecoration: "none",
-              lineHeight: 1.2,
-              transition:
-                "transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease, color 160ms ease",
-              _hover: {
-                transform: "translateY(-1px)",
-                borderColor: "rgba(237, 28, 36, 0.36)",
-                backgroundColor: "#fff7f8",
-                color: "#ED1C24",
+            className={clsx(
+              "badge bg-red-lt",
+              css({
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+                flexShrink: 0,
+                minHeight: "34px",
+                padding: "7px 11px 7px 9px",
+                borderColor: "rgba(237, 28, 36, 0.16)",
+                borderRadius: "999px",
                 boxShadow:
-                  "0 4px 10px rgba(20, 24, 32, 0.08), 0 10px 24px rgba(237, 28, 36, 0.12)",
-              },
-              _focusVisible: {
-                outline: "2px solid rgba(237, 28, 36, 0.35)",
-                outlineOffset: "2px",
-              },
-            })}
+                  "0 1px 2px rgba(20, 24, 32, 0.06), 0 7px 18px rgba(237, 28, 36, 0.07)",
+                fontSize: "0.825rem",
+                fontWeight: 700,
+                textDecoration: "none",
+                lineHeight: 1.2,
+                transition:
+                  "transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease, color 160ms ease",
+                _hover: {
+                  transform: "translateY(-1px)",
+                  borderColor: "rgba(237, 28, 36, 0.38)",
+                  backgroundColor: "#fff7f8",
+                  color: "#ED1C24",
+                  boxShadow:
+                    "0 4px 10px rgba(20, 24, 32, 0.08), 0 10px 24px rgba(237, 28, 36, 0.12)",
+                },
+                _focusVisible: {
+                  outline: "2px solid rgba(237, 28, 36, 0.35)",
+                  outlineOffset: "2px",
+                },
+              }),
+            )}
           >
             <IconMapPinFilled
               aria-hidden="true"
