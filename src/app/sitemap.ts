@@ -1,4 +1,5 @@
 import { MetadataRoute } from "next";
+import { popularBranches } from "@/lib/seoBranches";
 
 function getBaseUrl() {
   if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
@@ -7,7 +8,7 @@ function getBaseUrl() {
 }
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = getBaseUrl();
+  const base = getBaseUrl().replace(/\/$/, "");
   return [
     {
       url: base,
@@ -15,5 +16,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "weekly",
       priority: 1,
     },
+    ...popularBranches.map((branch) => ({
+      url: `${base}/branch/${branch.code}`,
+      lastModified: new Date(),
+      changeFrequency: "daily" as const,
+      priority: 0.85,
+    })),
   ];
 }

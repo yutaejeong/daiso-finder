@@ -1,0 +1,25 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "'/Users/user/Documents/daiso-finder/.codex/hooks/git-commit-author.sh'"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "'/Users/user/Documents/daiso-finder/.codex/hooks/git-commit-author.sh'",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

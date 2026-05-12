@@ -12,6 +12,7 @@ interface SearchProps {
   onSearchInputChange: (value: string) => void;
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   children: ReactNode;
+  beforeForm?: ReactNode;
   isFetching?: boolean;
   hasResults?: boolean;
   keyword?: string;
@@ -25,6 +26,7 @@ export function Search({
   onSearchInputChange,
   onSubmit,
   children,
+  beforeForm,
   isFetching,
   hasResults,
   keyword,
@@ -43,6 +45,7 @@ export function Search({
       >
         {title}
       </span>
+      {beforeForm}
       <form
         className={clsx("input-group", css({ marginBottom: "12px" }))}
         onSubmit={onSubmit}
