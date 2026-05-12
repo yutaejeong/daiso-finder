@@ -9,6 +9,11 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { SimplifiedBranchResponse } from "./api/branches/types";
 import { Search } from "@/components/Search";
 import { trackEvent } from "@/lib/gtag";
+import { popularBranches } from "@/lib/seoBranches";
+
+const APP_URL = (
+  process.env.NEXT_PUBLIC_APP_URL || "https://daiso-finder.vercel.app"
+).replace(/\/$/, "");
 
 export default function Home() {
   const [searchInput, setSearchInput] = useState("");
@@ -56,6 +61,17 @@ export default function Home() {
     () => data?.pages.flatMap((page) => page) ?? [],
     [data],
   );
+  const popularBranchesJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "다이소 주요 인기 매장 바로가기",
+    itemListElement: popularBranches.map((branch, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: `다이소 ${branch.name} 재고 확인`,
+      url: `${APP_URL}/branch/${branch.code}`,
+    })),
+  };
 
   const getCurrentPosition = async () => {
     if (!navigator.geolocation) {
@@ -159,6 +175,12 @@ export default function Home() {
         flexDirection: "column",
       })}
     >
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(popularBranchesJsonLd),
+        }}
+      />
       <Image
         src="/logo.svg"
         alt="다이소 파인더 로고"
@@ -178,6 +200,42 @@ export default function Home() {
         })}
       />
       <h1>당신이 있는 매장의 상품을 찾아드립니다</h1>
+      <nav
+        aria-label="주요 다이소 매장"
+        className={css({
+          display: "flex",
+          gap: "6px",
+          overflowX: "auto",
+          paddingBottom: "12px",
+          marginBottom: "4px",
+          scrollbarWidth: "none",
+          "&::-webkit-scrollbar": { display: "none" },
+        })}
+      >
+        {popularBranches.map((branch) => (
+          <Link
+            key={branch.code}
+            href={`/branch/${branch.code}`}
+            className={css({
+              flexShrink: 0,
+              padding: "6px 10px",
+              border: "1px solid #e4e4e4",
+              borderRadius: "999px",
+              backgroundColor: "white",
+              color: "#333",
+              fontSize: "0.8125rem",
+              textDecoration: "none",
+              lineHeight: 1.2,
+              _hover: {
+                borderColor: "#ED1C24",
+                color: "#ED1C24",
+              },
+            })}
+          >
+            {branch.name}
+          </Link>
+        ))}
+      </nav>
       <Search
         title="매장을 선택해주세요"
         placeholder="주소 혹은 지점명을 입력하세요"
