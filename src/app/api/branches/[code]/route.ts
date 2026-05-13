@@ -1,4 +1,4 @@
-import { BranchResponse } from "../types";
+import { DaisoBranchApiError, fetchBranchByCode } from "@/lib/daisoBranches";
 
 export async function GET(
   _request: Request,
@@ -7,36 +7,7 @@ export async function GET(
   const code = params.code;
 
   try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/ms/msg/selStr`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          inclusiveStrCd: code,
-        }),
-      },
-    );
-
-    const responseText = await response.text();
-
-    if (!response.ok) {
-      return new Response(
-        JSON.stringify({
-          error: "매장 정보를 불러오는 중 오류가 발생했습니다.",
-          detail: responseText,
-        }),
-        {
-          status: response.status,
-          headers: { "Content-Type": "application/json" },
-        },
-      );
-    }
-
-    const data: BranchResponse = JSON.parse(responseText);
-    const branch = data.data[0];
+    const branch = await fetchBranchByCode(code);
 
     if (!branch) {
       return new Response(
@@ -50,23 +21,25 @@ export async function GET(
       );
     }
 
-    return new Response(
-      JSON.stringify({
-        code: branch.strCd,
-        name: branch.strNm,
-        lat: branch.strLttd,
-        lng: branch.strLitd,
-        address: branch.strAddr,
-        openTime: branch.opngTime,
-        closeTime: branch.clsngTime,
-      }),
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
+    return new Response(JSON.stringify(branch), {
+      headers: {
+        "Content-Type": "application/json",
       },
-    );
+    });
   } catch (error) {
+    if (error instanceof DaisoBranchApiError) {
+      return new Response(
+        JSON.stringify({
+          error: error.message,
+          detail: error.detail,
+        }),
+        {
+          status: error.status,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    }
+
     console.error("API 오류:", error);
     return new Response(
       JSON.stringify({
