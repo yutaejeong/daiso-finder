@@ -11,6 +11,18 @@ export async function GET(request: Request) {
 
     const hasLocation = curLttd && curLitd;
 
+    if (!keyword.trim() && !hasLocation) {
+      return new Response(
+        JSON.stringify({
+          error: "검색어를 입력하거나 위치 검색을 시도해주세요.",
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    }
+
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/ms/msg/selStr`,
       {
@@ -49,10 +61,11 @@ export async function GET(request: Request) {
     }
 
     const data: BranchResponse = JSON.parse(responseText);
+    const branches = data.data ?? [];
 
     return new Response(
       JSON.stringify(
-        data.data.map((branch) => ({
+        branches.map((branch) => ({
           code: branch.strCd,
           name: branch.strNm,
           lat: branch.strLttd,

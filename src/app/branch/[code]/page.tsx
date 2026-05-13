@@ -1,6 +1,7 @@
 import { SimplifiedBranch } from "@/app/api/branches/types";
 import { branchSearchKeywords, popularBranches } from "@/lib/seoBranches";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { BranchClient } from "./BranchClient";
 
 function getBaseUrl() {
@@ -85,16 +86,19 @@ export default async function BranchPage({
   params: { code: string };
 }) {
   const branch = await getBranch(params.code);
+
+  if (!branch) {
+    notFound();
+  }
+
   const popularBranch = popularBranches.find(
     (item) => item.code === params.code,
   );
-  const localKeywords = branch
-    ? (popularBranch?.keywords ?? [
-        `다이소 ${branch.name}`,
-        `${branch.name} 다이소`,
-        `${branch.name} 재고 확인`,
-      ])
-    : [];
+  const localKeywords = popularBranch?.keywords ?? [
+    `다이소 ${branch.name}`,
+    `${branch.name} 다이소`,
+    `${branch.name} 재고 확인`,
+  ];
   const pageUrl = `${getBaseUrl()}/branch/${params.code}`;
 
   const jsonLd = branch
