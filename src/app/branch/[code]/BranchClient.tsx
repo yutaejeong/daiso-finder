@@ -43,34 +43,46 @@ export function BranchClient({ code, initialBranch }: Props) {
     initialData: initialBranch ?? undefined,
   });
 
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isFetching } =
-    useInfiniteQuery<
-      ProductApiResponse,
-      Error,
-      InfiniteData<ProductApiResponse>,
-      ["products", string, string],
-      number
-    >({
-      queryKey: ["products", code, keyword],
-      queryFn: async ({ pageParam = 1 }) => {
-        const response = await fetch(
-          `/api/products?keyword=${keyword}&currentPage=${pageParam}&branchCode=${code}`,
-        );
-        if (!response.ok) {
-          const body = await response.json().catch(() => null);
-          throw new Error(body?.error || "상품 검색 중 오류가 발생했습니다.", {
-            cause: body?.detail,
-          });
-        }
-        return response.json();
-      },
-      getNextPageParam: (lastPage) => {
-        if (!lastPage.hasMore) return undefined;
-        return lastPage.nextPage;
-      },
-      enabled: !!keyword,
-      initialPageParam: 1,
-    });
+  const {
+    data,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isError,
+    isFetchingNextPage,
+    isFetching,
+    refetch,
+  } = useInfiniteQuery<
+    ProductApiResponse,
+    Error,
+    InfiniteData<ProductApiResponse>,
+    ["products", string, string],
+    number
+  >({
+    queryKey: ["products", code, keyword],
+    queryFn: async ({ pageParam = 1 }) => {
+      const params = new URLSearchParams({
+        keyword,
+        currentPage: pageParam.toString(),
+        branchCode: code,
+      });
+      const response = await fetch(`/api/products?${params.toString()}`);
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.error || "상품 검색 중 오류가 발생했습니다.", {
+          cause: body?.detail,
+        });
+      }
+      return response.json();
+    },
+    getNextPageParam: (lastPage) => {
+      if (!lastPage.hasMore) return undefined;
+      return lastPage.nextPage;
+    },
+    enabled: !!keyword,
+    meta: { suppressGlobalError: true },
+    initialPageParam: 1,
+  });
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -160,6 +172,8 @@ export function BranchClient({ code, initialBranch }: Props) {
         isFetching={isFetching}
         hasResults={products.length > 0}
         keyword={keyword}
+        errorMessage={isError ? error.message : undefined}
+        onRetry={keyword ? () => refetch() : undefined}
       >
         {products.map((product: SimplifiedProduct) => (
           <article
@@ -306,7 +320,10 @@ export function BranchClient({ code, initialBranch }: Props) {
         ))}
         {hasNextPage && (
           <button
-            onClick={() => { fetchNextPage(); trackEvent("product_load_more", { branch_code: code }); }}
+            onClick={() => {
+              fetchNextPage();
+              trackEvent("product_load_more", { branch_code: code });
+            }}
             disabled={isFetchingNextPage}
             className={css({
               marginTop: "16px",
