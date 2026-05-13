@@ -8,7 +8,7 @@ import {
 import { Search } from "@/components/Search";
 import { trackEvent } from "@/lib/gtag";
 import { css } from "@styled-system/css";
-import { IconPhotoX } from "@tabler/icons-react";
+import { IconMapPin, IconPhotoX, IconStairs } from "@tabler/icons-react";
 import {
   InfiniteData,
   useInfiniteQuery,
@@ -281,37 +281,93 @@ export function BranchClient({ code, initialBranch }: Props) {
                 <div
                   className={css({
                     display: "flex",
+                    flexWrap: "wrap",
                     alignItems: "center",
-                    gap: "6px",
+                    justifyContent: "flex-end",
+                    columnGap: "12px",
+                    rowGap: "4px",
                     alignSelf: "flex-end",
                   })}
                   aria-label={`진열 위치: ${product.stairNo < 0 ? `지하${-product.stairNo}층` : `${product.stairNo}층`} ${product.zoneNo}구역`}
                 >
                   <span
                     className={css({
-                      fontWeight: "black",
-                      fontSize: "1.25rem",
-                      color: "#ED1C24",
-                      lineHeight: 1,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
                     })}
                   >
-                    {product.stairNo < 0
-                      ? `B${-product.stairNo}`
-                      : `${product.stairNo}F`}
+                    <IconStairs
+                      width={16}
+                      height={16}
+                      stroke={2.25}
+                      color="#666"
+                      aria-hidden="true"
+                    />
+                    <span
+                      className={css({
+                        fontSize: "0.75rem",
+                        fontWeight: 500,
+                        color: "#666",
+                        marginRight: "3px",
+                      })}
+                      aria-hidden="true"
+                    >
+                      층
+                    </span>
+                    <span
+                      className={css({
+                        fontWeight: "black",
+                        fontSize: "1.25rem",
+                        color: "#ED1C24",
+                        lineHeight: 1,
+                        fontVariantNumeric: "tabular-nums",
+                      })}
+                    >
+                      {product.stairNo < 0
+                        ? `B${-product.stairNo}`
+                        : `${product.stairNo}F`}
+                    </span>
                   </span>
                   <span
                     className={css({
-                      backgroundColor: "#ED1C24",
-                      color: "white",
-                      padding: "3px 8px",
-                      borderRadius: "4px",
-                      fontSize: "1rem",
-                      fontWeight: "bold",
-                      lineHeight: 1.2,
-                      fontVariantNumeric: "tabular-nums",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
                     })}
                   >
-                    {product.zoneNo}
+                    <IconMapPin
+                      width={16}
+                      height={16}
+                      stroke={2.25}
+                      color="#666"
+                      aria-hidden="true"
+                    />
+                    <span
+                      className={css({
+                        fontSize: "0.75rem",
+                        fontWeight: 500,
+                        color: "#666",
+                        marginRight: "3px",
+                      })}
+                      aria-hidden="true"
+                    >
+                      구역
+                    </span>
+                    <span
+                      className={css({
+                        backgroundColor: "#ED1C24",
+                        color: "white",
+                        padding: "3px 8px",
+                        borderRadius: "4px",
+                        fontSize: "1rem",
+                        fontWeight: "bold",
+                        lineHeight: 1.2,
+                        fontVariantNumeric: "tabular-nums",
+                      })}
+                    >
+                      {product.zoneNo}
+                    </span>
                   </span>
                 </div>
               </div>
