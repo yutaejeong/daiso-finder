@@ -60,11 +60,11 @@ export function PWAInstallBanner() {
             })}`}
           >
             <Image
-              src="/logo.svg"
+              src="/android-icon-192x192.png"
               alt="다이소 파인더"
               width={40}
               height={40}
-              className={css({ flexShrink: 0 })}
+              className={css({ flexShrink: 0, borderRadius: "8px" })}
             />
             <div className={css({ flex: 1, minWidth: 0 })}>
               <div
