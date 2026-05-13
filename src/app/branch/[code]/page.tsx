@@ -1,4 +1,5 @@
 import { SimplifiedBranch } from "@/app/api/branches/types";
+import { fetchBranchByCode } from "@/lib/daisoBranches";
 import { branchSearchKeywords, popularBranches } from "@/lib/seoBranches";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -13,15 +14,7 @@ function getBaseUrl() {
 }
 
 async function getBranch(code: string): Promise<SimplifiedBranch | null> {
-  try {
-    const res = await fetch(`${getBaseUrl()}/api/branches/${code}`, {
-      next: { revalidate: 3600 },
-    });
-    if (!res.ok) return null;
-    return res.json();
-  } catch {
-    return null;
-  }
+  return fetchBranchByCode(code);
 }
 
 export async function generateMetadata({
@@ -29,7 +22,10 @@ export async function generateMetadata({
 }: {
   params: { code: string };
 }): Promise<Metadata> {
-  const branch = await getBranch(params.code);
+  const branch = await getBranch(params.code).catch((error) => {
+    console.error("매장 메타데이터 조회 오류:", error);
+    return null;
+  });
 
   if (!branch) {
     return { title: "매장 정보를 찾을 수 없습니다" };
