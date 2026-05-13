@@ -64,6 +64,11 @@ export const metadata: Metadata = {
     "다이소 매장의 상품 재고, 가격, 층별 진열 위치를 확인하세요. 강남역, 명동, 홍대, 신촌, 잠실 등 주요 매장에서 원하는 상품을 빠르게 찾아드립니다.",
   manifest: "/manifest.json",
   applicationName: "다이소 파인더",
+  appleWebApp: {
+    capable: true,
+    title: "다이소 파인더",
+    statusBarStyle: "default",
+  },
   keywords: [
     "다이소",
     ...branchSearchKeywords,
