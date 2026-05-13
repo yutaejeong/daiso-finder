@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import {
   Product,
   ProductEquippingResponse,
@@ -6,31 +6,27 @@ import {
   ProductStockResponse,
   SimplifiedProduct,
 } from "./types";
-import { headers } from "next/headers";
 
 function decodeHtmlEntities(text: string): string {
-  return text.replace(
-    /&(amp|lt|gt|quot|apos|#39|nbsp);/g,
-    (match, entity) => {
-      switch (entity) {
-        case "amp":
-          return "&";
-        case "lt":
-          return "<";
-        case "gt":
-          return ">";
-        case "quot":
-          return '"';
-        case "apos":
-        case "#39":
-          return "'";
-        case "nbsp":
-          return " ";
-        default:
-          return match;
-      }
-    },
-  );
+  return text.replace(/&(amp|lt|gt|quot|apos|#39|nbsp);/g, (match, entity) => {
+    switch (entity) {
+      case "amp":
+        return "&";
+      case "lt":
+        return "<";
+      case "gt":
+        return ">";
+      case "quot":
+        return '"';
+      case "apos":
+      case "#39":
+        return "'";
+      case "nbsp":
+        return " ";
+      default:
+        return match;
+    }
+  });
 }
 
 async function searchProductsByKeyword(
@@ -102,8 +98,28 @@ export async function GET(request: NextRequest) {
     const currentPage = parseInt(searchParams.get("currentPage") || "1");
     const branchCode = searchParams.get("branchCode");
 
+    if (!keyword?.trim()) {
+      return new Response(
+        JSON.stringify({
+          error: "상품명을 입력해주세요.",
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    }
+
     if (!branchCode) {
-      throw new Error("branchCode가 필요합니다.");
+      return new Response(
+        JSON.stringify({
+          error: "매장 정보가 필요합니다.",
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
     }
 
     let page = currentPage;
@@ -123,24 +139,24 @@ export async function GET(request: NextRequest) {
         await Promise.all(
           products
             .map((product) => ({
-            id: product.pdNo,
-            name: decodeHtmlEntities(product.pdNm),
-            price: parseInt(product.pdPrc),
-            image: product.atchFileUrl
-              ? `https://cdn.daisomall.co.kr${product.atchFileUrl}`
-              : null,
-            stock: (() => {
-              const stockInfo = stock.find((s) => s.pdNo === product.pdNo);
-              if (stockInfo) {
-                const stockNumber = parseInt(stockInfo.stck);
-                if (isNaN(stockNumber)) {
-                  return 0;
+              id: product.pdNo,
+              name: decodeHtmlEntities(product.pdNm),
+              price: parseInt(product.pdPrc),
+              image: product.atchFileUrl
+                ? `https://cdn.daisomall.co.kr${product.atchFileUrl}`
+                : null,
+              stock: (() => {
+                const stockInfo = stock.find((s) => s.pdNo === product.pdNo);
+                if (stockInfo) {
+                  const stockNumber = parseInt(stockInfo.stck);
+                  if (isNaN(stockNumber)) {
+                    return 0;
+                  }
+                  return stockNumber;
                 }
-                return stockNumber;
-              }
-              return 0;
-            })(),
-          }))
+                return 0;
+              })(),
+            }))
             .filter((product) => product.stock > 0)
             .map(async (product) => {
               try {

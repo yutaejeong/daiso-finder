@@ -1,6 +1,9 @@
 "use client";
 
-import { ErrorModalProvider, useErrorModal } from "@/contexts/ErrorModalContext";
+import {
+  ErrorModalProvider,
+  useErrorModal,
+} from "@/contexts/ErrorModalContext";
 import {
   MutationCache,
   QueryCache,
@@ -15,7 +18,11 @@ function QueryProvider({ children }: { children: React.ReactNode }) {
     () =>
       new QueryClient({
         queryCache: new QueryCache({
-          onError: (error) => {
+          onError: (error, query) => {
+            if (query.meta?.suppressGlobalError) {
+              return;
+            }
+
             const detail =
               error.cause && typeof error.cause === "string"
                 ? error.cause

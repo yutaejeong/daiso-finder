@@ -36,16 +36,29 @@ export async function GET(
     }
 
     const data: BranchResponse = JSON.parse(responseText);
+    const branch = data.data[0];
+
+    if (!branch) {
+      return new Response(
+        JSON.stringify({
+          error: "매장 정보를 찾을 수 없습니다.",
+        }),
+        {
+          status: 404,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    }
 
     return new Response(
       JSON.stringify({
-        code: data.data[0].strCd,
-        name: data.data[0].strNm,
-        lat: data.data[0].strLttd,
-        lng: data.data[0].strLitd,
-        address: data.data[0].strAddr,
-        openTime: data.data[0].opngTime,
-        closeTime: data.data[0].clsngTime,
+        code: branch.strCd,
+        name: branch.strNm,
+        lat: branch.strLttd,
+        lng: branch.strLitd,
+        address: branch.strAddr,
+        openTime: branch.opngTime,
+        closeTime: branch.clsngTime,
       }),
       {
         headers: {

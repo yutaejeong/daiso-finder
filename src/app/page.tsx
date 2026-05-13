@@ -24,40 +24,42 @@ export default function Home() {
     curLttd: number;
   } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
-  const { data, fetchNextPage, isFetching } = useInfiniteQuery<
-    SimplifiedBranchResponse,
-    Error,
-    InfiniteData<SimplifiedBranchResponse>,
-    ["branches", string],
-    number
-  >({
-    queryKey: ["branches", keyword],
-    enabled: false,
-    initialPageParam: 1,
-    getNextPageParam: (lastPage, _pages, lastPageParam) =>
-      lastPage.length < 10 ? undefined : lastPageParam + 1,
-    queryFn: async ({ pageParam = 1 }) => {
-      const url = new URL("/api/branches/search", window.location.origin);
-      if (location) {
-        url.searchParams.set("curLttd", location.curLttd.toFixed(14));
-        url.searchParams.set("curLitd", location.curLitd.toFixed(14));
-      } else {
-        url.searchParams.set("keyword", keyword);
-      }
-      url.searchParams.set("currentPage", pageParam.toString());
-      url.searchParams.set("pageSize", "10");
-      url.searchParams.set("pageIndex", "0");
-      const response = await fetch(url);
-      if (!response.ok) {
-        const body = await response.json().catch(() => null);
-        throw new Error(body?.error || "매장 검색 중 오류가 발생했습니다.", {
-          cause: body?.detail,
-        });
-      }
-      const data: SimplifiedBranchResponse = await response.json();
-      return data;
-    },
-  });
+  const { data, error, fetchNextPage, isError, isFetching, refetch } =
+    useInfiniteQuery<
+      SimplifiedBranchResponse,
+      Error,
+      InfiniteData<SimplifiedBranchResponse>,
+      ["branches", string],
+      number
+    >({
+      queryKey: ["branches", keyword],
+      enabled: false,
+      meta: { suppressGlobalError: true },
+      initialPageParam: 1,
+      getNextPageParam: (lastPage, _pages, lastPageParam) =>
+        lastPage.length < 10 ? undefined : lastPageParam + 1,
+      queryFn: async ({ pageParam = 1 }) => {
+        const url = new URL("/api/branches/search", window.location.origin);
+        if (location) {
+          url.searchParams.set("curLttd", location.curLttd.toFixed(14));
+          url.searchParams.set("curLitd", location.curLitd.toFixed(14));
+        } else {
+          url.searchParams.set("keyword", keyword);
+        }
+        url.searchParams.set("currentPage", pageParam.toString());
+        url.searchParams.set("pageSize", "10");
+        url.searchParams.set("pageIndex", "0");
+        const response = await fetch(url);
+        if (!response.ok) {
+          const body = await response.json().catch(() => null);
+          throw new Error(body?.error || "매장 검색 중 오류가 발생했습니다.", {
+            cause: body?.detail,
+          });
+        }
+        const data: SimplifiedBranchResponse = await response.json();
+        return data;
+      },
+    });
   const branches = useMemo(
     () => data?.pages.flatMap((page) => page) ?? [],
     [data],
@@ -211,6 +213,8 @@ export default function Home() {
         hasResults={branches.length > 0}
         keyword={keyword}
         withLocation
+        errorMessage={isError ? error.message : undefined}
+        onRetry={keyword ? () => refetch() : undefined}
         beforeForm={
           <nav
             aria-label="주요 다이소 매장"
