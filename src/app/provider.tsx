@@ -1,5 +1,6 @@
 "use client";
 
+import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 import {
   ErrorModalProvider,
   useErrorModal,
@@ -62,6 +63,7 @@ export default function Provider({ children }: { children: React.ReactNode }) {
   return (
     <ErrorModalProvider>
       <QueryProvider>{children}</QueryProvider>
+      <PWAInstallBanner />
     </ErrorModalProvider>
   );
 }
