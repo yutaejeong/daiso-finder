@@ -3,28 +3,93 @@
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 import { trackEvent } from "@/lib/gtag";
 import { css } from "@styled-system/css";
-import { IconDownload } from "@tabler/icons-react";
+import {
+  IconCirclePlus,
+  IconDeviceMobile,
+  IconDotsVertical,
+  IconDownload,
+  IconShare3,
+} from "@tabler/icons-react";
 import Image from "next/image";
 import { useState } from "react";
-import { PWAInstallInstructions } from "./PWAInstallInstructions";
+import {
+  PWAInstallInstructions,
+  type PWAInstallStep,
+} from "./PWAInstallInstructions";
+
+type InstructionsKind = "ios" | "android";
+
+const IOS_STEPS: PWAInstallStep[] = [
+  { icon: IconShare3, text: "Safari 하단의 공유 버튼을 탭하세요" },
+  {
+    icon: IconCirclePlus,
+    text: "메뉴에서 '홈 화면에 추가'를 선택하세요",
+  },
+  {
+    icon: IconDeviceMobile,
+    text: "우측 상단의 '추가' 버튼을 탭하면 완료됩니다",
+  },
+];
+
+const ANDROID_STEPS: PWAInstallStep[] = [
+  {
+    icon: IconDotsVertical,
+    text: "우측 상단의 메뉴(︙) 아이콘을 탭하세요",
+  },
+  {
+    icon: IconCirclePlus,
+    text: "'앱 설치' 또는 '홈 화면에 추가'를 선택하세요",
+  },
+  {
+    icon: IconDeviceMobile,
+    text: "'설치' 또는 '추가'를 탭하면 완료됩니다",
+  },
+];
+
+const INSTRUCTIONS_COPY: Record<
+  InstructionsKind,
+  { title: string; description: string; steps: PWAInstallStep[]; viewEvent: string }
+> = {
+  ios: {
+    title: "홈 화면에 추가하기",
+    description:
+      "다이소 파인더를 앱처럼 사용해보세요. 아래 단계대로 따라하시면 홈 화면에 추가됩니다.",
+    steps: IOS_STEPS,
+    viewEvent: "pwa_install_ios_modal_view",
+  },
+  android: {
+    title: "앱으로 설치하기",
+    description:
+      "다이소 파인더를 앱처럼 사용해보세요. 아래 단계대로 따라하시면 홈 화면에 추가됩니다.",
+    steps: ANDROID_STEPS,
+    viewEvent: "pwa_install_chrome_modal_view",
+  },
+};
 
 export function PWAInstallBanner() {
-  const { state, promptInstall, dismiss } = usePWAInstall();
-  const [showIOSInstructions, setShowIOSInstructions] = useState(false);
+  const { state, hasDeferredPrompt, promptInstall, dismiss } = usePWAInstall();
+  const [instructions, setInstructions] = useState<InstructionsKind | null>(
+    null,
+  );
+
+  const closeInstructions = () => setInstructions(null);
 
   if (state === "hidden") {
-    return showIOSInstructions ? (
-      <PWAInstallInstructions onClose={() => setShowIOSInstructions(false)} />
+    return instructions ? (
+      <PWAInstallInstructions
+        {...INSTRUCTIONS_COPY[instructions]}
+        onClose={closeInstructions}
+      />
     ) : null;
   }
 
   const handleInstall = () => {
     trackEvent("pwa_install_banner_click", { platform: state });
-    if (state === "android") {
+    if (state === "android" && hasDeferredPrompt) {
       void promptInstall();
-    } else {
-      setShowIOSInstructions(true);
+      return;
     }
+    setInstructions(state);
   };
 
   return (
@@ -108,8 +173,11 @@ export function PWAInstallBanner() {
           </div>
         </div>
       </div>
-      {showIOSInstructions && (
-        <PWAInstallInstructions onClose={() => setShowIOSInstructions(false)} />
+      {instructions && (
+        <PWAInstallInstructions
+          {...INSTRUCTIONS_COPY[instructions]}
+          onClose={closeInstructions}
+        />
       )}
     </>
   );
