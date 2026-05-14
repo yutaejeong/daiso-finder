@@ -2,35 +2,49 @@
 
 import { trackEvent } from "@/lib/gtag";
 import { css } from "@styled-system/css";
-import {
-  IconCirclePlus,
-  IconDeviceMobile,
-  IconShare3,
-} from "@tabler/icons-react";
-import { useEffect } from "react";
+import type { Icon } from "@tabler/icons-react";
+import { useEffect, useRef } from "react";
+
+export interface PWAInstallStep {
+  icon: Icon;
+  text: string;
+}
 
 interface PWAInstallInstructionsProps {
+  title: string;
+  description: string;
+  steps: PWAInstallStep[];
+  viewEvent: string;
   onClose: () => void;
 }
 
-const steps = [
-  {
-    icon: IconShare3,
-    text: "Safari 하단의 공유 버튼을 탭하세요",
-  },
-  {
-    icon: IconCirclePlus,
-    text: "메뉴에서 '홈 화면에 추가'를 선택하세요",
-  },
-  {
-    icon: IconDeviceMobile,
-    text: "우측 상단의 '추가' 버튼을 탭하면 완료됩니다",
-  },
-];
+const LIGHT_THEME_COLOR = "#FFFFFF";
 
-export function PWAInstallInstructions({ onClose }: PWAInstallInstructionsProps) {
+export function PWAInstallInstructions({
+  title,
+  description,
+  steps,
+  viewEvent,
+  onClose,
+}: PWAInstallInstructionsProps) {
+  const originalThemeColorRef = useRef<string | null>(null);
+
   useEffect(() => {
-    trackEvent("pwa_install_ios_modal_view");
+    trackEvent(viewEvent);
+  }, [viewEvent]);
+
+  useEffect(() => {
+    const meta = document.querySelector<HTMLMetaElement>(
+      'meta[name="theme-color"]',
+    );
+    if (!meta) return;
+    originalThemeColorRef.current = meta.getAttribute("content");
+    meta.setAttribute("content", LIGHT_THEME_COLOR);
+    return () => {
+      if (originalThemeColorRef.current !== null) {
+        meta.setAttribute("content", originalThemeColorRef.current);
+      }
+    };
   }, []);
 
   return (
@@ -40,13 +54,12 @@ export function PWAInstallInstructions({ onClose }: PWAInstallInstructionsProps)
       >
         <div className="modal-content">
           <div className="modal-header">
-            <h5 className="modal-title">홈 화면에 추가하기</h5>
+            <h5 className="modal-title">{title}</h5>
             <button type="button" className="btn-close" onClick={onClose} />
           </div>
           <div className="modal-body">
             <p className={css({ marginBottom: "16px", color: "#4a4a4a" })}>
-              다이소 파인더를 앱처럼 사용해보세요. 아래 단계대로 따라하시면
-              홈 화면에 추가됩니다.
+              {description}
             </p>
             <ol
               className={css({

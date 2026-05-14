@@ -29,7 +29,6 @@ function isWithinDismissWindow(): boolean {
 function isStandalone(): boolean {
   if (typeof window === "undefined") return false;
   if (window.matchMedia?.("(display-mode: standalone)").matches) return true;
-  // iOS Safari standalone flag
   return (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
 }
 
@@ -43,6 +42,7 @@ function isIOSSafari(): boolean {
 
 export function usePWAInstall() {
   const [state, setState] = useState<PWAInstallState>("hidden");
+  const [hasDeferredPrompt, setHasDeferredPrompt] = useState(false);
   const deferredPromptRef = useRef<BeforeInstallPromptEvent | null>(null);
   const hasTrackedViewRef = useRef(false);
 
@@ -50,18 +50,17 @@ export function usePWAInstall() {
     if (isStandalone() || isWithinDismissWindow()) return;
 
     let cancelled = false;
-    let delayTimer: ReturnType<typeof setTimeout> | null = null;
+    const targetState: PWAInstallState = isIOSSafari() ? "ios" : "android";
 
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
       deferredPromptRef.current = event as BeforeInstallPromptEvent;
-      delayTimer = setTimeout(() => {
-        if (!cancelled) setState("android");
-      }, SHOW_DELAY_MS);
+      setHasDeferredPrompt(true);
     };
 
     const handleAppInstalled = () => {
       deferredPromptRef.current = null;
+      setHasDeferredPrompt(false);
       setState("hidden");
       trackEvent("pwa_installed");
     };
@@ -69,15 +68,13 @@ export function usePWAInstall() {
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     window.addEventListener("appinstalled", handleAppInstalled);
 
-    if (isIOSSafari()) {
-      delayTimer = setTimeout(() => {
-        if (!cancelled) setState("ios");
-      }, SHOW_DELAY_MS);
-    }
+    const delayTimer = setTimeout(() => {
+      if (!cancelled) setState(targetState);
+    }, SHOW_DELAY_MS);
 
     return () => {
       cancelled = true;
-      if (delayTimer) clearTimeout(delayTimer);
+      clearTimeout(delayTimer);
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
       window.removeEventListener("appinstalled", handleAppInstalled);
     };
@@ -89,14 +86,16 @@ export function usePWAInstall() {
     trackEvent("pwa_install_banner_view", { platform: state });
   }, [state]);
 
-  const promptInstall = useCallback(async () => {
+  const promptInstall = useCallback(async (): Promise<boolean> => {
     const deferred = deferredPromptRef.current;
-    if (!deferred) return;
+    if (!deferred) return false;
     deferredPromptRef.current = null;
+    setHasDeferredPrompt(false);
     await deferred.prompt();
     const choice = await deferred.userChoice;
     trackEvent("pwa_install_prompt_result", { outcome: choice.outcome });
     setState("hidden");
+    return true;
   }, []);
 
   const dismiss = useCallback(() => {
@@ -113,5 +112,5 @@ export function usePWAInstall() {
     });
   }, []);
 
-  return { state, promptInstall, dismiss };
+  return { state, hasDeferredPrompt, promptInstall, dismiss };
 }
