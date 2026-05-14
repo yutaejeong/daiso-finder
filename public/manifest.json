@@ -1,5 +1,9 @@
 {
-  "name": "Daiso Finder",
+  "name": "다이소 파인더",
+  "short_name": "다이소 파인더",
+  "description": "다이소 매장의 상품 재고, 가격, 진열 위치를 빠르게 확인하세요.",
+  "lang": "ko-KR",
+  "scope": "/",
   "theme_color": "#ED1C24",
   "background_color": "#ED1C24",
   "start_url": "/",
