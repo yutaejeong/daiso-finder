@@ -3,7 +3,7 @@
 import { trackEvent } from "@/lib/gtag";
 import { css } from "@styled-system/css";
 import type { Icon } from "@tabler/icons-react";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 
 export interface PWAInstallStep {
   icon: Icon;
@@ -27,23 +27,17 @@ export function PWAInstallInstructions({
   viewEvent,
   onClose,
 }: PWAInstallInstructionsProps) {
-  const originalThemeColorRef = useRef<string | null>(null);
-
   useEffect(() => {
     trackEvent(viewEvent);
   }, [viewEvent]);
 
   useEffect(() => {
-    const meta = document.querySelector<HTMLMetaElement>(
-      'meta[name="theme-color"]',
-    );
-    if (!meta) return;
-    originalThemeColorRef.current = meta.getAttribute("content");
-    meta.setAttribute("content", LIGHT_THEME_COLOR);
+    const override = document.createElement("meta");
+    override.name = "theme-color";
+    override.content = LIGHT_THEME_COLOR;
+    document.head.appendChild(override);
     return () => {
-      if (originalThemeColorRef.current !== null) {
-        meta.setAttribute("content", originalThemeColorRef.current);
-      }
+      override.remove();
     };
   }, []);
 
@@ -123,7 +117,11 @@ export function PWAInstallInstructions({
           </div>
         </div>
       </div>
-      <div className="modal-backdrop show" onClick={onClose} />
+      <div
+        className="modal-backdrop show"
+        onClick={onClose}
+        style={{ backgroundColor: "transparent", opacity: 1 }}
+      />
     </div>
   );
 }

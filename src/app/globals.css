@@ -18,6 +18,7 @@ html,
 body {
   width: 100vw;
   height: 100vh;
+  background: rgb(var(--background-rgb));
   @supports (width: 100dvw) {
     width: 100dvw;
     height: 100dvh;
@@ -26,7 +27,6 @@ body {
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: rgb(var(--background-rgb));
   overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
