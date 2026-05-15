@@ -6,11 +6,9 @@ import { notFound } from "next/navigation";
 import { BranchClient } from "./BranchClient";
 
 function getBaseUrl() {
-  if (process.env.NEXT_PUBLIC_APP_URL) {
-    return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "");
-  }
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  return "http://localhost:3000";
+  return (
+    process.env.NEXT_PUBLIC_APP_URL || "https://daiso-finder.kr"
+  ).replace(/\/$/, "");
 }
 
 async function getBranch(code: string): Promise<SimplifiedBranch | null> {
