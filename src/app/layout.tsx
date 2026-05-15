@@ -10,10 +10,7 @@ import { branchSearchKeywords, popularBranches } from "@/lib/seoBranches";
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 const APP_URL = (
-  process.env.NEXT_PUBLIC_APP_URL ||
-  (process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : "http://localhost:3000")
+  process.env.NEXT_PUBLIC_APP_URL || "https://daiso-finder.kr"
 ).replace(/\/$/, "");
 
 const pretendard = localFont({

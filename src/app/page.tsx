@@ -13,7 +13,7 @@ import { trackEvent } from "@/lib/gtag";
 import { popularBranches } from "@/lib/seoBranches";
 
 const APP_URL = (
-  process.env.NEXT_PUBLIC_APP_URL || "https://daiso-finder.vercel.app"
+  process.env.NEXT_PUBLIC_APP_URL || "https://daiso-finder.kr"
 ).replace(/\/$/, "");
 
 export default function Home() {

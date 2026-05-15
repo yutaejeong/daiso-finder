@@ -2,9 +2,7 @@ import { MetadataRoute } from "next";
 import { popularBranches } from "@/lib/seoBranches";
 
 function getBaseUrl() {
-  if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  return "http://localhost:3000";
+  return process.env.NEXT_PUBLIC_APP_URL || "https://daiso-finder.kr";
 }
 
 export default function sitemap(): MetadataRoute.Sitemap {
