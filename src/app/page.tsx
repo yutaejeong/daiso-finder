@@ -2,13 +2,14 @@
 
 import { css } from "@styled-system/css";
 import { InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
-import { IconMapPinFilled } from "@tabler/icons-react";
+import { IconHistory, IconMapPinFilled, IconX } from "@tabler/icons-react";
 import clsx from "clsx";
 import Image from "next/image";
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { SimplifiedBranchResponse } from "./api/branches/types";
 import { Search } from "@/components/Search";
+import { useRecentBranches } from "@/hooks/useRecentBranches";
 import { trackEvent } from "@/lib/gtag";
 import { popularBranches } from "@/lib/seoBranches";
 
@@ -24,6 +25,7 @@ export default function Home() {
     curLttd: number;
   } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+  const { recentBranches, removeRecentBranch } = useRecentBranches();
   const { data, error, fetchNextPage, isError, isFetching, refetch } =
     useInfiniteQuery<
       SimplifiedBranchResponse,
@@ -216,54 +218,152 @@ export default function Home() {
         errorMessage={isError ? error.message : undefined}
         onRetry={keyword ? () => refetch() : undefined}
         beforeForm={
-          <nav
-            aria-label="주요 다이소 매장"
-            className={css({
-              display: "flex",
-              gap: "10px",
-              overflowX: "auto",
-              paddingBlock: 4,
-              paddingInline: 4,
-              marginBottom: "10px",
-              scrollbarWidth: "none",
-              WebkitMaskImage:
-                "linear-gradient(90deg, transparent 0, black 14px, black calc(100% - 22px), transparent 100%)",
-              maskImage:
-                "linear-gradient(90deg, transparent 0, black 14px, black calc(100% - 22px), transparent 100%)",
-              "&::-webkit-scrollbar": { display: "none" },
-            })}
-          >
-            {popularBranches.map((branch) => (
-              <Link
-                key={branch.code}
-                href={`/branch/${branch.code}`}
-                className={clsx(
-                  "badge bg-red-lt",
-                  css({
+          <>
+            {recentBranches.length > 0 && (
+              <nav
+                aria-label="최근 본 다이소 매장"
+                className={css({
+                  display: "flex",
+                  gap: "10px",
+                  overflowX: "auto",
+                  paddingBlock: 4,
+                  paddingInline: 4,
+                  marginBottom: "6px",
+                  scrollbarWidth: "none",
+                  WebkitMaskImage:
+                    "linear-gradient(90deg, transparent 0, black 14px, black calc(100% - 22px), transparent 100%)",
+                  maskImage:
+                    "linear-gradient(90deg, transparent 0, black 14px, black calc(100% - 22px), transparent 100%)",
+                  "&::-webkit-scrollbar": { display: "none" },
+                })}
+              >
+                <span
+                  aria-hidden="true"
+                  className={css({
                     display: "inline-flex",
                     alignItems: "center",
-                    gap: "6px",
+                    gap: "4px",
                     flexShrink: 0,
-                    minHeight: "32px",
-                    padding: "7px 11px",
-                    fontSize: "0.875rem",
-                    lineHeight: 1.2,
-                  }),
-                )}
-              >
-                <IconMapPinFilled
-                  aria-hidden="true"
-                  width={15}
-                  height={15}
-                  className={css({
-                    color: "#ED1C24",
-                    flexShrink: 0,
+                    color: "#666",
+                    fontSize: "0.8125rem",
+                    fontWeight: 500,
                   })}
-                />
-                {branch.name}
-              </Link>
-            ))}
-          </nav>
+                >
+                  <IconHistory width={15} height={15} />
+                  최근
+                </span>
+                {recentBranches.map((branch) => (
+                  <span
+                    key={branch.code}
+                    className={clsx(
+                      "badge bg-blue-lt",
+                      css({
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        flexShrink: 0,
+                        minHeight: "32px",
+                        padding: "4px 4px 4px 11px",
+                        fontSize: "0.875rem",
+                        lineHeight: 1.2,
+                      }),
+                    )}
+                  >
+                    <Link
+                      href={`/branch/${branch.code}`}
+                      onClick={() =>
+                        trackEvent("recent_branch_click", {
+                          branch_code: branch.code,
+                          branch_name: branch.name,
+                        })
+                      }
+                      className={css({
+                        color: "inherit",
+                        textDecoration: "none",
+                      })}
+                    >
+                      {branch.name}
+                    </Link>
+                    <button
+                      type="button"
+                      aria-label={`${branch.name} 최근 본 매장에서 제거`}
+                      onClick={() => {
+                        removeRecentBranch(branch.code);
+                        trackEvent("recent_branch_remove", {
+                          branch_code: branch.code,
+                        });
+                      }}
+                      className={css({
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: "20px",
+                        height: "20px",
+                        padding: 0,
+                        border: "none",
+                        borderRadius: "50%",
+                        backgroundColor: "transparent",
+                        color: "inherit",
+                        cursor: "pointer",
+                        opacity: 0.7,
+                        _hover: { opacity: 1 },
+                      })}
+                    >
+                      <IconX width={14} height={14} />
+                    </button>
+                  </span>
+                ))}
+              </nav>
+            )}
+            <nav
+              aria-label="주요 다이소 매장"
+              className={css({
+                display: "flex",
+                gap: "10px",
+                overflowX: "auto",
+                paddingBlock: 4,
+                paddingInline: 4,
+                marginBottom: "10px",
+                scrollbarWidth: "none",
+                WebkitMaskImage:
+                  "linear-gradient(90deg, transparent 0, black 14px, black calc(100% - 22px), transparent 100%)",
+                maskImage:
+                  "linear-gradient(90deg, transparent 0, black 14px, black calc(100% - 22px), transparent 100%)",
+                "&::-webkit-scrollbar": { display: "none" },
+              })}
+            >
+              {popularBranches.map((branch) => (
+                <Link
+                  key={branch.code}
+                  href={`/branch/${branch.code}`}
+                  className={clsx(
+                    "badge bg-red-lt",
+                    css({
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      flexShrink: 0,
+                      minHeight: "32px",
+                      padding: "7px 11px",
+                      fontSize: "0.875rem",
+                      lineHeight: 1.2,
+                    }),
+                  )}
+                >
+                  <IconMapPinFilled
+                    aria-hidden="true"
+                    width={15}
+                    height={15}
+                    className={css({
+                      color: "#ED1C24",
+                      flexShrink: 0,
+                    })}
+                  />
+                  {branch.name}
+                </Link>
+              ))}
+            </nav>
+          </>
         }
       >
         {branches?.map((branch) => (
