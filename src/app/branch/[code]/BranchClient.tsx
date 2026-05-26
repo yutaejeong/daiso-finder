@@ -6,6 +6,7 @@ import {
   SimplifiedProduct,
 } from "@/app/api/products/types";
 import { Search } from "@/components/Search";
+import { useRecentBranches } from "@/hooks/useRecentBranches";
 import { trackEvent } from "@/lib/gtag";
 import { css } from "@styled-system/css";
 import { IconMapPin, IconPhotoX, IconStairs } from "@tabler/icons-react";
@@ -16,7 +17,7 @@ import {
 } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface Props {
   code: string;
@@ -26,6 +27,7 @@ interface Props {
 export function BranchClient({ code, initialBranch }: Props) {
   const [searchInput, setSearchInput] = useState("");
   const [keyword, setKeyword] = useState("");
+  const { addRecentBranch } = useRecentBranches();
 
   const { data: branch } = useQuery<SimplifiedBranch>({
     queryKey: ["branch", code],
@@ -42,6 +44,10 @@ export function BranchClient({ code, initialBranch }: Props) {
     },
     initialData: initialBranch ?? undefined,
   });
+
+  useEffect(() => {
+    if (branch) addRecentBranch(branch);
+  }, [branch, addRecentBranch]);
 
   const {
     data,
