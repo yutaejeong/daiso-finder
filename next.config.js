@@ -31,6 +31,16 @@ const nextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "www.daiso-finder.kr" }],
+        destination: "https://daiso-finder.kr/:path*",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 module.exports = withPWA(nextConfig); 
