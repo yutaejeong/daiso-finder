@@ -1,0 +1,26 @@
+# Daiso Finder
+
+> 한국 다이소 매장과 상품 재고·진열 위치를 검색하는 Next.js PWA. 키워드 또는 GPS로 매장을 찾고, 매장 내 상품 재고 수량과 층/구역 정보를 확인한다.
+
+## 페이지
+
+- [홈 — 매장 검색](https://daiso-finder.kr/): 키워드 또는 현재 위치(GPS) 기반 매장 검색, 무한 스크롤
+- [매장 상세](https://daiso-finder.kr/branch/[code]): 매장별 상품 검색 — 가격, 재고 수량, 층/구역 표시
+
+## API
+
+- [매장 검색](https://daiso-finder.kr/api/branches/search): `GET ?keyword=&curLttd=&curLitd=&currentPage=&pageSize=` — 매장 목록 반환
+- [매장 단건 조회](https://daiso-finder.kr/api/branches/[code]): `GET` — 단일 매장 상세 정보
+- [상품 재고 검색](https://daiso-finder.kr/api/products): `GET ?branchCd=&keyword=` — 재고 있는 상품만 반환 (가격, 재고 수, 층/구역)
+
+## 에이전트 리소스
+
+- [앱 설명 (Markdown)](https://daiso-finder.kr/md): 기능 및 API 전체 요약
+- [MCP 서버](https://daiso-finder.kr/api/mcp): Model Context Protocol 엔드포인트
+- [API 카탈로그](https://daiso-finder.kr/.well-known/api-catalog): 머신 리더블 API 목록
+- [에이전트 스킬](https://daiso-finder.kr/.well-known/agent-skills/index.json): 사용 가능한 에이전트 스킬 목록
+
+## Optional
+
+- [사이트맵](https://daiso-finder.kr/sitemap.xml): 전체 페이지 URL 목록
+- [MCP 서버 카드](https://daiso-finder.kr/.well-known/mcp/server-card.json): MCP 서버 메타데이터
