@@ -8,7 +8,7 @@ import {
   IconSearch,
 } from "@tabler/icons-react";
 import clsx from "clsx";
-import { ReactNode } from "react";
+import { ReactNode, useId } from "react";
 
 interface SearchProps {
   title: string;
@@ -22,6 +22,8 @@ interface SearchProps {
   hasResults?: boolean;
   keyword?: string;
   withLocation?: boolean;
+  searchButtonLabel?: string;
+  locationButtonLabel?: string;
   errorMessage?: string;
   onRetry?: () => void;
 }
@@ -38,14 +40,23 @@ export function Search({
   hasResults,
   keyword,
   withLocation = false,
+  searchButtonLabel = "검색",
+  locationButtonLabel = "현재 위치로 검색",
   errorMessage,
   onRetry,
 }: SearchProps) {
+  const inputId = useId();
   const hasError = Boolean(errorMessage);
+  const statusMessage = isFetching
+    ? "검색 중..."
+    : keyword
+      ? "검색 결과가 없습니다"
+      : "검색어를 입력해주세요";
 
   return (
     <>
-      <span
+      <label
+        htmlFor={inputId}
         className={clsx(
           "text-muted",
           css({
@@ -55,13 +66,15 @@ export function Search({
         )}
       >
         {title}
-      </span>
+      </label>
       {beforeForm}
       <form
         className={clsx("input-group", css({ marginBottom: "12px" }))}
         onSubmit={onSubmit}
+        role="search"
       >
         <input
+          id={inputId}
           type="text"
           className="form-control"
           placeholder={placeholder}
@@ -73,8 +86,9 @@ export function Search({
           type="submit"
           name="action"
           value="keyword"
+          aria-label={searchButtonLabel}
         >
-          <IconSearch width={20} height={20} />
+          <IconSearch aria-hidden="true" width={20} height={20} />
         </button>
         {withLocation && (
           <button
@@ -82,8 +96,9 @@ export function Search({
             name="action"
             value="location"
             type="submit"
+            aria-label={locationButtonLabel}
           >
-            <IconLocation width={20} height={20} />
+            <IconLocation aria-hidden="true" width={20} height={20} />
           </button>
         )}
       </form>
@@ -126,7 +141,7 @@ export function Search({
             </p>
             {onRetry && (
               <button type="button" onClick={onRetry} className="btn btn-red">
-                <IconRefresh width={18} height={18} />
+                <IconRefresh aria-hidden="true" width={18} height={18} />
                 다시 시도
               </button>
             )}
@@ -134,16 +149,14 @@ export function Search({
         ) : (
           !hasResults && (
             <div
+              role="status"
+              aria-live="polite"
               className={clsx(
                 "text-muted",
                 css({ textAlign: "center", marginTop: "16px" }),
               )}
             >
-              {isFetching
-                ? "검색 중..."
-                : keyword
-                  ? "검색 결과가 없습니다"
-                  : "검색어를 입력해주세요"}
+              {statusMessage}
             </div>
           )
         )}

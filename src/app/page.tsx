@@ -104,8 +104,8 @@ export default function Home() {
   const handleSearch = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const button = (e.nativeEvent as SubmitEvent)
-      .submitter as HTMLButtonElement;
-    const action = button.value;
+      .submitter as HTMLButtonElement | null;
+    const action = button?.value ?? "keyword";
 
     if (action === "location") {
       try {
@@ -169,6 +169,7 @@ export default function Home() {
         alt="다이소 파인더 로고"
         width={200}
         height={80}
+        priority
         draggable={false}
         style={{ WebkitUserDrag: "none" } as React.CSSProperties}
         className={css({
@@ -193,6 +194,8 @@ export default function Home() {
         hasResults={branches.length > 0}
         keyword={keyword}
         withLocation
+        searchButtonLabel="매장 검색"
+        locationButtonLabel="현재 위치로 주변 매장 검색"
         errorMessage={isError ? error.message : undefined}
         onRetry={keyword ? () => refetch() : undefined}
         beforeForm={
@@ -274,8 +277,8 @@ export default function Home() {
                       display: "inline-flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      width: "20px",
-                      height: "20px",
+                      width: "28px",
+                      height: "28px",
                       padding: 0,
                       border: "none",
                       borderRadius: "50%",
@@ -286,7 +289,7 @@ export default function Home() {
                       _hover: { opacity: 1 },
                     })}
                   >
-                    <IconX width={14} height={14} />
+                    <IconX aria-hidden="true" width={14} height={14} />
                   </button>
                 </span>
               ))}

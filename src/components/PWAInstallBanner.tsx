@@ -161,7 +161,7 @@ export function PWAInstallBanner() {
                 gap: "4px",
               })}`}
             >
-              <IconDownload width={16} height={16} />
+              <IconDownload aria-hidden="true" width={16} height={16} />
               설치
             </button>
             <button

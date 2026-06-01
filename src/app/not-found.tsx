@@ -21,6 +21,7 @@ export default function NotFound() {
           alt="다이소 파인더 로고"
           width={200}
           height={80}
+          priority
           draggable={false}
           style={{ WebkitUserDrag: "none" } as React.CSSProperties}
           className={css({

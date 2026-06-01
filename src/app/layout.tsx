@@ -1,7 +1,5 @@
 import { css } from "@styled-system/css";
-import clsx from "clsx";
 import type { Metadata, Viewport } from "next";
-import localFont from "next/font/local";
 import "./globals.css";
 import { GoogleAnalytics } from "./GoogleAnalytics";
 import Provider from "./provider";
@@ -12,10 +10,6 @@ const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 const APP_URL = (
   process.env.NEXT_PUBLIC_APP_URL || "https://daiso-finder.kr"
 ).replace(/\/$/, "");
-
-const pretendard = localFont({
-  src: "./PretendardVariable.woff2",
-});
 
 const webAppJsonLd = {
   "@context": "https://schema.org",
@@ -117,8 +111,6 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
   themeColor: "#ED1C24",
 };
 
@@ -130,10 +122,7 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body
-        className={clsx(
-          pretendard.className,
-          css({ padding: "24px !important", height: "100dvh" }),
-        )}
+        className={css({ padding: "24px !important", height: "100dvh" })}
       >
         <script
           type="application/ld+json"
