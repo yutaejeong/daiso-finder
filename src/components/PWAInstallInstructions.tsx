@@ -3,7 +3,7 @@
 import { trackEvent } from "@/lib/gtag";
 import { css } from "@styled-system/css";
 import type { Icon } from "@tabler/icons-react";
-import { useEffect } from "react";
+import { useEffect, useId } from "react";
 
 export interface PWAInstallStep {
   icon: Icon;
@@ -27,6 +27,9 @@ export function PWAInstallInstructions({
   viewEvent,
   onClose,
 }: PWAInstallInstructionsProps) {
+  const titleId = useId();
+  const descriptionId = useId();
+
   useEffect(() => {
     trackEvent(viewEvent);
   }, [viewEvent]);
@@ -42,17 +45,34 @@ export function PWAInstallInstructions({
   }, []);
 
   return (
-    <div className="modal modal-blur show" style={{ display: "block" }}>
+    <div
+      className="modal modal-blur show"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
+      aria-describedby={descriptionId}
+      style={{ display: "block" }}
+    >
       <div
         className={`modal-dialog modal-sm modal-dialog-centered ${css({ maxWidth: "400px", margin: "0 auto", position: "relative", zIndex: 1060 })}`}
       >
         <div className="modal-content">
           <div className="modal-header">
-            <h5 className="modal-title">{title}</h5>
-            <button type="button" className="btn-close" onClick={onClose} />
+            <h5 id={titleId} className="modal-title">
+              {title}
+            </h5>
+            <button
+              type="button"
+              className="btn-close"
+              aria-label="닫기"
+              onClick={onClose}
+            />
           </div>
           <div className="modal-body">
-            <p className={css({ marginBottom: "16px", color: "#4a4a4a" })}>
+            <p
+              id={descriptionId}
+              className={css({ marginBottom: "16px", color: "#4a4a4a" })}
+            >
               {description}
             </p>
             <ol
@@ -85,7 +105,7 @@ export function PWAInstallInstructions({
                         width: "28px",
                         height: "28px",
                         borderRadius: "50%",
-                        backgroundColor: "#ED1C24",
+                        backgroundColor: "#c4002f",
                         color: "white",
                         fontWeight: 600,
                         fontSize: "14px",
@@ -94,9 +114,10 @@ export function PWAInstallInstructions({
                       {index + 1}
                     </span>
                     <Icon
+                      aria-hidden="true"
                       width={22}
                       height={22}
-                      className={css({ color: "#ED1C24", flexShrink: 0 })}
+                      className={css({ color: "#c4002f", flexShrink: 0 })}
                     />
                     <span className={css({ fontSize: "14px", lineHeight: 1.5 })}>
                       {step.text}
