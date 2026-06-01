@@ -1,5 +1,5 @@
 import { MetadataRoute } from "next";
-import { popularBranches } from "@/lib/seoBranches";
+import { sitemapBranchCodes } from "@/lib/sitemapBranchCodes";
 
 function getBaseUrl() {
   return process.env.NEXT_PUBLIC_APP_URL || "https://daiso-finder.kr";
@@ -7,18 +7,20 @@ function getBaseUrl() {
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = getBaseUrl().replace(/\/$/, "");
+  const lastModified = new Date();
+
   return [
     {
       url: base,
-      lastModified: new Date(),
+      lastModified,
       changeFrequency: "weekly",
       priority: 1,
     },
-    ...popularBranches.map((branch) => ({
-      url: `${base}/branch/${branch.code}`,
-      lastModified: new Date(),
+    ...sitemapBranchCodes.map((code) => ({
+      url: `${base}/branch/${code}`,
+      lastModified,
       changeFrequency: "daily" as const,
-      priority: 0.85,
+      priority: 0.8,
     })),
   ];
 }
