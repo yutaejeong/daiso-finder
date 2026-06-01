@@ -115,6 +115,7 @@ export function BranchClient({ code, initialBranch }: Props) {
           alt="다이소 파인더 로고"
           width={200}
           height={80}
+          priority
           draggable={false}
           style={{ WebkitUserDrag: "none" } as React.CSSProperties}
           className={css({
@@ -178,6 +179,7 @@ export function BranchClient({ code, initialBranch }: Props) {
         isFetching={isFetching}
         hasResults={products.length > 0}
         keyword={keyword}
+        searchButtonLabel="상품 검색"
         errorMessage={isError ? error.message : undefined}
         onRetry={keyword ? () => refetch() : undefined}
       >
@@ -325,7 +327,7 @@ export function BranchClient({ code, initialBranch }: Props) {
                       className={css({
                         fontWeight: "black",
                         fontSize: "1.25rem",
-                        color: "#ED1C24",
+                        color: "#c4002f",
                         lineHeight: 1,
                         fontVariantNumeric: "tabular-nums",
                       })}
@@ -362,7 +364,7 @@ export function BranchClient({ code, initialBranch }: Props) {
                     </span>
                     <span
                       className={css({
-                        backgroundColor: "#ED1C24",
+                        backgroundColor: "#c4002f",
                         color: "white",
                         padding: "3px 8px",
                         borderRadius: "4px",
