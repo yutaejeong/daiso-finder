@@ -1,7 +1,13 @@
 "use client";
 
 import { css } from "@styled-system/css";
-import { createContext, useCallback, useContext, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useId,
+  useState,
+} from "react";
 
 interface ErrorModalContextValue {
   showError: (message: string, detail?: string) => void;
@@ -22,6 +28,8 @@ export function ErrorModalProvider({
 }: {
   children: React.ReactNode;
 }) {
+  const titleId = useId();
+  const messageId = useId();
   const [error, setError] = useState<{
     isOpen: boolean;
     message: string;
@@ -43,21 +51,31 @@ export function ErrorModalProvider({
     <ErrorModalContext.Provider value={{ showError }}>
       {children}
       {error.isOpen && (
-        <div className="modal modal-blur show" style={{ display: "block" }}>
+        <div
+          className="modal modal-blur show"
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
+          aria-describedby={messageId}
+          style={{ display: "block" }}
+        >
           <div
             className={`modal-dialog modal-sm modal-dialog-centered ${css({ maxWidth: "400px", margin: "0 auto", position: "relative", zIndex: 1060 })}`}
           >
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">오류</h5>
+                <h5 id={titleId} className="modal-title">
+                  오류
+                </h5>
                 <button
                   type="button"
                   className="btn-close"
+                  aria-label="닫기"
                   onClick={closeError}
                 />
               </div>
               <div className="modal-body">
-                <p>{error.message}</p>
+                <p id={messageId}>{error.message}</p>
                 {error.detail && (
                   <textarea
                     readOnly
