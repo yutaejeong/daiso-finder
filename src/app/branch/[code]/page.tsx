@@ -1,4 +1,5 @@
 import { SimplifiedBranch } from "@/app/api/branches/types";
+import { formatDaisoBranchName } from "@/lib/branchNames";
 import { fetchBranchByCode } from "@/lib/daisoBranches";
 import { branchSearchKeywords, popularBranches } from "@/lib/seoBranches";
 import type { Metadata } from "next";
@@ -29,7 +30,8 @@ export async function generateMetadata({
     return { title: "매장 정보를 찾을 수 없습니다" };
   }
 
-  const title = `${branch.name} 상품 재고 확인`;
+  const branchLabel = formatDaisoBranchName(branch.name);
+  const title = `${branchLabel} 상품 찾기`;
   const popularBranch = popularBranches.find(
     (item) => item.code === params.code,
   );
@@ -38,8 +40,9 @@ export async function generateMetadata({
     `${branch.name} 다이소`,
     `${branch.name} 재고 확인`,
   ];
-  const description = `${branch.name}(${branch.address}) 다이소 매장의 상품 재고, 가격, 층별 진열 위치를 확인하세요. 영업시간 ${branch.openTime} ~ ${branch.closeTime}`;
+  const description = `${branchLabel}에서 물건을 찾아보세요! 재고, 가격, 진열 위치를 확인할 수 있습니다.`;
   const url = `${getBaseUrl()}/branch/${params.code}`;
+  const imageUrl = `${url}/opengraph-image`;
 
   return {
     title,
@@ -59,17 +62,18 @@ export async function generateMetadata({
       url,
       images: [
         {
-          url: "/ms-icon-310x310.png",
-          width: 310,
-          height: 310,
-          alt: `다이소 ${branch.name}`,
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: `${branchLabel}에서 물건을 찾아보세요!`,
         },
       ],
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title,
       description,
+      images: [imageUrl],
     },
   };
 }
@@ -93,6 +97,7 @@ export default async function BranchPage({
     `${branch.name} 다이소`,
     `${branch.name} 재고 확인`,
   ];
+  const branchLabel = formatDaisoBranchName(branch.name);
   const pageUrl = `${getBaseUrl()}/branch/${params.code}`;
 
   const jsonLd = branch
@@ -102,8 +107,8 @@ export default async function BranchPage({
           {
             "@type": "Store",
             "@id": `${pageUrl}#store`,
-            name: `다이소 ${branch.name}`,
-            description: `다이소 ${branch.name} 매장의 상품 재고, 가격, 진열 위치, 영업시간 정보`,
+            name: branchLabel,
+            description: `${branchLabel}에서 상품 재고, 가격, 진열 위치를 확인할 수 있습니다.`,
             address: {
               "@type": "PostalAddress",
               streetAddress: branch.address,
@@ -127,8 +132,8 @@ export default async function BranchPage({
             "@type": "WebPage",
             "@id": `${pageUrl}#webpage`,
             url: pageUrl,
-            name: `${branch.name} 다이소 상품 재고 확인`,
-            description: `${branch.name} 매장의 다이소 상품 재고, 가격, 층별 진열 위치를 확인하세요.`,
+            name: `${branchLabel} 상품 찾기`,
+            description: `${branchLabel}에서 물건을 찾아보세요! 재고, 가격, 진열 위치를 확인할 수 있습니다.`,
             inLanguage: "ko-KR",
             about: { "@id": `${pageUrl}#store` },
             keywords: [...localKeywords, ...branchSearchKeywords].join(", "),
@@ -146,7 +151,7 @@ export default async function BranchPage({
               {
                 "@type": "ListItem",
                 position: 2,
-                name: `다이소 ${branch.name}`,
+                name: branchLabel,
                 item: pageUrl,
               },
             ],
