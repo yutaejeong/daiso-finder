@@ -57,12 +57,15 @@ body {
 
 input,
 textarea,
+select,
 [contenteditable="true"],
 [contenteditable=""] {
   user-select: text;
   -webkit-user-select: text;
   -moz-user-select: text;
   -ms-user-select: text;
+  /* Prevent iOS from zooming in on focus (triggered below 16px). */
+  font-size: 16px;
 }
 
 a {
