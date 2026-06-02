@@ -80,7 +80,7 @@ export function ErrorModalProvider({
                   <textarea
                     readOnly
                     value={error.detail}
-                    className={`form-control ${css({ marginTop: "12px", fontSize: "12px", fontFamily: "monospace", resize: "vertical" })}`}
+                    className={`form-control ${css({ marginTop: "12px", fontSize: "16px", fontFamily: "monospace", resize: "vertical" })}`}
                     rows={6}
                   />
                 )}
