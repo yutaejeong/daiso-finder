@@ -26,7 +26,7 @@ export default async function Image({ params }: { params: { code: string } }) {
     eyebrow: "지점별 상품 검색",
     title: `${branchLabel}\n상품 찾기`,
     subtitle: "매장 재고, 가격, 진열 위치를 한 번에 확인하세요.",
-    badge: "지점 검색",
+    badge: "상품 검색",
     footer: `/branch/${params.code}`,
   });
 }

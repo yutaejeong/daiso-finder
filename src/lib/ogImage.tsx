@@ -19,15 +19,16 @@ type DaisoOgImageOptions = {
 };
 
 const daisoRed = "#e60033";
-const ink = "#141414";
-const muted = "#64605a";
-const line = "#e4e1dc";
-const paper = "#fffdfa";
-const soft = "#f4f5f7";
-const sun = "#ffc928";
-const blue = "#2f66f6";
+const ink = "#171717";
+const muted = "#5f6267";
+const subtle = "#8d9298";
+const line = "#dedede";
+const surface = "#f6f7f8";
+const panel = "#fbfbfb";
+const success = "#138a43";
 
 let ogFontPromise: Promise<ArrayBuffer> | null = null;
+let logoSrcPromise: Promise<string> | null = null;
 
 function getOgFont() {
   ogFontPromise ??= readFile(
@@ -42,248 +43,398 @@ function getOgFont() {
   return ogFontPromise;
 }
 
+function getLogoSrc() {
+  logoSrcPromise ??= readFile(
+    join(process.cwd(), "public/logo.svg"),
+    "utf8",
+  ).then(
+    (svg) => `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`,
+  );
+
+  return logoSrcPromise;
+}
+
 function getTitleFontSize(title: string) {
   const longestLine = Math.max(...title.split("\n").map((line) => line.length));
 
   if (title.includes("\n")) {
-    if (longestLine >= 17) return 46;
-    if (longestLine >= 13) return 54;
-    if (longestLine >= 10) return 62;
-    return 70;
+    if (longestLine >= 15) return 48;
+    if (longestLine >= 11) return 54;
+    return 60;
   }
 
-  if (longestLine >= 22) return 48;
-  if (longestLine >= 18) return 56;
-  if (longestLine >= 14) return 64;
-  return 82;
+  if (longestLine >= 20) return 56;
+  if (longestLine >= 15) return 64;
+  return 76;
+}
+
+function getPreviewStoreName(title: string) {
+  const firstLine = title.split("\n")[0];
+
+  if (firstLine.includes("다이소") && !firstLine.includes("상품 찾기")) {
+    return firstLine;
+  }
+
+  return "선택한 다이소 매장";
 }
 
 const rootStyle = {
   width: "100%",
   height: "100%",
   display: "flex",
-  position: "relative",
-  overflow: "hidden",
-  backgroundColor: soft,
+  backgroundColor: surface,
   color: ink,
   fontFamily: "Noto Sans KR",
   letterSpacing: 0,
-  padding: 28,
+  padding: 32,
 } satisfies CSSProperties;
 
-const logoMarkStyle = {
-  width: 112,
-  height: 112,
-  borderRadius: 28,
-  backgroundColor: "#ffffff",
+const frameStyle = {
+  width: "100%",
+  height: "100%",
   display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  position: "relative",
+  backgroundColor: "#ffffff",
+  border: `1px solid ${line}`,
+  borderRadius: 8,
+  overflow: "hidden",
 } satisfies CSSProperties;
 
-const featureCardStyle = {
-  width: 150,
-  height: 96,
-  border: `1px solid ${line}`,
-  borderRadius: 20,
-  backgroundColor: "#ffffff",
-  padding: "16px 18px",
+const leftStyle = {
+  width: 694,
+  height: "100%",
+  padding: "40px 54px 34px",
   display: "flex",
   flexDirection: "column",
   justifyContent: "space-between",
 } satisfies CSSProperties;
 
-const featureDotStyle = {
-  width: 14,
-  height: 14,
-  borderRadius: 999,
+const rightStyle = {
+  flex: 1,
+  height: "100%",
+  backgroundColor: panel,
+  borderLeft: `1px solid ${line}`,
+  padding: "42px 38px",
   display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
 } satisfies CSSProperties;
 
-function LogoMark() {
-  return (
-    <div style={logoMarkStyle}>
-      <div
-        style={{
-          width: 55,
-          height: 55,
-          border: `14px solid ${daisoRed}`,
-          borderRadius: 999,
-          display: "flex",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          right: 24,
-          bottom: 20,
-          width: 23,
-          height: 58,
-          borderRadius: 999,
-          backgroundColor: daisoRed,
-          transform: "rotate(-45deg)",
-          display: "flex",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          left: 52,
-          top: 36,
-          width: 22,
-          height: 33,
-          borderRadius: "18px 0 0 18px",
-          backgroundColor: "#ffffff",
-          display: "flex",
-        }}
-      />
-    </div>
-  );
-}
+const previewStyle = {
+  width: 384,
+  height: 482,
+  backgroundColor: "#ffffff",
+  border: `1px solid ${line}`,
+  borderRadius: 8,
+  display: "flex",
+  flexDirection: "column",
+  overflow: "hidden",
+} satisfies CSSProperties;
 
-function FeatureCard({
-  dotColor,
-  label,
-  value,
-}: {
-  dotColor: string;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div style={featureCardStyle}>
-      <div style={{ display: "flex", alignItems: "center" }}>
-        <div style={{ ...featureDotStyle, backgroundColor: dotColor }} />
-        <div
-          style={{
-            marginLeft: 9,
-            color: muted,
-            fontSize: 20,
-            fontWeight: 800,
-            display: "flex",
-          }}
-        >
-          {label}
-        </div>
-      </div>
-      <div
-        style={{
-          color: ink,
-          fontSize: 27,
-          fontWeight: 900,
-          display: "flex",
-        }}
-      >
-        {value}
-      </div>
-    </div>
-  );
-}
+const previewHeaderStyle = {
+  height: 72,
+  borderBottom: `1px solid ${line}`,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  padding: "0 22px",
+} satisfies CSSProperties;
 
-function ShelfPreview({ badge }: { badge: string }) {
+const searchBarStyle = {
+  height: 60,
+  border: `1px solid ${line}`,
+  borderRadius: 8,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  backgroundColor: "#ffffff",
+  overflow: "hidden",
+} satisfies CSSProperties;
+
+const resultCardStyle = {
+  border: `1px solid ${line}`,
+  borderRadius: 8,
+  backgroundColor: "#ffffff",
+  display: "flex",
+  flexDirection: "column",
+} satisfies CSSProperties;
+
+function StatItem({ label, value }: { label: string; value: string }) {
   return (
     <div
       style={{
-        width: 255,
-        height: 178,
-        borderRadius: 28,
-        backgroundColor: "#ffffff",
-        border: `1px solid ${line}`,
-        padding: "20px 20px 18px",
         display: "flex",
         flexDirection: "column",
-        justifyContent: "space-between",
-        position: "relative",
+        paddingLeft: 18,
+        borderLeft: `4px solid ${daisoRed}`,
       }}
     >
+      <span
+        style={{
+          display: "flex",
+          color: subtle,
+          fontSize: 20,
+          fontWeight: 700,
+        }}
+      >
+        {label}
+      </span>
+      <span
+        style={{
+          display: "flex",
+          marginTop: 7,
+          color: ink,
+          fontSize: 28,
+          fontWeight: 900,
+        }}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function SearchMock({ badge }: { badge: string }) {
+  return (
+    <div style={searchBarStyle}>
       <div
         style={{
-          position: "absolute",
-          top: -18,
-          right: 24,
-          padding: "9px 15px",
-          borderRadius: 999,
-          backgroundColor: ink,
-          color: "#ffffff",
-          fontSize: 19,
-          fontWeight: 800,
           display: "flex",
+          alignItems: "center",
+          paddingLeft: 24,
+          color: subtle,
+          fontSize: 23,
+          fontWeight: 700,
+        }}
+      >
+        상품명 또는 매장명을 검색
+      </div>
+      <div
+        style={{
+          width: 132,
+          height: "100%",
+          backgroundColor: daisoRed,
+          color: "#ffffff",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 24,
+          fontWeight: 900,
         }}
       >
         {badge}
       </div>
-      {[
-        [daisoRed, sun, "#ffffff", blue],
-        [blue, "#ffffff", daisoRed, sun],
-        [sun, daisoRed, blue, "#ffffff"],
-      ].map((colors, rowIndex) => (
-        <div
-          key={`shelf-${rowIndex}`}
-          style={{
-            height: 38,
-            borderRadius: 12,
-            backgroundColor: "#f0eee9",
-            padding: "6px 8px",
-            display: "flex",
-            alignItems: "center",
-          }}
-        >
-          {colors.map((color, index) => (
-            <div
-              key={`${color}-${index}`}
-              style={{
-                width: index === 1 ? 45 : 34,
-                height: 26,
-                marginLeft: index === 0 ? 0 : 8,
-                borderRadius: 8,
-                backgroundColor: color,
-                border: color === "#ffffff" ? `1px solid ${line}` : "none",
-                display: "flex",
-              }}
-            />
-          ))}
-        </div>
-      ))}
-      <div
-        style={{
-          position: "absolute",
-          right: 26,
-          bottom: 20,
-          width: 54,
-          height: 54,
-          borderRadius: 999,
-          backgroundColor: daisoRed,
-          border: "5px solid #ffffff",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <div
-          style={{
-            width: 16,
-            height: 16,
-            borderRadius: 999,
-            backgroundColor: "#ffffff",
-            display: "flex",
-          }}
-        />
-      </div>
     </div>
   );
 }
 
-const watermarkStyle = {
-  position: "absolute",
-  right: 36,
-  top: 26,
-  width: 210,
-  height: 210,
-  borderRadius: 999,
-  border: "26px solid rgba(230, 0, 51, 0.06)",
-  display: "flex",
-} satisfies CSSProperties;
+function PreviewPanel({
+  badge,
+  storeName,
+}: {
+  badge: string;
+  storeName: string;
+}) {
+  return (
+    <div style={previewStyle}>
+      <div style={{ height: 6, backgroundColor: daisoRed, display: "flex" }} />
+      <div style={previewHeaderStyle}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            color: ink,
+          }}
+        >
+          <span style={{ display: "flex", fontSize: 18, color: muted }}>
+            현재 매장
+          </span>
+          <span
+            style={{
+              display: "flex",
+              marginTop: 4,
+              fontSize: 24,
+              fontWeight: 900,
+            }}
+          >
+            {storeName}
+          </span>
+        </div>
+        <div
+          style={{
+            display: "flex",
+            padding: "6px 10px",
+            borderRadius: 6,
+            backgroundColor: "#eef8f1",
+            color: success,
+            fontSize: 17,
+            fontWeight: 900,
+          }}
+        >
+          영업중
+        </div>
+      </div>
+
+      <div
+        style={{
+          padding: "22px",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <div
+          style={{
+            height: 48,
+            border: `1px solid ${line}`,
+            borderRadius: 8,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            color: subtle,
+            fontSize: 18,
+            fontWeight: 700,
+            overflow: "hidden",
+          }}
+        >
+          <span style={{ display: "flex", paddingLeft: 16 }}>검색어 입력</span>
+          <span
+            style={{
+              width: 88,
+              height: "100%",
+              backgroundColor: daisoRed,
+              color: "#ffffff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 18,
+              fontWeight: 900,
+            }}
+          >
+            {badge}
+          </span>
+        </div>
+
+        <div style={{ ...resultCardStyle, marginTop: 18, padding: 18 }}>
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <div
+              style={{
+                width: 74,
+                height: 98,
+                borderRadius: 6,
+                border: `1px solid ${line}`,
+                backgroundColor: "#f2f2f2",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                padding: 10,
+              }}
+            >
+              <div
+                style={{
+                  height: 10,
+                  borderRadius: 3,
+                  backgroundColor: daisoRed,
+                  display: "flex",
+                }}
+              />
+              <div
+                style={{
+                  height: 38,
+                  borderRadius: 4,
+                  backgroundColor: "#ffffff",
+                  border: `1px solid ${line}`,
+                  display: "flex",
+                }}
+              />
+              <div
+                style={{
+                  height: 10,
+                  borderRadius: 3,
+                  backgroundColor: "#cfcfcf",
+                  display: "flex",
+                }}
+              />
+            </div>
+            <div
+              style={{
+                marginLeft: 16,
+                display: "flex",
+                flexDirection: "column",
+                flex: 1,
+              }}
+            >
+              <span
+                style={{
+                  display: "flex",
+                  color: ink,
+                  fontSize: 22,
+                  lineHeight: 1.25,
+                  fontWeight: 900,
+                }}
+              >
+                수납 바구니
+              </span>
+              <span
+                style={{
+                  display: "flex",
+                  marginTop: 9,
+                  color: muted,
+                  fontSize: 18,
+                  fontWeight: 700,
+                }}
+              >
+                3,000원
+              </span>
+              <div style={{ display: "flex", marginTop: 13 }}>
+                <span
+                  style={{
+                    display: "flex",
+                    padding: "5px 8px",
+                    borderRadius: 6,
+                    backgroundColor: "#eef8f1",
+                    color: success,
+                    fontSize: 16,
+                    fontWeight: 900,
+                  }}
+                >
+                  재고 12개
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              marginTop: 18,
+              paddingTop: 16,
+              borderTop: `1px solid ${line}`,
+              justifyContent: "space-between",
+              color: ink,
+              fontSize: 19,
+              fontWeight: 800,
+            }}
+          >
+            <span>층수 2층</span>
+            <span>위치 B-03</span>
+          </div>
+        </div>
+
+        <div
+          style={{
+            marginTop: 16,
+            display: "flex",
+            alignItems: "center",
+            color: subtle,
+            fontSize: 17,
+            fontWeight: 700,
+          }}
+        >
+          daiso-finder.kr
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export async function createDaisoOgImage({
   eyebrow,
@@ -292,240 +443,139 @@ export async function createDaisoOgImage({
   badge,
   footer = "daiso-finder.kr",
 }: DaisoOgImageOptions) {
-  const ogFont = await getOgFont();
+  const [ogFont, logoSrc] = await Promise.all([getOgFont(), getLogoSrc()]);
   const titleFontSize = getTitleFontSize(title);
+  const storeName = getPreviewStoreName(title);
+  const isBranchImage = title.includes("\n");
 
   return new ImageResponse(
     (
       <div style={rootStyle}>
-        <div
-          style={{
-            position: "absolute",
-            left: 0,
-            bottom: 0,
-            width: "100%",
-            height: 14,
-            backgroundColor: daisoRed,
-            display: "flex",
-          }}
-        />
-        <div
-          style={{
-            width: 322,
-            height: "100%",
-            padding: "34px 28px",
-            borderRadius: 32,
-            backgroundColor: daisoRed,
-            color: "#ffffff",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            position: "relative",
-            overflow: "hidden",
-          }}
-        >
-          <div
-            style={{
-              position: "absolute",
-              left: -58,
-              bottom: -58,
-              width: 210,
-              height: 210,
-              borderRadius: 999,
-              backgroundColor: "rgba(255, 255, 255, 0.12)",
-              display: "flex",
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              right: -24,
-              top: 30,
-              width: 88,
-              height: 88,
-              borderRadius: 24,
-              backgroundColor: sun,
-              display: "flex",
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              right: 40,
-              bottom: 92,
-              width: 22,
-              height: 88,
-              borderRadius: 999,
-              backgroundColor: blue,
-              display: "flex",
-            }}
-          />
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <LogoMark />
-            <div
-              style={{
-                marginTop: 32,
-                display: "flex",
-                flexDirection: "column",
-                fontSize: 42,
-                lineHeight: 1.02,
-                fontWeight: 900,
-              }}
-            >
-              <span>Daiso</span>
-              <span>Finder</span>
-            </div>
-            <div
-              style={{
-                marginTop: 18,
-                width: 82,
-                height: 6,
-                borderRadius: 999,
-                backgroundColor: sun,
-                display: "flex",
-              }}
-            />
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <div
-              style={{
-                marginBottom: 24,
-                display: "flex",
-                flexDirection: "column",
-                color: "rgba(255, 255, 255, 0.86)",
-                fontSize: 19,
-                lineHeight: 1.5,
-                fontWeight: 700,
-              }}
-            >
-              <span>상품 재고</span>
-              <span>가격</span>
-              <span>층별 진열 위치</span>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                paddingTop: 22,
-                borderTop: "1px solid rgba(255, 255, 255, 0.28)",
-                fontSize: 20,
-                lineHeight: 1.35,
-                fontWeight: 800,
-                color: "#ffffff",
-              }}
-            >
-              <span>다이소 파인더</span>
-              <span style={{ opacity: 0.76 }}>{footer}</span>
-            </div>
-          </div>
-        </div>
-
-        <div
-          style={{
-            flex: 1,
-            height: "100%",
-            marginLeft: 24,
-            padding: "40px 46px 34px",
-            borderRadius: 32,
-            backgroundColor: paper,
-            border: `1px solid ${line}`,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            position: "relative",
-            overflow: "hidden",
-          }}
-        >
-          <div style={watermarkStyle} />
-
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
+        <div style={frameStyle}>
+          <div style={leftStyle}>
+            <div style={{ display: "flex", flexDirection: "column" }}>
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  alignSelf: "flex-start",
-                  padding: "11px 18px",
-                  borderRadius: 999,
-                  backgroundColor: ink,
-                  color: "#ffffff",
-                  fontSize: 21,
-                  fontWeight: 800,
+                  justifyContent: "space-between",
                 }}
               >
-                {eyebrow}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={logoSrc}
+                  alt="다이소 파인더"
+                  width={222}
+                  height={88}
+                  style={{ objectFit: "contain" }}
+                />
+                <div
+                  style={{
+                    display: "flex",
+                    color: muted,
+                    fontSize: 20,
+                    fontWeight: 800,
+                  }}
+                >
+                  {footer}
+                </div>
               </div>
+
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
+                  marginTop: 34,
+                }}
+              >
+                <div
+                  style={{
+                    width: 42,
+                    height: 4,
+                    backgroundColor: daisoRed,
+                    display: "flex",
+                  }}
+                />
+                <div
+                  style={{
+                    display: "flex",
+                    marginLeft: 14,
+                    color: daisoRed,
+                    fontSize: 22,
+                    fontWeight: 900,
+                  }}
+                >
+                  {eyebrow}
+                </div>
+              </div>
+
+              <div
+                style={{
+                  marginTop: 20,
+                  display: "flex",
+                  flexDirection: "column",
+                  color: ink,
+                  fontSize: titleFontSize,
+                  lineHeight: 1.08,
+                  fontWeight: 900,
+                  maxWidth: 580,
+                }}
+              >
+                {title.split("\n").map((line) => (
+                  <span key={line} style={{ display: "flex" }}>
+                    {line}
+                  </span>
+                ))}
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  marginTop: 18,
+                  maxWidth: 590,
                   color: muted,
-                  fontSize: 20,
-                  fontWeight: 800,
+                  fontSize: 25,
+                  lineHeight: 1.35,
+                  fontWeight: 700,
                 }}
               >
-                daiso-finder.kr
+                {subtitle}
               </div>
             </div>
 
-            <div
-              style={{
-                marginTop: 34,
-                display: "flex",
-                flexDirection: "column",
-                color: ink,
-                fontSize: titleFontSize,
-                lineHeight: 1.06,
-                fontWeight: 900,
-                maxWidth: 690,
-              }}
-            >
-              {title.split("\n").map((line) => (
-                <span key={line} style={{ display: "flex" }}>
-                  {line}
-                </span>
-              ))}
-            </div>
-
-            <div
-              style={{
-                marginTop: 24,
-                display: "flex",
-                maxWidth: 655,
-                color: muted,
-                fontSize: 28,
-                lineHeight: 1.34,
-                fontWeight: 700,
-              }}
-            >
-              {subtitle}
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <SearchMock badge={badge} />
+              {isBranchImage ? (
+                <div
+                  style={{
+                    marginTop: 14,
+                    display: "flex",
+                    color: muted,
+                    fontSize: 22,
+                    fontWeight: 800,
+                  }}
+                >
+                  재고 확인 · 가격 확인 · 진열 위치
+                </div>
+              ) : (
+                <div
+                  style={{
+                    marginTop: 18,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    maxWidth: 570,
+                  }}
+                >
+                  <StatItem label="매장별" value="재고 확인" />
+                  <StatItem label="상품별" value="가격 확인" />
+                  <StatItem label="진열대" value="층수/구역" />
+                </div>
+              )}
             </div>
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              alignItems: "flex-end",
-              justifyContent: "space-between",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center" }}>
-              <FeatureCard dotColor={daisoRed} label="재고" value="실시간" />
-              <div style={{ marginLeft: 14, display: "flex" }}>
-                <FeatureCard dotColor={sun} label="가격" value="빠르게" />
-              </div>
-              <div style={{ marginLeft: 14, display: "flex" }}>
-                <FeatureCard dotColor={blue} label="위치" value="층/구역" />
-              </div>
-            </div>
-            <ShelfPreview badge={badge} />
+          <div style={rightStyle}>
+            <PreviewPanel badge={badge} storeName={storeName} />
           </div>
         </div>
       </div>
