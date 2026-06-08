@@ -6,6 +6,12 @@ const withPWA = require("next-pwa")({
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
+  experimental: {
+    outputFileTracingIncludes: {
+      "/opengraph-image": ["./src/app/NotoSansCJKkr-Regular.otf"],
+      "/branch/[code]/opengraph-image": ["./src/app/NotoSansCJKkr-Regular.otf"],
+    },
+  },
   images: {
     remotePatterns: [
       {
@@ -33,4 +39,4 @@ const nextConfig = {
   },
 };
 
-module.exports = withPWA(nextConfig); 
+module.exports = withPWA(nextConfig);

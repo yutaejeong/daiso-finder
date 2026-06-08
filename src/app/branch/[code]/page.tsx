@@ -7,13 +7,49 @@ import { notFound } from "next/navigation";
 import { BranchClient } from "./BranchClient";
 
 function getBaseUrl() {
-  return (
-    process.env.NEXT_PUBLIC_APP_URL || "https://daiso-finder.kr"
-  ).replace(/\/$/, "");
+  return (process.env.NEXT_PUBLIC_APP_URL || "https://daiso-finder.kr").replace(
+    /\/$/,
+    "",
+  );
 }
 
 async function getBranch(code: string): Promise<SimplifiedBranch | null> {
   return fetchBranchByCode(code);
+}
+
+function getBranchSeo(code: string, branch: SimplifiedBranch | null) {
+  const popularBranch = popularBranches.find((item) => item.code === code);
+  const branchName = branch?.name ?? popularBranch?.name;
+  const branchLabel = branchName
+    ? formatDaisoBranchName(branchName)
+    : "다이소 지점";
+  const localKeywords = popularBranch?.keywords ?? [
+    ...(branch
+      ? [
+          `다이소 ${branch.name}`,
+          `${branch.name} 다이소`,
+          `${branch.name} 재고 확인`,
+        ]
+      : [
+          "다이소 지점 상품 찾기",
+          "다이소 매장 상품 검색",
+          `다이소 매장 ${code}`,
+        ]),
+  ];
+  const title = `${branchLabel} 상품 찾기`;
+  const description = `${branchLabel}에서 상품 재고, 가격, 진열 위치를 확인하세요.`;
+  const url = `${getBaseUrl()}/branch/${code}`;
+  const imageUrl = `${url}/opengraph-image`;
+
+  return {
+    branchLabel,
+    localKeywords,
+    title,
+    description,
+    url,
+    imageUrl,
+    hasKnownBranch: Boolean(branch || popularBranch),
+  };
 }
 
 export async function generateMetadata({
@@ -26,54 +62,52 @@ export async function generateMetadata({
     return null;
   });
 
-  if (!branch) {
-    return { title: "매장 정보를 찾을 수 없습니다" };
-  }
-
-  const branchLabel = formatDaisoBranchName(branch.name);
-  const title = `${branchLabel} 상품 찾기`;
-  const popularBranch = popularBranches.find(
-    (item) => item.code === params.code,
-  );
-  const localKeywords = popularBranch?.keywords ?? [
-    `다이소 ${branch.name}`,
-    `${branch.name} 다이소`,
-    `${branch.name} 재고 확인`,
-  ];
-  const description = `${branchLabel}에서 물건을 찾아보세요! 재고, 가격, 진열 위치를 확인할 수 있습니다.`;
-  const url = `${getBaseUrl()}/branch/${params.code}`;
-  const imageUrl = `${url}/opengraph-image`;
+  const seo = getBranchSeo(params.code, branch);
 
   return {
-    title,
-    description,
+    title: seo.title,
+    description: seo.description,
     keywords: [
-      ...localKeywords,
+      ...seo.localKeywords,
       ...branchSearchKeywords,
-      `${branch.name} 상품 찾기`,
-      `${branch.name} 상품 위치`,
-      `${branch.name} 영업시간`,
+      ...(branch
+        ? [
+            `${branch.name} 상품 찾기`,
+            `${branch.name} 상품 위치`,
+            `${branch.name} 영업시간`,
+          ]
+        : []),
     ],
-    alternates: { canonical: url },
+    alternates: { canonical: seo.url },
+    robots: seo.hasKnownBranch
+      ? undefined
+      : {
+          index: false,
+          follow: true,
+          googleBot: { index: false, follow: true },
+        },
     openGraph: {
-      title,
-      description,
+      title: seo.title,
+      description: seo.description,
       type: "website",
-      url,
+      siteName: "다이소 파인더",
+      locale: "ko_KR",
+      url: seo.url,
       images: [
         {
-          url: imageUrl,
+          url: seo.imageUrl,
           width: 1200,
           height: 630,
-          alt: `${branchLabel}에서 물건을 찾아보세요!`,
+          alt: `${seo.branchLabel} 상품 찾기`,
+          type: "image/png",
         },
       ],
     },
     twitter: {
       card: "summary_large_image",
-      title,
-      description,
-      images: [imageUrl],
+      title: seo.title,
+      description: seo.description,
+      images: [seo.imageUrl],
     },
   };
 }
@@ -89,16 +123,7 @@ export default async function BranchPage({
     notFound();
   }
 
-  const popularBranch = popularBranches.find(
-    (item) => item.code === params.code,
-  );
-  const localKeywords = popularBranch?.keywords ?? [
-    `다이소 ${branch.name}`,
-    `${branch.name} 다이소`,
-    `${branch.name} 재고 확인`,
-  ];
-  const branchLabel = formatDaisoBranchName(branch.name);
-  const pageUrl = `${getBaseUrl()}/branch/${params.code}`;
+  const seo = getBranchSeo(params.code, branch);
 
   const jsonLd = branch
     ? {
@@ -106,9 +131,9 @@ export default async function BranchPage({
         "@graph": [
           {
             "@type": "Store",
-            "@id": `${pageUrl}#store`,
-            name: branchLabel,
-            description: `${branchLabel}에서 상품 재고, 가격, 진열 위치를 확인할 수 있습니다.`,
+            "@id": `${seo.url}#store`,
+            name: seo.branchLabel,
+            description: `${seo.branchLabel}에서 상품 재고, 가격, 진열 위치를 확인할 수 있습니다.`,
             address: {
               "@type": "PostalAddress",
               streetAddress: branch.address,
@@ -120,8 +145,10 @@ export default async function BranchPage({
               latitude: branch.lat,
               longitude: branch.lng,
             },
-            url: pageUrl,
-            keywords: [...localKeywords, ...branchSearchKeywords].join(", "),
+            url: seo.url,
+            keywords: [...seo.localKeywords, ...branchSearchKeywords].join(
+              ", ",
+            ),
             parentOrganization: {
               "@type": "Organization",
               name: "다이소",
@@ -130,17 +157,19 @@ export default async function BranchPage({
           },
           {
             "@type": "WebPage",
-            "@id": `${pageUrl}#webpage`,
-            url: pageUrl,
-            name: `${branchLabel} 상품 찾기`,
-            description: `${branchLabel}에서 물건을 찾아보세요! 재고, 가격, 진열 위치를 확인할 수 있습니다.`,
+            "@id": `${seo.url}#webpage`,
+            url: seo.url,
+            name: `${seo.branchLabel} 상품 찾기`,
+            description: `${seo.branchLabel}에서 상품 재고, 가격, 진열 위치를 확인할 수 있습니다.`,
             inLanguage: "ko-KR",
-            about: { "@id": `${pageUrl}#store` },
-            keywords: [...localKeywords, ...branchSearchKeywords].join(", "),
+            about: { "@id": `${seo.url}#store` },
+            keywords: [...seo.localKeywords, ...branchSearchKeywords].join(
+              ", ",
+            ),
           },
           {
             "@type": "BreadcrumbList",
-            "@id": `${pageUrl}#breadcrumb`,
+            "@id": `${seo.url}#breadcrumb`,
             itemListElement: [
               {
                 "@type": "ListItem",
@@ -151,8 +180,8 @@ export default async function BranchPage({
               {
                 "@type": "ListItem",
                 position: 2,
-                name: branchLabel,
-                item: pageUrl,
+                name: seo.branchLabel,
+                item: seo.url,
               },
             ],
           },

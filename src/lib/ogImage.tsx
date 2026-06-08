@@ -18,6 +18,15 @@ type DaisoOgImageOptions = {
   footer?: string;
 };
 
+const daisoRed = "#e60033";
+const ink = "#141414";
+const muted = "#64605a";
+const line = "#e4e1dc";
+const paper = "#fffdfa";
+const soft = "#f4f5f7";
+const sun = "#ffc928";
+const blue = "#2f66f6";
+
 let ogFontPromise: Promise<ArrayBuffer> | null = null;
 
 function getOgFont() {
@@ -37,15 +46,16 @@ function getTitleFontSize(title: string) {
   const longestLine = Math.max(...title.split("\n").map((line) => line.length));
 
   if (title.includes("\n")) {
-    if (longestLine >= 16) return 50;
-    if (longestLine >= 11) return 58;
-    return 66;
+    if (longestLine >= 17) return 46;
+    if (longestLine >= 13) return 54;
+    if (longestLine >= 10) return 62;
+    return 70;
   }
 
   if (longestLine >= 22) return 48;
   if (longestLine >= 18) return 56;
   if (longestLine >= 14) return 64;
-  return 86;
+  return 82;
 }
 
 const rootStyle = {
@@ -54,16 +64,17 @@ const rootStyle = {
   display: "flex",
   position: "relative",
   overflow: "hidden",
-  backgroundColor: "#fbfaf8",
-  color: "#111111",
+  backgroundColor: soft,
+  color: ink,
   fontFamily: "Noto Sans KR",
   letterSpacing: 0,
+  padding: 28,
 } satisfies CSSProperties;
 
 const logoMarkStyle = {
-  width: 116,
-  height: 116,
-  borderRadius: 30,
+  width: 112,
+  height: 112,
+  borderRadius: 28,
   backgroundColor: "#ffffff",
   display: "flex",
   alignItems: "center",
@@ -71,19 +82,207 @@ const logoMarkStyle = {
   position: "relative",
 } satisfies CSSProperties;
 
-const featureChipStyle = {
-  minWidth: 142,
-  height: 58,
-  padding: "0 22px",
-  border: "1px solid #dedbd5",
-  borderRadius: 999,
+const featureCardStyle = {
+  width: 150,
+  height: 96,
+  border: `1px solid ${line}`,
+  borderRadius: 20,
   backgroundColor: "#ffffff",
+  padding: "16px 18px",
   display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  color: "#2d2a26",
-  fontSize: 24,
-  fontWeight: 700,
+  flexDirection: "column",
+  justifyContent: "space-between",
+} satisfies CSSProperties;
+
+const featureDotStyle = {
+  width: 14,
+  height: 14,
+  borderRadius: 999,
+  display: "flex",
+} satisfies CSSProperties;
+
+function LogoMark() {
+  return (
+    <div style={logoMarkStyle}>
+      <div
+        style={{
+          width: 55,
+          height: 55,
+          border: `14px solid ${daisoRed}`,
+          borderRadius: 999,
+          display: "flex",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          right: 24,
+          bottom: 20,
+          width: 23,
+          height: 58,
+          borderRadius: 999,
+          backgroundColor: daisoRed,
+          transform: "rotate(-45deg)",
+          display: "flex",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          left: 52,
+          top: 36,
+          width: 22,
+          height: 33,
+          borderRadius: "18px 0 0 18px",
+          backgroundColor: "#ffffff",
+          display: "flex",
+        }}
+      />
+    </div>
+  );
+}
+
+function FeatureCard({
+  dotColor,
+  label,
+  value,
+}: {
+  dotColor: string;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div style={featureCardStyle}>
+      <div style={{ display: "flex", alignItems: "center" }}>
+        <div style={{ ...featureDotStyle, backgroundColor: dotColor }} />
+        <div
+          style={{
+            marginLeft: 9,
+            color: muted,
+            fontSize: 20,
+            fontWeight: 800,
+            display: "flex",
+          }}
+        >
+          {label}
+        </div>
+      </div>
+      <div
+        style={{
+          color: ink,
+          fontSize: 27,
+          fontWeight: 900,
+          display: "flex",
+        }}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function ShelfPreview({ badge }: { badge: string }) {
+  return (
+    <div
+      style={{
+        width: 255,
+        height: 178,
+        borderRadius: 28,
+        backgroundColor: "#ffffff",
+        border: `1px solid ${line}`,
+        padding: "20px 20px 18px",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        position: "relative",
+      }}
+    >
+      <div
+        style={{
+          position: "absolute",
+          top: -18,
+          right: 24,
+          padding: "9px 15px",
+          borderRadius: 999,
+          backgroundColor: ink,
+          color: "#ffffff",
+          fontSize: 19,
+          fontWeight: 800,
+          display: "flex",
+        }}
+      >
+        {badge}
+      </div>
+      {[
+        [daisoRed, sun, "#ffffff", blue],
+        [blue, "#ffffff", daisoRed, sun],
+        [sun, daisoRed, blue, "#ffffff"],
+      ].map((colors, rowIndex) => (
+        <div
+          key={`shelf-${rowIndex}`}
+          style={{
+            height: 38,
+            borderRadius: 12,
+            backgroundColor: "#f0eee9",
+            padding: "6px 8px",
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          {colors.map((color, index) => (
+            <div
+              key={`${color}-${index}`}
+              style={{
+                width: index === 1 ? 45 : 34,
+                height: 26,
+                marginLeft: index === 0 ? 0 : 8,
+                borderRadius: 8,
+                backgroundColor: color,
+                border: color === "#ffffff" ? `1px solid ${line}` : "none",
+                display: "flex",
+              }}
+            />
+          ))}
+        </div>
+      ))}
+      <div
+        style={{
+          position: "absolute",
+          right: 26,
+          bottom: 20,
+          width: 54,
+          height: 54,
+          borderRadius: 999,
+          backgroundColor: daisoRed,
+          border: "5px solid #ffffff",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <div
+          style={{
+            width: 16,
+            height: 16,
+            borderRadius: 999,
+            backgroundColor: "#ffffff",
+            display: "flex",
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+const watermarkStyle = {
+  position: "absolute",
+  right: 36,
+  top: 26,
+  width: 210,
+  height: 210,
+  borderRadius: 999,
+  border: "26px solid rgba(230, 0, 51, 0.06)",
+  display: "flex",
 } satisfies CSSProperties;
 
 export async function createDaisoOgImage({
@@ -102,57 +301,73 @@ export async function createDaisoOgImage({
         <div
           style={{
             position: "absolute",
-            top: 0,
             left: 0,
-            right: 0,
+            bottom: 0,
+            width: "100%",
             height: 14,
-            backgroundColor: "#ed1c24",
+            backgroundColor: daisoRed,
             display: "flex",
           }}
         />
         <div
           style={{
-            width: 360,
+            width: 322,
             height: "100%",
-            padding: "54px 46px 50px",
-            backgroundColor: "#ed1c24",
+            padding: "34px 28px",
+            borderRadius: 32,
+            backgroundColor: daisoRed,
             color: "#ffffff",
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
+            position: "relative",
+            overflow: "hidden",
           }}
         >
+          <div
+            style={{
+              position: "absolute",
+              left: -58,
+              bottom: -58,
+              width: 210,
+              height: 210,
+              borderRadius: 999,
+              backgroundColor: "rgba(255, 255, 255, 0.12)",
+              display: "flex",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              right: -24,
+              top: 30,
+              width: 88,
+              height: 88,
+              borderRadius: 24,
+              backgroundColor: sun,
+              display: "flex",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              right: 40,
+              bottom: 92,
+              width: 22,
+              height: 88,
+              borderRadius: 999,
+              backgroundColor: blue,
+              display: "flex",
+            }}
+          />
           <div style={{ display: "flex", flexDirection: "column" }}>
-            <div style={logoMarkStyle}>
-              <div
-                style={{
-                  width: 54,
-                  height: 54,
-                  border: "14px solid #ed1c24",
-                  borderRadius: 999,
-                  display: "flex",
-                }}
-              />
-              <div
-                style={{
-                  position: "absolute",
-                  right: 26,
-                  bottom: 20,
-                  width: 22,
-                  height: 58,
-                  borderRadius: 999,
-                  backgroundColor: "#ed1c24",
-                  transform: "rotate(-45deg)",
-                  display: "flex",
-                }}
-              />
-            </div>
+            <LogoMark />
             <div
               style={{
-                marginTop: 38,
+                marginTop: 32,
                 display: "flex",
                 flexDirection: "column",
-                fontSize: 44,
+                fontSize: 42,
                 lineHeight: 1.02,
                 fontWeight: 900,
               }}
@@ -160,20 +375,49 @@ export async function createDaisoOgImage({
               <span>Daiso</span>
               <span>Finder</span>
             </div>
+            <div
+              style={{
+                marginTop: 18,
+                width: 82,
+                height: 6,
+                borderRadius: 999,
+                backgroundColor: sun,
+                display: "flex",
+              }}
+            />
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              fontSize: 22,
-              lineHeight: 1.45,
-              opacity: 0.92,
-            }}
-          >
-            <span>상품 재고</span>
-            <span>가격</span>
-            <span>진열 위치</span>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <div
+              style={{
+                marginBottom: 24,
+                display: "flex",
+                flexDirection: "column",
+                color: "rgba(255, 255, 255, 0.86)",
+                fontSize: 19,
+                lineHeight: 1.5,
+                fontWeight: 700,
+              }}
+            >
+              <span>상품 재고</span>
+              <span>가격</span>
+              <span>층별 진열 위치</span>
+            </div>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                paddingTop: 22,
+                borderTop: "1px solid rgba(255, 255, 255, 0.28)",
+                fontSize: 20,
+                lineHeight: 1.35,
+                fontWeight: 800,
+                color: "#ffffff",
+              }}
+            >
+              <span>다이소 파인더</span>
+              <span style={{ opacity: 0.76 }}>{footer}</span>
+            </div>
           </div>
         </div>
 
@@ -181,39 +425,66 @@ export async function createDaisoOgImage({
           style={{
             flex: 1,
             height: "100%",
-            padding: "66px 70px 54px 66px",
+            marginLeft: 24,
+            padding: "40px 46px 34px",
+            borderRadius: 32,
+            backgroundColor: paper,
+            border: `1px solid ${line}`,
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
+            position: "relative",
+            overflow: "hidden",
           }}
         >
+          <div style={watermarkStyle} />
+
           <div style={{ display: "flex", flexDirection: "column" }}>
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
-                alignSelf: "flex-start",
-                padding: "12px 20px",
-                borderRadius: 999,
-                backgroundColor: "#111111",
-                color: "#ffffff",
-                fontSize: 22,
-                fontWeight: 800,
+                justifyContent: "space-between",
               }}
             >
-              {eyebrow}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  alignSelf: "flex-start",
+                  padding: "11px 18px",
+                  borderRadius: 999,
+                  backgroundColor: ink,
+                  color: "#ffffff",
+                  fontSize: 21,
+                  fontWeight: 800,
+                }}
+              >
+                {eyebrow}
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  color: muted,
+                  fontSize: 20,
+                  fontWeight: 800,
+                }}
+              >
+                daiso-finder.kr
+              </div>
             </div>
 
             <div
               style={{
-                marginTop: 38,
+                marginTop: 34,
                 display: "flex",
                 flexDirection: "column",
-                color: "#111111",
+                color: ink,
                 fontSize: titleFontSize,
-                lineHeight: 1.08,
+                lineHeight: 1.06,
                 fontWeight: 900,
-                maxWidth: 770,
+                maxWidth: 690,
               }}
             >
               {title.split("\n").map((line) => (
@@ -225,67 +496,36 @@ export async function createDaisoOgImage({
 
             <div
               style={{
-                marginTop: 28,
+                marginTop: 24,
                 display: "flex",
-                maxWidth: 720,
-                color: "#55514b",
-                fontSize: 29,
-                lineHeight: 1.38,
-                fontWeight: 600,
+                maxWidth: 655,
+                color: muted,
+                fontSize: 28,
+                lineHeight: 1.34,
+                fontWeight: 700,
               }}
             >
               {subtitle}
             </div>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-end",
+              justifyContent: "space-between",
+            }}
+          >
             <div style={{ display: "flex", alignItems: "center" }}>
-              {["재고 확인", "가격 보기", "진열 위치"].map((label, index) => (
-                <div
-                  key={label}
-                  style={{
-                    ...featureChipStyle,
-                    marginLeft: index === 0 ? 0 : 14,
-                  }}
-                >
-                  {label}
-                </div>
-              ))}
-              <div
-                style={{
-                  marginLeft: 18,
-                  padding: "0 24px",
-                  height: 58,
-                  borderRadius: 999,
-                  backgroundColor: "#ed1c24",
-                  color: "#ffffff",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 24,
-                  fontWeight: 800,
-                }}
-              >
-                {badge}
+              <FeatureCard dotColor={daisoRed} label="재고" value="실시간" />
+              <div style={{ marginLeft: 14, display: "flex" }}>
+                <FeatureCard dotColor={sun} label="가격" value="빠르게" />
+              </div>
+              <div style={{ marginLeft: 14, display: "flex" }}>
+                <FeatureCard dotColor={blue} label="위치" value="층/구역" />
               </div>
             </div>
-
-            <div
-              style={{
-                marginTop: 34,
-                paddingTop: 24,
-                borderTop: "1px solid #dedbd5",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                color: "#817a70",
-                fontSize: 22,
-                fontWeight: 700,
-              }}
-            >
-              <span>다이소 파인더</span>
-              <span>{footer}</span>
-            </div>
+            <ShelfPreview badge={badge} />
           </div>
         </div>
       </div>
