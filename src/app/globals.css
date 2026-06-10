@@ -64,8 +64,6 @@ select,
   -webkit-user-select: text;
   -moz-user-select: text;
   -ms-user-select: text;
-  /* Prevent iOS from zooming in on focus (triggered below 16px). */
-  font-size: 16px;
 }
 
 a {
@@ -81,6 +79,17 @@ button,
 input,
 textarea {
   font: inherit;
+}
+
+/*
+ * Keep form controls at 16px so iOS Safari doesn't auto-zoom on focus.
+ * Declared after the `font: inherit` shorthand above, which would
+ * otherwise reset font-size back to the inherited (sub-16px) value.
+ */
+input,
+textarea,
+select {
+  font-size: 16px;
 }
 
 h1,
