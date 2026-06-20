@@ -70,3 +70,18 @@ export interface ProductApiResponse {
   hasMore: boolean;
   nextPage: number;
 }
+
+export interface OtherBranchStock {
+  code: string;
+  name: string;
+  address: string;
+  stock: number;
+  distanceKm: number | null;
+}
+
+export interface ProductDetailResponse {
+  stock: number;
+  stairNo: number | null;
+  zoneNo: number | null;
+  otherBranches: OtherBranchStock[];
+}
