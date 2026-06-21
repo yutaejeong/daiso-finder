@@ -21,8 +21,50 @@ export class DaisoApiError extends Error {
   }
 }
 
+const DEFAULT_DAISO_API_BASE_URL = "https://fapi.daisomall.co.kr";
+
 function getDaisoApiBaseUrl() {
-  return process.env.NEXT_PUBLIC_API_URL ?? "https://fapi.daisomall.co.kr";
+  const configuredUrl =
+    process.env.DAISO_API_URL ?? process.env.NEXT_PUBLIC_API_URL;
+
+  if (!configuredUrl) {
+    return DEFAULT_DAISO_API_BASE_URL;
+  }
+
+  try {
+    const url = new URL(configuredUrl);
+
+    if (
+      url.hostname === "www.daisomall.co.kr" ||
+      url.hostname === "daisomall.co.kr"
+    ) {
+      url.hostname = "fapi.daisomall.co.kr";
+    }
+
+    url.pathname = url.pathname.replace(/\/$/, "");
+
+    return url.toString();
+  } catch {
+    return DEFAULT_DAISO_API_BASE_URL;
+  }
+}
+
+function formatErrorDetail(response: Response, responseText: string) {
+  const contentType = response.headers.get("content-type") ?? "unknown";
+
+  if (contentType.includes("text/html")) {
+    const preview = responseText
+      .replace(/<script[\s\S]*?<\/script>/gi, "")
+      .replace(/<style[\s\S]*?<\/style>/gi, "")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 300);
+
+    return `HTTP ${response.status} ${response.statusText} from ${response.url} (${contentType}). Response preview: ${preview}`;
+  }
+
+  return responseText;
 }
 
 function appendSearchParams(url: URL, params?: Record<string, unknown>) {
@@ -75,7 +117,7 @@ export async function daisoFetch<T>(
     throw new DaisoApiError(
       "Daiso API 요청 중 오류가 발생했습니다.",
       response.status,
-      responseText,
+      formatErrorDetail(response, responseText),
     );
   }
 
