@@ -22,7 +22,7 @@ pnpm generate:daiso-api
 1. `scripts/prepare-daiso-openapi.mjs`가 `https://fapi.daisomall.co.kr/v3/api-docs`를 다운로드한다.
 2. 앱에서 쓰는 5개 path만 `openapi/daiso.filtered.json`으로 추출한다.
 3. Orval이 `src/generated/daiso/client.ts`와 `src/generated/daiso/model/*`를 생성한다.
-4. 생성 함수는 `src/lib/daisoApiClient.ts`의 `daisoFetch` mutator를 통해 런타임 `NEXT_PUBLIC_API_URL`로 호출된다.
+4. 생성 함수는 `src/lib/daisoApiClient.ts`의 `daisoFetch` mutator를 통해 런타임 `DAISO_API_URL` 또는 `NEXT_PUBLIC_API_URL`로 호출된다. `www.daisomall.co.kr`처럼 프론트 사이트 host가 들어오면 API host인 `fapi.daisomall.co.kr`로 보정한다.
 
 ## 현재 포함한 Daiso endpoint
 
