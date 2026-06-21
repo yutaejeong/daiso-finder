@@ -8,8 +8,14 @@ const nextConfig = {
   swcMinify: true,
   experimental: {
     outputFileTracingIncludes: {
-      "/opengraph-image": ["./src/app/NotoSansCJKkr-Regular.otf"],
-      "/branch/[code]/opengraph-image": ["./src/app/NotoSansCJKkr-Regular.otf"],
+      "/opengraph-image": [
+        "./src/app/NotoSansCJKkr-Regular.otf",
+        "./public/logo.svg",
+      ],
+      "/branch/[code]/opengraph-image": [
+        "./src/app/NotoSansCJKkr-Regular.otf",
+        "./public/logo.svg",
+      ],
     },
   },
   images: {
