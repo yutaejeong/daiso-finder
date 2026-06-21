@@ -184,8 +184,15 @@ export function BranchClient({ code, initialBranch }: Props) {
         onRetry={keyword ? () => refetch() : undefined}
       >
         {products.map((product: SimplifiedProduct) => (
-          <article
+          <Link
             key={product.id}
+            href={`/branch/${code}/product/${product.id}`}
+            onClick={() =>
+              trackEvent("product_detail_view", {
+                branch_code: code,
+                product_id: product.id,
+              })
+            }
             className={css({
               padding: "14px",
               backgroundColor: "white",
@@ -195,6 +202,13 @@ export function BranchClient({ code, initialBranch }: Props) {
               display: "flex",
               flexDirection: "column",
               gap: "12px",
+              textDecoration: "none",
+              color: "inherit",
+              transition: "border-color 0.15s, box-shadow 0.15s",
+              _hover: {
+                borderColor: "#c4002f",
+                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
+              },
             })}
           >
             <h2
@@ -380,7 +394,7 @@ export function BranchClient({ code, initialBranch }: Props) {
                 </div>
               </div>
             </div>
-          </article>
+          </Link>
         ))}
         {hasNextPage && (
           <button

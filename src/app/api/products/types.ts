@@ -65,8 +65,31 @@ export interface SimplifiedProduct {
   zoneNo: number;
 }
 
+export interface SimplifiedProductInfo {
+  id: string;
+  name: string;
+  price: number;
+  image: string | null;
+  brand: string | null;
+}
+
 export interface ProductApiResponse {
   products: SimplifiedProduct[];
   hasMore: boolean;
   nextPage: number;
+}
+
+export interface OtherBranchStock {
+  code: string;
+  name: string;
+  address: string;
+  stock: number;
+  distanceKm: number | null;
+}
+
+export interface ProductDetailResponse {
+  stock: number;
+  stairNo: number | null;
+  zoneNo: number | null;
+  otherBranches: OtherBranchStock[];
 }
