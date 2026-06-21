@@ -1,4 +1,9 @@
 import { NextRequest } from "next/server";
+import {
+  selOfflStrStckList,
+  selPdStDispInfo,
+  selStr,
+} from "@/generated/daiso/client";
 import { Branch, BranchResponse } from "../../branches/types";
 import {
   OtherBranchStock,
@@ -14,30 +19,23 @@ async function fetchNearbyBranches(
   lat: number,
   lng: number,
 ): Promise<Branch[]> {
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/ms/msg/selStr`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        keyword: "",
-        curLttd: lat,
-        curLitd: lng,
-        geolocationAgrYn: "Y",
-        srchBassPkupStrYn: "Y",
-        srchYn: "N",
-        currentPage: 1,
-        pageSize: MAX_NEARBY_BRANCHES,
-      }),
-    },
-  );
+  try {
+    const payload: Parameters<typeof selStr>[0] & { srchYn?: string } = {
+      keyword: "",
+      curLttd: lat,
+      curLitd: lng,
+      geolocationAgrYn: "Y",
+      srchBassPkupStrYn: "Y",
+      srchYn: "N",
+      currentPage: 1,
+      pageSize: MAX_NEARBY_BRANCHES,
+    };
+    const data = (await selStr(payload)) as unknown as BranchResponse;
 
-  if (!response.ok) {
+    return data.data ?? [];
+  } catch {
     return [];
   }
-
-  const data: BranchResponse = await response.json();
-  return data.data ?? [];
 }
 
 async function fetchStock(
@@ -50,29 +48,20 @@ async function fetchStock(
     return stockByBranch;
   }
 
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/pdo/selOfflStrStck`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(
-        branchCodes.map((strCd) => ({ pdNo, strCd })),
-      ),
-    },
-  );
+  try {
+    const data = (await selOfflStrStckList(
+      branchCodes.map((strCd) => ({ pdNo, strCd })),
+    )) as unknown as ProductStockResponse;
 
-  if (!response.ok) {
+    for (const item of data.data ?? []) {
+      const stock = parseInt(item.stck);
+      stockByBranch.set(item.strCd, isNaN(stock) ? 0 : stock);
+    }
+
+    return stockByBranch;
+  } catch {
     return stockByBranch;
   }
-
-  const data: ProductStockResponse = await response.json();
-
-  for (const item of data.data ?? []) {
-    const stock = parseInt(item.stck);
-    stockByBranch.set(item.strCd, isNaN(stock) ? 0 : stock);
-  }
-
-  return stockByBranch;
 }
 
 async function fetchPlacement(
@@ -80,20 +69,10 @@ async function fetchPlacement(
   branchCode: string,
 ): Promise<{ stairNo: number | null; zoneNo: number | null }> {
   try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/pdo/selPdStDispInfo`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pdNo, strCd: branchCode }),
-      },
-    );
-
-    if (!response.ok) {
-      return { stairNo: null, zoneNo: null };
-    }
-
-    const data: ProductEquippingResponse = await response.json();
+    const data = (await selPdStDispInfo({
+      pdNo,
+      strCd: branchCode,
+    })) as unknown as ProductEquippingResponse;
     const placement = data.data?.[0];
 
     if (!placement) {

@@ -3,6 +3,8 @@ import {
   BranchResponse,
   SimplifiedBranch,
 } from "@/app/api/branches/types";
+import { selStr } from "@/generated/daiso/client";
+import { DaisoApiError } from "@/lib/daisoApiClient";
 
 export class DaisoBranchApiError extends Error {
   status: number;
@@ -31,31 +33,22 @@ export function simplifyBranch(branch: Branch): SimplifiedBranch {
 export async function fetchBranchByCode(
   code: string,
 ): Promise<SimplifiedBranch | null> {
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/ms/msg/selStr`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        inclusiveStrCd: code,
-      }),
-    },
-  );
+  try {
+    const data = (await selStr({
+      inclusiveStrCd: code,
+    })) as unknown as BranchResponse;
+    const branch = data.data?.[0];
 
-  const responseText = await response.text();
+    return branch ? simplifyBranch(branch) : null;
+  } catch (error) {
+    if (!(error instanceof DaisoApiError)) {
+      throw error;
+    }
 
-  if (!response.ok) {
     throw new DaisoBranchApiError(
       "매장 정보를 불러오는 중 오류가 발생했습니다.",
-      response.status,
-      responseText,
+      error.status,
+      error.detail,
     );
   }
-
-  const data: BranchResponse = JSON.parse(responseText);
-  const branch = data.data?.[0];
-
-  return branch ? simplifyBranch(branch) : null;
 }
