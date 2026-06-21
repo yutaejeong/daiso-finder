@@ -1,7 +1,10 @@
 "use client";
 
 import { SimplifiedBranch } from "@/app/api/branches/types";
-import { ProductDetailResponse } from "@/app/api/products/types";
+import {
+  ProductDetailResponse,
+  SimplifiedProductInfo,
+} from "@/app/api/products/types";
 import { css } from "@styled-system/css";
 import {
   IconArrowLeft,
@@ -18,29 +21,17 @@ interface Props {
   code: string;
   productId: string;
   branch: SimplifiedBranch;
-  name: string | null;
-  image: string | null;
-  price: number | null;
-  initialStock: number | null;
-  initialStairNo: number | null;
-  initialZoneNo: number | null;
+  product: SimplifiedProductInfo | null;
 }
 
 function formatFloor(stairNo: number) {
   return stairNo < 0 ? `B${-stairNo}` : `${stairNo}F`;
 }
 
-export function ProductClient({
-  code,
-  productId,
-  branch,
-  name,
-  image,
-  price,
-  initialStock,
-  initialStairNo,
-  initialZoneNo,
-}: Props) {
+export function ProductClient({ code, productId, branch, product }: Props) {
+  const name = product?.name ?? null;
+  const image = product?.image ?? null;
+  const price = product?.price ?? null;
   const { data, isLoading, isError, error, refetch, isFetching } =
     useQuery<ProductDetailResponse>({
       queryKey: ["product-detail", code, productId],
@@ -61,10 +52,9 @@ export function ProductClient({
       meta: { suppressGlobalError: true },
     });
 
-  // 목록에서 넘어온 초기값을 우선 표시하고, 조회가 끝나면 최신 값으로 갱신
-  const stock = data?.stock ?? initialStock;
-  const stairNo = data?.stairNo ?? initialStairNo;
-  const zoneNo = data?.zoneNo ?? initialZoneNo;
+  const stock = data?.stock ?? null;
+  const stairNo = data?.stairNo ?? null;
+  const zoneNo = data?.zoneNo ?? null;
   const otherBranches = data?.otherBranches ?? [];
 
   return (
@@ -279,7 +269,9 @@ export function ProductClient({
                 })}
               >
                 {stock === null
-                  ? "-"
+                  ? isLoading
+                    ? "조회 중..."
+                    : "-"
                   : stock > 0
                     ? `${stock}개 이하`
                     : "품절"}
@@ -476,13 +468,7 @@ export function ProductClient({
               {otherBranches.map((other) => (
                 <li key={other.code}>
                   <Link
-                    href={`/branch/${other.code}/product/${productId}${
-                      name
-                        ? `?name=${encodeURIComponent(name)}${
-                            price !== null ? `&price=${price}` : ""
-                          }${image ? `&image=${encodeURIComponent(image)}` : ""}`
-                        : ""
-                    }`}
+                    href={`/branch/${other.code}/product/${productId}`}
                     className={css({
                       display: "flex",
                       alignItems: "center",

@@ -65,6 +65,14 @@ export interface SimplifiedProduct {
   zoneNo: number;
 }
 
+export interface SimplifiedProductInfo {
+  id: string;
+  name: string;
+  price: number;
+  image: string | null;
+  brand: string | null;
+}
+
 export interface ProductApiResponse {
   products: SimplifiedProduct[];
   hasMore: boolean;

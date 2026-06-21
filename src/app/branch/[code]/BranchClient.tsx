@@ -186,17 +186,7 @@ export function BranchClient({ code, initialBranch }: Props) {
         {products.map((product: SimplifiedProduct) => (
           <Link
             key={product.id}
-            href={{
-              pathname: `/branch/${code}/product/${product.id}`,
-              query: {
-                name: product.name,
-                price: product.price,
-                ...(product.image ? { image: product.image } : {}),
-                stock: product.stock,
-                stairNo: product.stairNo,
-                zoneNo: product.zoneNo,
-              },
-            }}
+            href={`/branch/${code}/product/${product.id}`}
             onClick={() =>
               trackEvent("product_detail_view", {
                 branch_code: code,
