@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "generate:daiso-api": "node scripts/prepare-daiso-openapi.mjs && orval --config orval.config.cjs",
     "prepare": "panda codegen"
   },
   "dependencies": {
@@ -29,6 +30,7 @@
     "@types/react-dom": "^18.3.7",
     "eslint": "^8.57.1",
     "eslint-config-next": "14.2.1",
+    "orval": "^8.18.0",
     "prettier": "3.2.5",
     "typescript": "^5.9.3"
   }

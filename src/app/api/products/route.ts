@@ -1,11 +1,18 @@
 import { NextRequest } from "next/server";
 import {
+  pdThumbSelSimple,
+  selOfflStrStckList,
+  selPdStDispInfo,
+} from "@/generated/daiso/client";
+import {
   Product,
   ProductEquippingResponse,
   ProductResponse,
   ProductStockResponse,
   SimplifiedProduct,
 } from "./types";
+
+export const dynamic = "force-dynamic";
 
 function decodeHtmlEntities(text: string): string {
   return text.replace(/&(amp|lt|gt|quot|apos|#39|nbsp);/g, (match, entity) => {
@@ -37,28 +44,11 @@ async function searchProductsByKeyword(
     return [];
   }
 
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/pdo/pdThumbSelSimple`,
-    {
-      method: "POST",
-      body: JSON.stringify({
-        searchText: keyword,
-        currentPage: currentPage || 1,
-        pageSize: 10,
-      }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    },
-  );
-
-  const responseText = await response.text();
-
-  if (!response.ok) {
-    throw new Error(responseText);
-  }
-
-  const data: ProductResponse = JSON.parse(responseText);
+  const data = (await pdThumbSelSimple({
+    searchText: keyword,
+    currentPage: currentPage || 1,
+    pageSize: 10,
+  })) as unknown as ProductResponse;
 
   return data.data;
 }
@@ -69,24 +59,9 @@ async function checkProductStock(products: Product[], branchCode: string) {
     strCd: branchCode,
   }));
 
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/pdo/selOfflStrStck`,
-    {
-      method: "POST",
-      body: JSON.stringify(payload),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    },
-  );
-
-  const responseText = await response.text();
-
-  if (!response.ok) {
-    throw new Error(responseText);
-  }
-
-  const data: ProductStockResponse = JSON.parse(responseText);
+  const data = (await selOfflStrStckList(
+    payload,
+  )) as unknown as ProductStockResponse;
 
   return data.data;
 }
@@ -160,20 +135,10 @@ export async function GET(request: NextRequest) {
             .filter((product) => product.stock > 0)
             .map(async (product) => {
               try {
-                const response = await fetch(
-                  `${process.env.NEXT_PUBLIC_API_URL}/pdo/selPdStDispInfo`,
-                  {
-                    method: "POST",
-                    body: JSON.stringify({
-                      pdNo: product.id,
-                      strCd: branchCode,
-                    }),
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                  },
-                );
-                const data: ProductEquippingResponse = await response.json();
+                const data = (await selPdStDispInfo({
+                  pdNo: product.id,
+                  strCd: branchCode,
+                })) as unknown as ProductEquippingResponse;
                 return {
                   ...product,
                   stairNo: parseInt(data.data[0].stairNo),
