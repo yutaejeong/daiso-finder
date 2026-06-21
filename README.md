@@ -45,10 +45,11 @@ http://localhost:3000 에서 확인.
 
 ## 환경 변수
 
-`.env.local.example` 을 복사해 `.env.local` 로 사용합니다. 모든 값은 `NEXT_PUBLIC_*` 으로 클라이언트에 노출되는 공개 값이며, 시크릿은 포함되어 있지 않습니다.
+`.env.local.example` 을 복사해 `.env.local` 로 사용합니다. `NEXT_PUBLIC_*` 값은 클라이언트에 노출되는 공개 값이며, 시크릿은 포함되어 있지 않습니다.
 
 | 키 | 설명 |
 | --- | --- |
+| `DAISO_API_URL` | 서버사이드 다이소 외부 API 베이스 URL. 설정하면 `NEXT_PUBLIC_API_URL`보다 우선 사용 |
 | `NEXT_PUBLIC_API_URL` | 다이소 외부 API 베이스 URL |
 | `NEXT_PUBLIC_APP_URL` | 배포 도메인 (sitemap, canonical URL 등에 사용) |
 | `NEXT_PUBLIC_GA_ID` | Google Analytics 4 측정 ID |

@@ -1,0 +1,597 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "[DAISO] FrontOffice API",
+    "description": "다이소 프론트오피스 API",
+    "version": "v1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://fapi.daisomall.co.kr",
+      "description": "Generated server url"
+    }
+  ],
+  "paths": {
+    "/ms/msg/selStr": {
+      "post": {
+        "tags": [
+          "Membership"
+        ],
+        "summary": "매장검색",
+        "operationId": "selStr",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MsStrSO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CmmnResponseModelListMsStrVO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pdo/pdThumbSel": {
+      "post": {
+        "tags": [
+          "PdApi"
+        ],
+        "summary": "상품 썸네일 정보 조회",
+        "description": "상품 썸네일정보 조회(PRG_PDO_0001)",
+        "operationId": "pdThumbSel",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PdInfoSelSO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pdo/pdThumbSelSimple": {
+      "post": {
+        "tags": [
+          "PdApi"
+        ],
+        "summary": "상품 목록 간단 정보 조회",
+        "description": "상품 목록 간단 정보 조회",
+        "operationId": "pdThumbSelSimple",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PdInfoSelSimpleSO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pdo/selOfflStrStck": {
+      "post": {
+        "tags": [
+          "PdApi"
+        ],
+        "summary": "오프라인상품재고 조회 LIST",
+        "description": "오프라인상품재고 조회 LIST(gcp api call)",
+        "operationId": "selOfflStrStckList",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PdNoVO"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JSONObject"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pdo/selPdStDispInfo": {
+      "post": {
+        "tags": [
+          "PdApi"
+        ],
+        "summary": "매장진열정보 조회",
+        "description": "매장진열정보 조회(gcp api call)",
+        "operationId": "selPdStDispInfo",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StDispVO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JSONObject"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "StDispVO": {
+        "type": "object",
+        "properties": {
+          "pdNo": {
+            "type": "string",
+            "description": "상품번호"
+          },
+          "strCd": {
+            "type": "string",
+            "description": "매장코드"
+          }
+        }
+      },
+      "JSONObject": {
+        "type": "object",
+        "properties": {
+          "empty": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": {
+          "type": "object"
+        }
+      },
+      "PdNoVO": {
+        "type": "object",
+        "properties": {
+          "pdNo": {
+            "type": "string",
+            "description": "상품번호"
+          },
+          "strCd": {
+            "type": "string",
+            "description": "매장코드"
+          }
+        }
+      },
+      "PdInfoSelSimpleSO": {
+        "type": "object",
+        "properties": {
+          "currentPage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "firstIndex": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lastIndex": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "useCommonPaging": {
+            "type": "boolean"
+          },
+          "searchText": {
+            "type": "string",
+            "description": "상품번호/상품명"
+          },
+          "searchTextArray": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "searchTextForOrderBy": {
+            "type": "string"
+          },
+          "srchTy": {
+            "type": "string",
+            "description": "조회타입(zz:찜, rc:최근"
+          }
+        }
+      },
+      "PdInfoSelSO": {
+        "type": "object",
+        "properties": {
+          "pdNo": {
+            "type": "string",
+            "description": "상품번호"
+          },
+          "exhYn": {
+            "type": "string",
+            "description": "전시여부 판단"
+          },
+          "rcmYn": {
+            "type": "string",
+            "description": "추천구좌 상품 여부"
+          },
+          "exhSleStsYn": {
+            "type": "string",
+            "description": "판매상태 필터링 여부 (판매중지/종료 제외)"
+          },
+          "mbMngNo": {
+            "type": "string",
+            "description": "회원번호"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "페이징 limit",
+            "format": "int64"
+          },
+          "offset": {
+            "type": "integer",
+            "description": "페이징 offset",
+            "format": "int64"
+          },
+          "totalCnt": {
+            "type": "integer",
+            "description": "총갯수",
+            "format": "int64"
+          },
+          "chkStckQy": {
+            "type": "string",
+            "description": "상품재고체크여부"
+          },
+          "isPdExhYn": {
+            "type": "string",
+            "description": "전시여부체크여부"
+          },
+          "isPdStsCd": {
+            "type": "string",
+            "description": "상품상태체크여부"
+          },
+          "dlvTy": {
+            "type": "string",
+            "description": "배송유형"
+          },
+          "pdNoArr": {
+            "type": "array",
+            "description": "상품번호목록",
+            "items": {
+              "type": "string",
+              "description": "상품번호목록"
+            }
+          },
+          "needRevwInfo": {
+            "type": "boolean",
+            "description": "리뷰정보필요여부"
+          },
+          "grpPdYn": {
+            "type": "string",
+            "description": "전용상품여부"
+          },
+          "brndCd": {
+            "type": "string",
+            "description": "브랜드코드"
+          },
+          "mallId": {
+            "type": "string",
+            "description": "몰분류"
+          },
+          "exhCmptmtId": {
+            "type": "string",
+            "description": "전시구좌ID"
+          },
+          "strgyDateFilter": {
+            "type": "string",
+            "description": "전략상품 날짜 필터 (NOW: > now(), TODAY: >= date_trunc('day', now()))"
+          }
+        }
+      },
+      "CmmnResponseModelListMsStrVO": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MsStrVO"
+            }
+          },
+          "extraData": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object"
+            }
+          },
+          "extraString": {
+            "type": "string"
+          },
+          "returnCode": {
+            "type": "string"
+          },
+          "success": {
+            "type": "boolean"
+          }
+        }
+      },
+      "MsStrVO": {
+        "type": "object",
+        "properties": {
+          "rgpsId": {
+            "type": "string"
+          },
+          "regDttm": {
+            "type": "string"
+          },
+          "mdpsId": {
+            "type": "string"
+          },
+          "modDttm": {
+            "type": "string"
+          },
+          "totalCnt": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "dataAllTotal": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "currentPageCnt": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rnum": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string"
+          },
+          "frRgerId": {
+            "type": "string"
+          },
+          "frRgDtm": {
+            "type": "string"
+          },
+          "lsUpdrId": {
+            "type": "string"
+          },
+          "lsUpdtDtm": {
+            "type": "string"
+          },
+          "strCd": {
+            "type": "string"
+          },
+          "strNm": {
+            "type": "string"
+          },
+          "strZip": {
+            "type": "string"
+          },
+          "strAddr": {
+            "type": "string"
+          },
+          "strDtlAddr": {
+            "type": "string"
+          },
+          "strTno": {
+            "type": "string"
+          },
+          "brchChgrCrryTno": {
+            "type": "string"
+          },
+          "parkYn": {
+            "type": "string"
+          },
+          "nmtkYn": {
+            "type": "string"
+          },
+          "phcYn": {
+            "type": "string"
+          },
+          "usimYn": {
+            "type": "string"
+          },
+          "ovrseaUsimYn": {
+            "type": "string"
+          },
+          "hbrdUsimYn": {
+            "type": "string"
+          },
+          "phstkYn": {
+            "type": "string"
+          },
+          "opngTime": {
+            "type": "string"
+          },
+          "clsngTime": {
+            "type": "string"
+          },
+          "pkupYn": {
+            "type": "string"
+          },
+          "bassPkupStrYn": {
+            "type": "string"
+          },
+          "pntAcmYn": {
+            "type": "string"
+          },
+          "pntUseYn": {
+            "type": "string"
+          },
+          "elecRctwYn": {
+            "type": "string"
+          },
+          "strLitd": {
+            "type": "number",
+            "format": "double"
+          },
+          "strLttd": {
+            "type": "number",
+            "format": "double"
+          },
+          "km": {
+            "type": "string"
+          },
+          "useYn": {
+            "type": "string"
+          },
+          "directYn": {
+            "type": "string"
+          },
+          "nocashYn": {
+            "type": "string"
+          },
+          "hldyDt": {
+            "type": "string"
+          },
+          "sccardYn": {
+            "type": "string"
+          },
+          "sccashYn": {
+            "type": "string"
+          },
+          "elvtYn": {
+            "type": "string"
+          },
+          "entrRampYn": {
+            "type": "string"
+          },
+          "taxfYn": {
+            "type": "string"
+          },
+          "hflpYn": {
+            "type": "string"
+          }
+        }
+      },
+      "MsStrSO": {
+        "type": "object",
+        "properties": {
+          "currentPage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "firstIndex": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lastIndex": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "useCommonPaging": {
+            "type": "boolean"
+          },
+          "mbMngNo": {
+            "type": "string"
+          },
+          "inclusiveStrCd": {
+            "type": "string"
+          },
+          "exclusiveStrCd": {
+            "type": "string"
+          },
+          "keyword": {
+            "type": "string"
+          },
+          "srchBassPkupStrYn": {
+            "type": "string"
+          },
+          "pkupYn": {
+            "type": "string"
+          },
+          "useYn": {
+            "type": "string"
+          },
+          "geolocationAgrYn": {
+            "type": "string"
+          },
+          "curLitd": {
+            "type": "number",
+            "format": "double"
+          },
+          "curLttd": {
+            "type": "number",
+            "format": "double"
+          },
+          "mbEid": {
+            "type": "string"
+          },
+          "lcInfoGetSeCd": {
+            "type": "string"
+          },
+          "lcInfoSpySvcSeCd": {
+            "type": "string"
+          },
+          "srch": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}

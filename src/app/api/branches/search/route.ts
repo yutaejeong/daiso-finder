@@ -1,4 +1,8 @@
 import { BranchResponse } from "../types";
+import { selStr } from "@/generated/daiso/client";
+import { DaisoApiError } from "@/lib/daisoApiClient";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
@@ -23,44 +27,20 @@ export async function GET(request: Request) {
       );
     }
 
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/ms/msg/selStr`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          keyword,
-          ...(hasLocation && {
-            curLttd: parseFloat(curLttd),
-            curLitd: parseFloat(curLitd),
-            geolocationAgrYn: "Y",
-          }),
-          srchBassPkupStrYn: "Y",
-          srchYn: "N",
-          currentPage: currentPage ? parseInt(currentPage) : 1,
-          pageSize: pageSize ? parseInt(pageSize) : 10,
-        }),
-      },
-    );
+    const payload: Parameters<typeof selStr>[0] & { srchYn?: string } = {
+      keyword,
+      ...(hasLocation && {
+        curLttd: parseFloat(curLttd),
+        curLitd: parseFloat(curLitd),
+        geolocationAgrYn: "Y",
+      }),
+      srchBassPkupStrYn: "Y",
+      srchYn: "N",
+      currentPage: currentPage ? parseInt(currentPage) : 1,
+      pageSize: pageSize ? parseInt(pageSize) : 10,
+    };
 
-    const responseText = await response.text();
-
-    if (!response.ok) {
-      return new Response(
-        JSON.stringify({
-          error: "매장 검색 중 오류가 발생했습니다.",
-          detail: responseText,
-        }),
-        {
-          status: response.status,
-          headers: { "Content-Type": "application/json" },
-        },
-      );
-    }
-
-    const data: BranchResponse = JSON.parse(responseText);
+    const data = (await selStr(payload)) as unknown as BranchResponse;
     const branches = data.data ?? [];
 
     return new Response(
@@ -82,6 +62,19 @@ export async function GET(request: Request) {
       },
     );
   } catch (error) {
+    if (error instanceof DaisoApiError) {
+      return new Response(
+        JSON.stringify({
+          error: "매장 검색 중 오류가 발생했습니다.",
+          detail: error.detail,
+        }),
+        {
+          status: error.status,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    }
+
     console.error("API 오류:", error);
     return new Response(
       JSON.stringify({

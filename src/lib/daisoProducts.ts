@@ -1,4 +1,5 @@
 import { SimplifiedProductInfo } from "@/app/api/products/types";
+import { pdThumbSel } from "@/generated/daiso/client";
 
 /**
  * pdThumbSel(상품 썸네일 정보 조회) 응답에서 사용하는 필드.
@@ -51,24 +52,19 @@ function resolveImageUrl(vo: PdInfoSelVO): string | null {
 export async function fetchProductById(
   pdNo: string,
 ): Promise<SimplifiedProductInfo | null> {
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/pdo/pdThumbSel`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pdNo }),
-    },
-  );
+  let json: unknown;
 
-  if (!response.ok) {
+  try {
+    json = await pdThumbSel({ pdNo });
+  } catch {
     return null;
   }
 
-  const json = await response.json();
   // 래퍼 형태가 명확치 않아 data 배열/단일 객체/루트 객체를 모두 허용
-  const candidate: PdInfoSelVO | undefined = Array.isArray(json?.data)
-    ? json.data[0]
-    : (json?.data ?? json);
+  const wrappedJson = json as { data?: PdInfoSelVO[] | PdInfoSelVO };
+  const candidate: PdInfoSelVO | undefined = Array.isArray(wrappedJson?.data)
+    ? wrappedJson.data[0]
+    : (wrappedJson?.data ?? (json as PdInfoSelVO));
 
   if (!candidate || !candidate.pdNm) {
     return null;
