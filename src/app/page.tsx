@@ -196,6 +196,9 @@ export default function Home() {
         withLocation
         searchButtonLabel="매장 검색"
         locationButtonLabel="현재 위치로 주변 매장 검색"
+        toolName="search_daiso_stores"
+        toolDescription="Search Daiso stores by address or store name and show selectable results."
+        toolParamDescription="Address, neighborhood, or Daiso store name"
         errorMessage={isError ? error.message : undefined}
         onRetry={keyword ? () => refetch() : undefined}
         beforeForm={

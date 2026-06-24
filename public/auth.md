@@ -16,8 +16,9 @@
 |---|---|
 | `GET /api/branches/search` | 키워드 또는 GPS 기반 매장 검색 |
 | `GET /api/branches/[code]` | 매장 단건 조회 |
-| `GET /api/products` | 매장 내 상품 재고 및 진열 위치 검색 |
-| `GET /api/mcp` | MCP 서버 엔드포인트 |
+| `GET /api/products?branchCode=&keyword=` | 매장 내 상품 재고 및 진열 위치 검색 |
+| `POST /api/mcp` | MCP JSON-RPC 엔드포인트 |
+| `GET /api/mcp` | MCP 도구 메타데이터 |
 
 ## 에이전트 리소스
 

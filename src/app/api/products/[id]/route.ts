@@ -99,7 +99,8 @@ export async function GET(
   try {
     const pdNo = params.id;
     const { searchParams } = new URL(request.url);
-    const branchCode = searchParams.get("branchCode");
+    const branchCode =
+      searchParams.get("branchCode") ?? searchParams.get("branchCd");
 
     if (!pdNo) {
       return new Response(
