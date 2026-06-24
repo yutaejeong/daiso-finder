@@ -4,42 +4,113 @@ const TOOLS = [
   {
     name: "search_stores",
     description:
-      "주소 또는 지점명으로 다이소 매장을 검색합니다. 반환된 code 값을 search_products에 사용하세요.",
+      "Search Daiso stores by address or store name. Use a returned code as branchCode for product tools.",
     inputSchema: {
       type: "object",
       properties: {
-        keyword: { type: "string", description: "검색할 주소 또는 지점명" },
+        keyword: { type: "string", description: "Address or store name" },
         currentPage: {
           type: "number",
-          description: "페이지 번호 (기본값: 1)",
+          description: "Page number",
           default: 1,
         },
         pageSize: {
           type: "number",
-          description: "페이지당 결과 수 (기본값: 10, 최대: 10)",
+          description: "Results per page, max 10",
           default: 10,
         },
       },
       required: ["keyword"],
     },
+    annotations: { readOnlyHint: true, untrustedContentHint: true },
+  },
+  {
+    name: "search_nearby_stores",
+    description:
+      "Search nearby Daiso stores by latitude and longitude. Use a returned code as branchCode.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        latitude: { type: "number", description: "Current latitude" },
+        longitude: { type: "number", description: "Current longitude" },
+        currentPage: {
+          type: "number",
+          description: "Page number",
+          default: 1,
+        },
+        pageSize: {
+          type: "number",
+          description: "Results per page, max 10",
+          default: 10,
+        },
+      },
+      required: ["latitude", "longitude"],
+    },
+    annotations: { readOnlyHint: true, untrustedContentHint: true },
+  },
+  {
+    name: "get_store",
+    description:
+      "Get Daiso store details for a branchCode, including address, coordinates, and opening hours.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        branchCode: {
+          type: "string",
+          description: "Store code from search_stores",
+        },
+      },
+      required: ["branchCode"],
+    },
+    annotations: { readOnlyHint: true, untrustedContentHint: true },
   },
   {
     name: "search_products",
     description:
-      "특정 다이소 매장의 상품 재고 및 진열 위치를 검색합니다. search_stores로 매장 코드를 먼저 확인하세요.",
+      "Search product stock, price, floor, and zone inside a Daiso store. Requires branchCode.",
     inputSchema: {
       type: "object",
       properties: {
-        branchCd: {
+        branchCode: {
           type: "string",
-          description: "매장 코드 (search_stores 결과의 code 필드)",
+          description: "Store code from search_stores",
         },
-        keyword: { type: "string", description: "검색할 상품명" },
+        keyword: { type: "string", description: "Product name to search" },
+        currentPage: {
+          type: "number",
+          description: "Page number",
+          default: 1,
+        },
       },
-      required: ["branchCd", "keyword"],
+      required: ["branchCode", "keyword"],
     },
+    annotations: { readOnlyHint: true, untrustedContentHint: true },
   },
 ];
+
+function clampPageSize(value: unknown) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return 10;
+  return Math.min(Math.max(parsed, 1), 10);
+}
+
+async function fetchJson(url: URL) {
+  const res = await fetch(url);
+  const data = await res.json();
+
+  if (!res.ok) {
+    return {
+      error: data?.error ?? `HTTP ${res.status}`,
+      detail: data?.detail,
+    };
+  }
+
+  return data;
+}
+
+function content(data: unknown) {
+  return [{ type: "text", text: JSON.stringify(data) }];
+}
 
 async function callTool(
   name: string,
@@ -50,34 +121,73 @@ async function callTool(
     const url = new URL("/api/branches/search", origin);
     url.searchParams.set("keyword", String(args.keyword ?? ""));
     url.searchParams.set("currentPage", String(args.currentPage ?? 1));
-    url.searchParams.set("pageSize", String(args.pageSize ?? 10));
+    url.searchParams.set("pageSize", String(clampPageSize(args.pageSize)));
     url.searchParams.set("pageIndex", "0");
-    const res = await fetch(url);
-    const data = await res.json();
-    return [{ type: "text", text: JSON.stringify(data) }];
+    return content(await fetchJson(url));
+  }
+
+  if (name === "search_nearby_stores") {
+    const url = new URL("/api/branches/search", origin);
+    url.searchParams.set("curLttd", String(args.latitude ?? ""));
+    url.searchParams.set("curLitd", String(args.longitude ?? ""));
+    url.searchParams.set("currentPage", String(args.currentPage ?? 1));
+    url.searchParams.set("pageSize", String(clampPageSize(args.pageSize)));
+    url.searchParams.set("pageIndex", "0");
+    return content(await fetchJson(url));
+  }
+
+  if (name === "get_store") {
+    const branchCode = String(args.branchCode ?? args.branchCd ?? "");
+    const url = new URL(`/api/branches/${branchCode}`, origin);
+    return content(await fetchJson(url));
   }
 
   if (name === "search_products") {
+    const branchCode = String(args.branchCode ?? args.branchCd ?? "");
     const url = new URL("/api/products", origin);
-    url.searchParams.set("branchCd", String(args.branchCd ?? ""));
+    url.searchParams.set("branchCode", branchCode);
     url.searchParams.set("keyword", String(args.keyword ?? ""));
-    const res = await fetch(url);
-    const data = await res.json();
-    return [{ type: "text", text: JSON.stringify(data) }];
+    url.searchParams.set("currentPage", String(args.currentPage ?? 1));
+    return content(await fetchJson(url));
   }
 
   throw new Error(`Unknown tool: ${name}`);
 }
 
+export async function GET(request: NextRequest) {
+  const origin = new URL(request.url).origin;
+
+  return NextResponse.json({
+    serverInfo: {
+      name: "daiso-finder",
+      version: "1.0.0",
+      description: "Daiso store and product stock MCP server",
+    },
+    endpoint: `${origin}/api/mcp`,
+    protocol: "JSON-RPC 2.0 over POST",
+    capabilities: { tools: {} },
+    tools: TOOLS,
+  });
+}
+
 export async function POST(request: NextRequest) {
   const origin = new URL(request.url).origin;
 
-  let body: { jsonrpc: string; method: string; params?: Record<string, unknown>; id?: unknown };
+  let body: {
+    jsonrpc: string;
+    method: string;
+    params?: Record<string, unknown>;
+    id?: unknown;
+  };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json(
-      { jsonrpc: "2.0", error: { code: -32700, message: "Parse error" }, id: null },
+      {
+        jsonrpc: "2.0",
+        error: { code: -32700, message: "Parse error" },
+        id: null,
+      },
       { status: 400 },
     );
   }
@@ -101,7 +211,11 @@ export async function POST(request: NextRequest) {
   }
 
   if (method === "tools/list") {
-    return NextResponse.json({ jsonrpc: "2.0", result: { tools: TOOLS }, id });
+    return NextResponse.json({
+      jsonrpc: "2.0",
+      result: { tools: TOOLS },
+      id,
+    });
   }
 
   if (method === "tools/call") {

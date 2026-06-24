@@ -71,7 +71,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const keyword = searchParams.get("keyword");
     const currentPage = parseInt(searchParams.get("currentPage") || "1");
-    const branchCode = searchParams.get("branchCode");
+    const branchCode =
+      searchParams.get("branchCode") ?? searchParams.get("branchCd");
 
     if (!keyword?.trim()) {
       return new Response(
@@ -99,6 +100,7 @@ export async function GET(request: NextRequest) {
 
     let page = currentPage;
     let existingProducts: SimplifiedProduct[] = [];
+    const seenProductIds = new Set<string>();
     let hasMore = true;
 
     while (hasMore) {
@@ -152,7 +154,16 @@ export async function GET(request: NextRequest) {
         )
       ).filter((product): product is SimplifiedProduct => product !== null);
 
-      existingProducts = [...existingProducts, ...pageProducts];
+      const uniquePageProducts = pageProducts.filter((product) => {
+        if (seenProductIds.has(product.id)) {
+          return false;
+        }
+
+        seenProductIds.add(product.id);
+        return true;
+      });
+
+      existingProducts = [...existingProducts, ...uniquePageProducts];
 
       // 외부 API 마지막 페이지면 더 이상 없음
       if (products.length < 10) {

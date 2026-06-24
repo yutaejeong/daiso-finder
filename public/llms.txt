@@ -11,14 +11,15 @@
 
 - [매장 검색](https://daiso-finder.kr/api/branches/search): `GET ?keyword=&curLttd=&curLitd=&currentPage=&pageSize=` — 매장 목록 반환
 - [매장 단건 조회](https://daiso-finder.kr/api/branches/[code]): `GET` — 단일 매장 상세 정보
-- [상품 재고 검색](https://daiso-finder.kr/api/products): `GET ?branchCd=&keyword=` — 재고 있는 상품만 반환 (가격, 재고 수, 층/구역)
+- [상품 재고 검색](https://daiso-finder.kr/api/products): `GET ?branchCode=&keyword=&currentPage=` — 재고 있는 상품만 반환 (가격, 재고 수, 층/구역)
 
 ## 에이전트 리소스
 
 - [앱 설명 (Markdown)](https://daiso-finder.kr/md): 기능 및 API 전체 요약
-- [MCP 서버](https://daiso-finder.kr/api/mcp): Model Context Protocol 엔드포인트
+- [MCP 서버](https://daiso-finder.kr/api/mcp): Model Context Protocol 엔드포인트. JSON-RPC `POST`로 `tools/list`, `tools/call`을 지원하며 `GET`은 도구 메타데이터를 반환한다.
 - [API 카탈로그](https://daiso-finder.kr/.well-known/api-catalog): 머신 리더블 API 목록
 - [에이전트 스킬](https://daiso-finder.kr/.well-known/agent-skills/index.json): 사용 가능한 에이전트 스킬 목록
+- WebMCP: Chrome WebMCP가 활성화된 브라우저에서는 `document.modelContext`를 통해 `search_stores`, `search_nearby_stores`, `get_store`, `search_products`, `open_store_page` 도구를 등록한다.
 
 ## Optional
 

@@ -180,6 +180,9 @@ export function BranchClient({ code, initialBranch }: Props) {
         hasResults={products.length > 0}
         keyword={keyword}
         searchButtonLabel="상품 검색"
+        toolName="search_store_products"
+        toolDescription={`Search product stock, price, floor, and zone in ${branch?.name ?? "the current Daiso store"}.`}
+        toolParamDescription="Product name to search in the current store"
         errorMessage={isError ? error.message : undefined}
         onRetry={keyword ? () => refetch() : undefined}
       >

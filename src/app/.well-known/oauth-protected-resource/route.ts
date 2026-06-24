@@ -8,7 +8,7 @@ export function GET(request: NextRequest) {
       resource: base,
       authorization_servers: [],
       scopes_supported: [],
-      bearer_methods_supported: ["header"],
+      bearer_methods_supported: [],
       resource_documentation: `${base}/.well-known/api-catalog`,
     },
     {

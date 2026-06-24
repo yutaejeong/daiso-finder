@@ -26,6 +26,9 @@ interface SearchProps {
   locationButtonLabel?: string;
   errorMessage?: string;
   onRetry?: () => void;
+  toolName?: string;
+  toolDescription?: string;
+  toolParamDescription?: string;
 }
 
 export function Search({
@@ -44,6 +47,9 @@ export function Search({
   locationButtonLabel = "현재 위치로 검색",
   errorMessage,
   onRetry,
+  toolName,
+  toolDescription,
+  toolParamDescription,
 }: SearchProps) {
   const inputId = useId();
   const hasError = Boolean(errorMessage);
@@ -52,6 +58,19 @@ export function Search({
     : keyword
       ? "검색 결과가 없습니다"
       : "검색어를 입력해주세요";
+  const webMcpFormAttributes =
+    toolName && toolDescription
+      ? ({
+          toolname: toolName,
+          tooldescription: toolDescription,
+          toolautosubmit: "",
+        } satisfies Record<string, string>)
+      : undefined;
+  const webMcpInputAttributes = toolParamDescription
+    ? ({
+        toolparamdescription: toolParamDescription,
+      } satisfies Record<string, string>)
+    : undefined;
 
   return (
     <>
@@ -69,17 +88,20 @@ export function Search({
       </label>
       {beforeForm}
       <form
+        {...webMcpFormAttributes}
         className={clsx("input-group", css({ marginBottom: "12px" }))}
         onSubmit={onSubmit}
         role="search"
       >
         <input
           id={inputId}
+          name="keyword"
           type="text"
           className="form-control"
           placeholder={placeholder}
           value={searchInput}
           onChange={(e) => onSearchInputChange(e.target.value)}
+          {...webMcpInputAttributes}
         />
         <button
           className="btn btn-red"

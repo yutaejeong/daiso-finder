@@ -6,86 +6,237 @@ type McpTool = {
   name: string;
   description: string;
   inputSchema: object;
+  annotations?: {
+    readOnlyHint?: boolean;
+    untrustedContentHint?: boolean;
+  };
   execute: (args: unknown, signal?: AbortSignal) => Promise<unknown>;
 };
 
 type ModelContext = {
-  registerTool: (tool: McpTool) => { deregister: () => void };
+  registerTool: (
+    tool: McpTool,
+    options?: { signal?: AbortSignal },
+  ) => { deregister?: () => void } | void;
 };
 
 declare global {
+  interface Document {
+    modelContext?: ModelContext;
+  }
+
   interface Navigator {
     modelContext?: ModelContext;
   }
 }
 
+function asNumber(value: unknown, fallback: number) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function clampPageSize(value: unknown) {
+  return Math.min(Math.max(asNumber(value, 10), 1), 10);
+}
+
+function stringifyToolResult(data: unknown) {
+  const json = JSON.stringify(data);
+  if (json.length <= 1500) return json;
+  return `${json.slice(0, 1470)}...`;
+}
+
+async function fetchJson(url: URL, signal?: AbortSignal) {
+  const res = await fetch(url, { signal });
+  const data = await res.json();
+
+  if (!res.ok) {
+    return {
+      error: data?.error ?? `HTTP ${res.status}`,
+      detail: data?.detail,
+    };
+  }
+
+  return data;
+}
+
 export function WebMCP() {
   useEffect(() => {
-    const ctx = navigator.modelContext;
+    const ctx = document.modelContext ?? navigator.modelContext;
     if (!ctx) return;
+    const controller = new AbortController();
+    const legacyDeregisterCallbacks: Array<() => void> = [];
 
-    const storesTool = ctx.registerTool({
+    const registerTool = (tool: McpTool) => {
+      const result = ctx.registerTool(tool, { signal: controller.signal });
+      if (result?.deregister) {
+        legacyDeregisterCallbacks.push(result.deregister);
+      }
+    };
+
+    registerTool({
       name: "search_stores",
       description:
-        "다이소 매장을 주소 또는 지점명으로 검색합니다. 반환된 code 값을 search_products에 사용하세요.",
+        "Search Daiso stores by address or store name. Use a returned code as branchCode for product tools.",
       inputSchema: {
         type: "object",
         properties: {
-          keyword: { type: "string", description: "검색할 주소 또는 지점명" },
+          keyword: { type: "string", description: "Address or store name" },
           currentPage: {
             type: "number",
-            description: "페이지 번호 (기본값: 1)",
+            description: "Page number",
             default: 1,
+          },
+          pageSize: {
+            type: "number",
+            description: "Results per page, max 10",
+            default: 10,
           },
         },
         required: ["keyword"],
       },
-      async execute(args) {
-        const { keyword, currentPage = 1 } = args as {
+      annotations: { readOnlyHint: true, untrustedContentHint: true },
+      async execute(args, signal) {
+        const { keyword, currentPage = 1, pageSize = 10 } = args as {
           keyword: string;
           currentPage?: number;
+          pageSize?: number;
         };
         const url = new URL("/api/branches/search", window.location.origin);
         url.searchParams.set("keyword", keyword);
         url.searchParams.set("currentPage", String(currentPage));
-        url.searchParams.set("pageSize", "10");
+        url.searchParams.set("pageSize", String(clampPageSize(pageSize)));
         url.searchParams.set("pageIndex", "0");
-        const res = await fetch(url);
-        return res.json();
+        return stringifyToolResult(await fetchJson(url, signal));
       },
     });
 
-    const productsTool = ctx.registerTool({
-      name: "search_products",
+    registerTool({
+      name: "search_nearby_stores",
       description:
-        "특정 다이소 매장에서 상품 재고와 진열 위치를 검색합니다. search_stores로 매장 코드를 먼저 확인하세요.",
+        "Search nearby Daiso stores by latitude and longitude. Use a returned code as branchCode.",
       inputSchema: {
         type: "object",
         properties: {
-          branchCd: {
-            type: "string",
-            description: "매장 코드 (search_stores 결과의 code 필드)",
+          latitude: { type: "number", description: "Current latitude" },
+          longitude: { type: "number", description: "Current longitude" },
+          currentPage: {
+            type: "number",
+            description: "Page number",
+            default: 1,
           },
-          keyword: { type: "string", description: "검색할 상품명" },
+          pageSize: {
+            type: "number",
+            description: "Results per page, max 10",
+            default: 10,
+          },
         },
-        required: ["branchCd", "keyword"],
+        required: ["latitude", "longitude"],
       },
-      async execute(args) {
-        const { branchCd, keyword } = args as {
-          branchCd: string;
+      annotations: { readOnlyHint: true, untrustedContentHint: true },
+      async execute(args, signal) {
+        const {
+          latitude,
+          longitude,
+          currentPage = 1,
+          pageSize = 10,
+        } = args as {
+          latitude: number;
+          longitude: number;
+          currentPage?: number;
+          pageSize?: number;
+        };
+        const url = new URL("/api/branches/search", window.location.origin);
+        url.searchParams.set("curLttd", String(latitude));
+        url.searchParams.set("curLitd", String(longitude));
+        url.searchParams.set("currentPage", String(currentPage));
+        url.searchParams.set("pageSize", String(clampPageSize(pageSize)));
+        url.searchParams.set("pageIndex", "0");
+        return stringifyToolResult(await fetchJson(url, signal));
+      },
+    });
+
+    registerTool({
+      name: "get_store",
+      description:
+        "Get Daiso store details for a branchCode, including address, coordinates, and opening hours.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          branchCode: {
+            type: "string",
+            description: "Store code from search_stores",
+          },
+        },
+        required: ["branchCode"],
+      },
+      annotations: { readOnlyHint: true, untrustedContentHint: true },
+      async execute(args, signal) {
+        const { branchCode } = args as { branchCode: string };
+        const url = new URL(`/api/branches/${branchCode}`, window.location.origin);
+        return stringifyToolResult(await fetchJson(url, signal));
+      },
+    });
+
+    registerTool({
+      name: "search_products",
+      description:
+        "Search product stock, price, floor, and zone inside a Daiso store. Requires branchCode.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          branchCode: {
+            type: "string",
+            description: "Store code from search_stores",
+          },
+          keyword: { type: "string", description: "Product name to search" },
+          currentPage: {
+            type: "number",
+            description: "Page number",
+            default: 1,
+          },
+        },
+        required: ["branchCode", "keyword"],
+      },
+      annotations: { readOnlyHint: true, untrustedContentHint: true },
+      async execute(args, signal) {
+        const { branchCode, keyword, currentPage = 1 } = args as {
+          branchCode: string;
           keyword: string;
+          currentPage?: number;
         };
         const url = new URL("/api/products", window.location.origin);
-        url.searchParams.set("branchCd", branchCd);
+        url.searchParams.set("branchCode", branchCode);
         url.searchParams.set("keyword", keyword);
-        const res = await fetch(url);
-        return res.json();
+        url.searchParams.set("currentPage", String(currentPage));
+        return stringifyToolResult(await fetchJson(url, signal));
+      },
+    });
+
+    registerTool({
+      name: "open_store_page",
+      description:
+        "Navigate this tab to a Daiso store page for a branchCode so the user can see and search it.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          branchCode: {
+            type: "string",
+            description: "Store code from search_stores",
+          },
+        },
+        required: ["branchCode"],
+      },
+      annotations: { readOnlyHint: false },
+      async execute(args) {
+        const { branchCode } = args as { branchCode: string };
+        window.location.assign(`/branch/${encodeURIComponent(branchCode)}`);
+        return `Opening store page for ${branchCode}`;
       },
     });
 
     return () => {
-      storesTool.deregister();
-      productsTool.deregister();
+      controller.abort();
+      legacyDeregisterCallbacks.forEach((deregister) => deregister());
     };
   }, []);
 

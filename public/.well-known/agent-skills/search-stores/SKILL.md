@@ -1,6 +1,11 @@
+---
+name: search-stores
+description: Search for Daiso stores in Korea by keyword, address, store name, or GPS coordinates. Use when a user needs a Daiso branch code, address, opening hours, or nearby store list.
+---
+
 # Search Daiso Stores
 
-Search for Daiso stores in Korea by keyword (address or store name) or GPS coordinates.
+Use this skill when a user asks for a Daiso branch, store address, opening hours, or a store code to use with product stock lookup.
 
 ## Endpoint
 
@@ -14,7 +19,7 @@ Search for Daiso stores in Korea by keyword (address or store name) or GPS coord
 | `curLttd` | number | No* | Latitude for GPS-based search |
 | `curLitd` | number | No* | Longitude for GPS-based search |
 | `currentPage` | number | No | Page number (default: 1) |
-| `pageSize` | number | No | Results per page (default: 10) |
+| `pageSize` | number | No | Results per page (default: 10, max: 10) |
 
 *Either `keyword` or both `curLttd`/`curLitd` must be provided.
 
@@ -38,6 +43,14 @@ Array of store objects:
 
 ## Notes
 
-- Use the `code` field with `search_products` to check product stock in a store.
+- Use the `code` field as `branchCode` with product tools and APIs.
 - Supports infinite scroll via the `currentPage` parameter.
 - Returns up to 10 results per page; check response length to determine if more pages exist.
+
+## MCP tools
+
+- `search_stores`: search by keyword.
+- `search_nearby_stores`: search by coordinates.
+- `get_store`: fetch one store by `branchCode`.
+
+MCP endpoint: `/api/mcp`.

@@ -36,16 +36,19 @@ const APP_MARKDOWN = `# Daiso Finder
 
 | 파라미터 | 타입 | 설명 |
 |---------|------|------|
-| \`branchCd\` | string | 매장 코드 (/api/branches/search의 code 값) |
+| \`branchCode\` | string | 매장 코드 (/api/branches/search의 code 값) |
 | \`keyword\` | string | 검색할 상품명 |
+| \`currentPage\` | number | 페이지 번호 (기본값: 1) |
 
 응답: \`{ products: [{ id, name, price, image, stock, stairNo, zoneNo }], hasMore, nextPage }\`
 
 ## 에이전트 리소스
 
 - API 카탈로그: \`/.well-known/api-catalog\`
-- MCP 서버: \`/api/mcp\`
+- MCP 서버: \`/api/mcp\` (JSON-RPC POST, GET 메타데이터)
 - 에이전트 스킬: \`/.well-known/agent-skills/index.json\`
+- llms.txt: \`/llms.txt\`
+- WebMCP: 브라우저에서 \`document.modelContext\`가 제공되면 매장/상품 검색 도구를 등록합니다.
 `;
 
 export async function GET(request: NextRequest) {
