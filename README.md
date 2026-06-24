@@ -53,6 +53,7 @@ http://localhost:3000 에서 확인.
 | `NEXT_PUBLIC_API_URL` | 다이소 외부 API 베이스 URL |
 | `NEXT_PUBLIC_APP_URL` | 배포 도메인 (sitemap, canonical URL 등에 사용) |
 | `NEXT_PUBLIC_GA_ID` | Google Analytics 4 측정 ID |
+| `WEBMCP_ORIGIN_TRIAL_TOKEN` | Chrome WebMCP Origin Trial 토큰. 설정하면 `Origin-Trial` 헤더로 내려가 배포 origin에서 `document.modelContext`를 활성화 |
 
 ## API Route
 
