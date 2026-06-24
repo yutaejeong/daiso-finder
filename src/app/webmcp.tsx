@@ -39,10 +39,14 @@ function clampPageSize(value: unknown) {
   return Math.min(Math.max(asNumber(value, 10), 1), 10);
 }
 
-function stringifyToolResult(data: unknown) {
+function textContent(text: string) {
+  return { content: [{ type: "text", text }] };
+}
+
+function toolResult(data: unknown) {
   const json = JSON.stringify(data);
-  if (json.length <= 1500) return json;
-  return `${json.slice(0, 1470)}...`;
+  const text = json.length <= 1500 ? json : `${json.slice(0, 1470)}...`;
+  return textContent(text);
 }
 
 async function fetchJson(url: URL, signal?: AbortSignal) {
@@ -106,7 +110,7 @@ export function WebMCP() {
         url.searchParams.set("currentPage", String(currentPage));
         url.searchParams.set("pageSize", String(clampPageSize(pageSize)));
         url.searchParams.set("pageIndex", "0");
-        return stringifyToolResult(await fetchJson(url, signal));
+        return toolResult(await fetchJson(url, signal));
       },
     });
 
@@ -151,7 +155,7 @@ export function WebMCP() {
         url.searchParams.set("currentPage", String(currentPage));
         url.searchParams.set("pageSize", String(clampPageSize(pageSize)));
         url.searchParams.set("pageIndex", "0");
-        return stringifyToolResult(await fetchJson(url, signal));
+        return toolResult(await fetchJson(url, signal));
       },
     });
 
@@ -173,7 +177,7 @@ export function WebMCP() {
       async execute(args, signal) {
         const { branchCode } = args as { branchCode: string };
         const url = new URL(`/api/branches/${branchCode}`, window.location.origin);
-        return stringifyToolResult(await fetchJson(url, signal));
+        return toolResult(await fetchJson(url, signal));
       },
     });
 
@@ -208,7 +212,7 @@ export function WebMCP() {
         url.searchParams.set("branchCode", branchCode);
         url.searchParams.set("keyword", keyword);
         url.searchParams.set("currentPage", String(currentPage));
-        return stringifyToolResult(await fetchJson(url, signal));
+        return toolResult(await fetchJson(url, signal));
       },
     });
 
@@ -230,7 +234,7 @@ export function WebMCP() {
       async execute(args) {
         const { branchCode } = args as { branchCode: string };
         window.location.assign(`/branch/${encodeURIComponent(branchCode)}`);
-        return `Opening store page for ${branchCode}`;
+        return textContent(`Opening store page for ${branchCode}`);
       },
     });
 
