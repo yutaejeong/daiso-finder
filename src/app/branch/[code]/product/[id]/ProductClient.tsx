@@ -71,7 +71,7 @@ export function ProductClient({ code, productId, branch, product }: Props) {
       <Link href="/" aria-label="다이소 파인더 홈으로 이동">
         <Image
           src="/logo.svg"
-          alt="다이소 파인더 로고"
+          alt="다이소 파인더"
           width={200}
           height={80}
           priority

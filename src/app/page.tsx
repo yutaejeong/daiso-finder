@@ -166,7 +166,7 @@ export default function Home() {
     >
       <Image
         src="/logo.svg"
-        alt="다이소 파인더 로고"
+        alt="다이소 파인더"
         width={200}
         height={80}
         priority
