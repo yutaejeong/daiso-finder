@@ -5,6 +5,7 @@ import {
   ProductApiResponse,
   SimplifiedProduct,
 } from "@/app/api/products/types";
+import { BranchLocationDialog } from "@/components/BranchLocationDialog";
 import { Search } from "@/components/Search";
 import { useRecentBranches } from "@/hooks/useRecentBranches";
 import { trackEvent } from "@/lib/gtag";
@@ -154,13 +155,7 @@ export function BranchClient({ code, initialBranch }: Props) {
       >
         <div>
           <strong className={css({ marginRight: "4px" })}>주소</strong>
-          <a
-            href={`https://map.kakao.com/link/to/다이소 ${branch?.name},${branch?.lat},${branch?.lng}`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {branch?.address}
-          </a>
+          {branch && <BranchLocationDialog branch={branch} />}
         </div>
         <div>
           <strong className={css({ marginRight: "4px" })}>영업시간</strong>
