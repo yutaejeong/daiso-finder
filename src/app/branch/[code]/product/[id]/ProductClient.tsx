@@ -14,7 +14,7 @@ import {
   IconStairs,
 } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
-import Image from "next/image";
+import { ImageWithFallback } from "@/components/ImageWithFallback";
 import Link from "next/link";
 
 interface Props {
@@ -69,7 +69,7 @@ export function ProductClient({ code, productId, branch, product }: Props) {
       })}
     >
       <Link href="/" aria-label="다이소 파인더 홈으로 이동">
-        <Image
+        <ImageWithFallback
           src="/logo.svg"
           alt="다이소 파인더"
           width={200}
@@ -132,7 +132,7 @@ export function ProductClient({ code, productId, branch, product }: Props) {
           })}
         >
           {image ? (
-            <Image
+            <ImageWithFallback
               src={image}
               alt={name ?? "상품 이미지"}
               width={96}

@@ -4,7 +4,7 @@ import { css } from "@styled-system/css";
 import { InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
 import { IconHistory, IconX } from "@tabler/icons-react";
 import clsx from "clsx";
-import Image from "next/image";
+import { ImageWithFallback } from "@/components/ImageWithFallback";
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { SimplifiedBranchResponse } from "./api/branches/types";
@@ -12,13 +12,17 @@ import { Search } from "@/components/Search";
 import { useRecentBranches } from "@/hooks/useRecentBranches";
 import { trackEvent } from "@/lib/gtag";
 
+/**
+ * 매장 검색 방식. 키워드 검색과 위치 검색이 서로를 덮어쓰지 않도록
+ * 하나의 상태로 관리하고, 그대로 React Query 키로 사용한다.
+ */
+type BranchSearchMode =
+  | { type: "keyword"; keyword: string }
+  | { type: "location"; lat: number; lng: number };
+
 export default function Home() {
   const [searchInput, setSearchInput] = useState("");
-  const [keyword, setKeyword] = useState("");
-  const [location, setLocation] = useState<{
-    curLitd: number;
-    curLttd: number;
-  } | null>(null);
+  const [mode, setMode] = useState<BranchSearchMode | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const { recentBranches, removeRecentBranch } = useRecentBranches();
   const { data, error, fetchNextPage, isError, isFetching, refetch } =
@@ -26,22 +30,30 @@ export default function Home() {
       SimplifiedBranchResponse,
       Error,
       InfiniteData<SimplifiedBranchResponse>,
-      ["branches", string],
+      ["branches", BranchSearchMode | null],
       number
     >({
-      queryKey: ["branches", keyword],
-      enabled: false,
+      queryKey: ["branches", mode],
+      enabled: mode !== null,
+      // 무한 쿼리는 refetch 시 로드된 페이지를 전부 다시 부른다.
+      // 매장 목록은 자주 바뀌지 않으므로 탭 복귀만으로 재조회하지 않는다.
+      refetchOnWindowFocus: false,
       meta: { suppressGlobalError: true },
       initialPageParam: 1,
       getNextPageParam: (lastPage, _pages, lastPageParam) =>
         lastPage.length < 10 ? undefined : lastPageParam + 1,
-      queryFn: async ({ pageParam = 1 }) => {
+      queryFn: async ({ pageParam = 1, queryKey: [, searchMode] }) => {
+        if (!searchMode) {
+          // enabled 가 막아주므로 실제로는 도달하지 않는다.
+          return [];
+        }
+
         const url = new URL("/api/branches/search", window.location.origin);
-        if (location) {
-          url.searchParams.set("curLttd", location.curLttd.toFixed(14));
-          url.searchParams.set("curLitd", location.curLitd.toFixed(14));
+        if (searchMode.type === "location") {
+          url.searchParams.set("curLttd", searchMode.lat.toFixed(14));
+          url.searchParams.set("curLitd", searchMode.lng.toFixed(14));
         } else {
-          url.searchParams.set("keyword", keyword);
+          url.searchParams.set("keyword", searchMode.keyword);
         }
         url.searchParams.set("currentPage", pageParam.toString());
         url.searchParams.set("pageSize", "10");
@@ -61,6 +73,12 @@ export default function Home() {
     () => data?.pages.flatMap((page) => page) ?? [],
     [data],
   );
+  // Search 의 안내 문구는 "검색을 한 적이 있는지" 만 알면 된다.
+  const searchLabel = mode
+    ? mode.type === "keyword"
+      ? mode.keyword
+      : "현재 위치"
+    : "";
 
   const getCurrentPosition = async () => {
     if (!navigator.geolocation) {
@@ -110,13 +128,11 @@ export default function Home() {
     if (action === "location") {
       try {
         const position = await getCurrentPosition();
-        setLocation({
-          curLitd: position.coords.longitude,
-          curLttd: position.coords.latitude,
+        setMode({
+          type: "location",
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
         });
-        setKeyword(
-          `${position.coords.longitude.toFixed(14)},${position.coords.latitude.toFixed(14)}`,
-        );
         trackEvent("branch_location_search");
       } catch (error) {
         console.error("위치 정보 오류:", error);
@@ -127,16 +143,13 @@ export default function Home() {
         alert(errorMessage);
       }
     } else {
+      if (!searchInput.trim()) {
+        return;
+      }
       trackEvent("branch_search", { keyword: searchInput });
-      setKeyword(searchInput);
+      setMode({ type: "keyword", keyword: searchInput });
     }
   };
-
-  useEffect(() => {
-    if (keyword) {
-      fetchNextPage();
-    }
-  }, [keyword, fetchNextPage]);
 
   useEffect(() => {
     if (ref.current) {
@@ -164,7 +177,7 @@ export default function Home() {
         flexDirection: "column",
       })}
     >
-      <Image
+      <ImageWithFallback
         src="/logo.svg"
         alt="다이소 파인더"
         width={200}
@@ -192,7 +205,7 @@ export default function Home() {
         onSubmit={handleSearch}
         isFetching={isFetching}
         hasResults={branches.length > 0}
-        keyword={keyword}
+        keyword={searchLabel}
         withLocation
         searchButtonLabel="매장 검색"
         locationButtonLabel="현재 위치로 주변 매장 검색"
@@ -200,7 +213,7 @@ export default function Home() {
         toolDescription="Search Daiso stores by address or store name and show selectable results."
         toolParamDescription="Address, neighborhood, or Daiso store name"
         errorMessage={isError ? error.message : undefined}
-        onRetry={keyword ? () => refetch() : undefined}
+        onRetry={mode ? () => refetch() : undefined}
         beforeForm={
           recentBranches.length > 0 ? (
             <nav

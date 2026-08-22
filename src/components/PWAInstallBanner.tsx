@@ -10,7 +10,7 @@ import {
   IconDownload,
   IconShare3,
 } from "@tabler/icons-react";
-import Image from "next/image";
+import { ImageWithFallback } from "@/components/ImageWithFallback";
 import { useState } from "react";
 import {
   PWAInstallInstructions,
@@ -124,7 +124,7 @@ export function PWAInstallBanner() {
               padding: "12px 14px !important",
             })}`}
           >
-            <Image
+            <ImageWithFallback
               src="/android-icon-192x192.png"
               alt="다이소 파인더"
               width={40}

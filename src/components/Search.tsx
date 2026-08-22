@@ -29,6 +29,10 @@ interface SearchProps {
   toolName?: string;
   toolDescription?: string;
   toolParamDescription?: string;
+  /** 검색 진행률(0~100). 진행률을 알 수 없으면 undefined */
+  progressPercent?: number;
+  /** 진행률 옆에 함께 보여줄 보조 설명 */
+  progressLabel?: string;
 }
 
 export function Search({
@@ -50,11 +54,21 @@ export function Search({
   toolName,
   toolDescription,
   toolParamDescription,
+  progressPercent,
+  progressLabel,
 }: SearchProps) {
   const inputId = useId();
   const hasError = Boolean(errorMessage);
+  const clampedPercent =
+    typeof progressPercent === "number"
+      ? Math.max(0, Math.min(100, Math.round(progressPercent)))
+      : 0;
+  const showProgress =
+    Boolean(isFetching) && typeof progressPercent === "number";
   const statusMessage = isFetching
-    ? "검색 중..."
+    ? showProgress
+      ? `검색 중... ${clampedPercent}%`
+      : "검색 중..."
     : keyword
       ? "검색 결과가 없습니다"
       : "검색어를 입력해주세요";
@@ -124,6 +138,59 @@ export function Search({
           </button>
         )}
       </form>
+      {showProgress && (
+        <div
+          className={css({
+            marginBottom: "12px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "6px",
+          })}
+        >
+          <div
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={clampedPercent}
+            aria-valuetext={`${clampedPercent}% 완료`}
+            aria-label="상품 검색 진행률"
+            className={css({
+              width: "100%",
+              height: "6px",
+              borderRadius: "999px",
+              backgroundColor: "#e5e5e5",
+              overflow: "hidden",
+            })}
+          >
+            <div
+              className={css({
+                height: "100%",
+                borderRadius: "999px",
+                backgroundColor: "#c4002f",
+                transition: "width 0.25s ease-out",
+              })}
+              style={{ width: `${clampedPercent}%` }}
+            />
+          </div>
+          <span
+            aria-hidden="true"
+            className={clsx(
+              "text-muted",
+              css({
+                fontSize: "0.8125rem",
+                display: "flex",
+                justifyContent: "space-between",
+                gap: "8px",
+              }),
+            )}
+          >
+            <span>{progressLabel ?? "상품을 찾는 중이에요"}</span>
+            <span className={css({ fontVariantNumeric: "tabular-nums" })}>
+              {clampedPercent}%
+            </span>
+          </span>
+        </div>
+      )}
       <div
         className={css({
           display: "flex",
