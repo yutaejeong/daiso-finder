@@ -39,8 +39,17 @@ const APP_MARKDOWN = `# Daiso Finder
 | \`branchCode\` | string | 매장 코드 (/api/branches/search의 code 값) |
 | \`keyword\` | string | 검색할 상품명 |
 | \`currentPage\` | number | 페이지 번호 (기본값: 1) |
+| \`stream\` | \`1\` | NDJSON 스트리밍 응답으로 진행률을 함께 받음 (선택) |
 
 응답: \`{ products: [{ id, name, price, image, stock, stairNo, zoneNo }], hasMore, nextPage }\`
+
+\`stream=1\` (또는 \`Accept: application/x-ndjson\`) 을 주면 한 줄에 하나씩 JSON 이벤트가 내려온다.
+현재 매장에 재고가 있는 상품을 하나 확정할 때마다 \`progress\` 이벤트가 발생하고, 마지막에 \`result\` 이벤트가 위 응답과 동일한 본문을 담는다.
+
+\`\`\`
+{"type":"progress","found":3,"target":10,"percent":30,"page":1,"scanned":10}
+{"type":"result","products":[...],"hasMore":true,"nextPage":2}
+\`\`\`
 
 ## 에이전트 리소스
 

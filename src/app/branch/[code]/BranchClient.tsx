@@ -3,12 +3,14 @@
 import { SimplifiedBranch } from "@/app/api/branches/types";
 import {
   ProductApiResponse,
+  ProductSearchProgress,
   SimplifiedProduct,
 } from "@/app/api/products/types";
 import { BranchLocationDialog } from "@/components/BranchLocationDialog";
 import { Search } from "@/components/Search";
 import { useRecentBranches } from "@/hooks/useRecentBranches";
 import { trackEvent } from "@/lib/gtag";
+import { fetchProductsWithProgress } from "@/lib/productSearchStream";
 import { css } from "@styled-system/css";
 import { IconMapPin, IconPhotoX, IconStairs } from "@tabler/icons-react";
 import {
@@ -28,6 +30,7 @@ interface Props {
 export function BranchClient({ code, initialBranch }: Props) {
   const [searchInput, setSearchInput] = useState("");
   const [keyword, setKeyword] = useState("");
+  const [progress, setProgress] = useState<ProductSearchProgress | null>(null);
   const { addRecentBranch } = useRecentBranches();
 
   const { data: branch } = useQuery<SimplifiedBranch>({
@@ -67,20 +70,29 @@ export function BranchClient({ code, initialBranch }: Props) {
     number
   >({
     queryKey: ["products", code, keyword],
-    queryFn: async ({ pageParam = 1 }) => {
+    queryFn: async ({ pageParam = 1, signal }) => {
       const params = new URLSearchParams({
         keyword,
         currentPage: pageParam.toString(),
         branchCode: code,
       });
-      const response = await fetch(`/api/products?${params.toString()}`);
-      if (!response.ok) {
-        const body = await response.json().catch(() => null);
-        throw new Error(body?.error || "상품 검색 중 오류가 발생했습니다.", {
-          cause: body?.detail,
+
+      setProgress({
+        found: 0,
+        target: 10,
+        percent: 0,
+        page: pageParam,
+        scanned: 0,
+      });
+
+      try {
+        return await fetchProductsWithProgress(params, {
+          signal,
+          onProgress: setProgress,
         });
+      } finally {
+        setProgress(null);
       }
-      return response.json();
     },
     getNextPageParam: (lastPage) => {
       if (!lastPage.hasMore) return undefined;
@@ -172,6 +184,12 @@ export function BranchClient({ code, initialBranch }: Props) {
         onSearchInputChange={setSearchInput}
         onSubmit={handleSearch}
         isFetching={isFetching}
+        progressPercent={progress?.percent}
+        progressLabel={
+          progress
+            ? `${branch?.name ?? "매장"}에서 ${Math.min(progress.found, progress.target)}/${progress.target}개 확인`
+            : undefined
+        }
         hasResults={products.length > 0}
         keyword={keyword}
         searchButtonLabel="상품 검색"
