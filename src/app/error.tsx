@@ -2,7 +2,7 @@
 
 import { css } from "@styled-system/css";
 import { IconRefresh, IconAlertTriangle } from "@tabler/icons-react";
-import Image from "next/image";
+import { ImageWithFallback } from "@/components/ImageWithFallback";
 import Link from "next/link";
 import { useEffect } from "react";
 
@@ -29,7 +29,7 @@ export default function Error({
       })}
     >
       <Link href="/" aria-label="다이소 파인더 홈으로 이동">
-        <Image
+        <ImageWithFallback
           src="/logo.svg"
           alt="다이소 파인더"
           width={200}

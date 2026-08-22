@@ -4,7 +4,7 @@ import { css } from "@styled-system/css";
 import { InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
 import { IconHistory, IconX } from "@tabler/icons-react";
 import clsx from "clsx";
-import Image from "next/image";
+import { ImageWithFallback } from "@/components/ImageWithFallback";
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { SimplifiedBranchResponse } from "./api/branches/types";
@@ -164,7 +164,7 @@ export default function Home() {
         flexDirection: "column",
       })}
     >
-      <Image
+      <ImageWithFallback
         src="/logo.svg"
         alt="다이소 파인더"
         width={200}

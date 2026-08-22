@@ -18,7 +18,7 @@ import {
   useInfiniteQuery,
   useQuery,
 } from "@tanstack/react-query";
-import Image from "next/image";
+import { ImageWithFallback } from "@/components/ImageWithFallback";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -123,7 +123,7 @@ export function BranchClient({ code, initialBranch }: Props) {
       })}
     >
       <Link href="/" aria-label="다이소 파인더 홈으로 이동">
-        <Image
+        <ImageWithFallback
           src="/logo.svg"
           alt="다이소 파인더"
           width={200}
@@ -247,7 +247,7 @@ export function BranchClient({ code, initialBranch }: Props) {
               })}
             >
               {product.image ? (
-                <Image
+                <ImageWithFallback
                   src={product.image}
                   alt={product.name}
                   width={84}
