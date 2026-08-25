@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "generate:daiso-api": "node scripts/prepare-daiso-openapi.mjs && orval --config orval.config.cjs",
-    "prepare": "panda codegen"
+    "prepare": "panda codegen",
+    "test": "node --test --import ./tests/register.mjs \"tests/**/*.test.mjs\""
   },
   "dependencies": {
     "@tabler/core": "^1.4.0",

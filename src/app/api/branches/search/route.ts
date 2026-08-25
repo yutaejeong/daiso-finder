@@ -1,6 +1,7 @@
 import { BranchResponse } from "../types";
 import { selStr } from "@/generated/daiso/client";
 import { DaisoApiError } from "@/lib/daisoApiClient";
+import { internalError, missingParameter, upstreamError } from "@/lib/apiError";
 
 export const dynamic = "force-dynamic";
 
@@ -16,14 +17,10 @@ export async function GET(request: Request) {
     const hasLocation = curLttd && curLitd;
 
     if (!keyword.trim() && !hasLocation) {
-      return new Response(
-        JSON.stringify({
-          error: "검색어를 입력하거나 위치 검색을 시도해주세요.",
-        }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        },
+      return missingParameter(
+        "검색어를 입력하거나 위치 검색을 시도해주세요.",
+        "Either `keyword` or both `curLttd` and `curLitd` must be supplied.",
+        "Retry with ?keyword=강남, or with ?curLttd=37.4972&curLitd=127.0279 for a nearby search.",
       );
     }
 
@@ -63,28 +60,18 @@ export async function GET(request: Request) {
     );
   } catch (error) {
     if (error instanceof DaisoApiError) {
-      return new Response(
-        JSON.stringify({
-          error: "매장 검색 중 오류가 발생했습니다.",
-          detail: error.detail,
-        }),
-        {
-          status: error.status,
-          headers: { "Content-Type": "application/json" },
-        },
+      return upstreamError(
+        "매장 검색 중 오류가 발생했습니다.",
+        error.status,
+        error.detail,
+        "Verify the query parameters, then retry after a short delay. The upstream Daiso service is occasionally unavailable.",
       );
     }
 
     console.error("API 오류:", error);
-    return new Response(
-      JSON.stringify({
-        error: "서버 오류가 발생했습니다.",
-        detail: error instanceof Error ? error.message : String(error),
-      }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      },
+    return internalError(
+      error,
+      "Retry the request. If it keeps failing, report the `detail` field at https://github.com/yutaejeong/daiso-finder/issues.",
     );
   }
 }

@@ -2,16 +2,10 @@ import { SimplifiedBranch } from "@/app/api/branches/types";
 import { formatDaisoBranchName } from "@/lib/branchNames";
 import { fetchBranchByCode } from "@/lib/daisoBranches";
 import { branchSearchKeywords, popularBranches } from "@/lib/seoBranches";
+import { getBaseUrl } from "@/lib/site";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BranchClient } from "./BranchClient";
-
-function getBaseUrl() {
-  return (process.env.NEXT_PUBLIC_APP_URL || "https://daiso-finder.kr").replace(
-    /\/$/,
-    "",
-  );
-}
 
 async function getBranch(code: string): Promise<SimplifiedBranch | null> {
   return fetchBranchByCode(code);

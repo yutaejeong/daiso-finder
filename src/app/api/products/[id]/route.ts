@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { internalError, missingParameter } from "@/lib/apiError";
 import {
   selOfflStrStckList,
   selPdStDispInfo,
@@ -103,16 +104,18 @@ export async function GET(
       searchParams.get("branchCode") ?? searchParams.get("branchCd");
 
     if (!pdNo) {
-      return new Response(
-        JSON.stringify({ error: "상품 정보가 필요합니다." }),
-        { status: 400, headers: { "Content-Type": "application/json" } },
+      return missingParameter(
+        "상품 정보가 필요합니다.",
+        "The product id path segment is required.",
+        "Call GET /api/products?branchCode=<store code>&keyword=<name> and use the `id` field of a result.",
       );
     }
 
     if (!branchCode) {
-      return new Response(
-        JSON.stringify({ error: "매장 정보가 필요합니다." }),
-        { status: 400, headers: { "Content-Type": "application/json" } },
+      return missingParameter(
+        "매장 정보가 필요합니다.",
+        "The `branchCode` query parameter is required.",
+        "Call GET /api/branches/search first and pass the `code` field of the store you want as `branchCode`.",
       );
     }
 
@@ -157,12 +160,9 @@ export async function GET(
     });
   } catch (error) {
     console.error("API 오류:", error);
-    return new Response(
-      JSON.stringify({
-        error: "서버 오류가 발생했습니다.",
-        detail: error instanceof Error ? error.message : String(error),
-      }),
-      { status: 500, headers: { "Content-Type": "application/json" } },
+    return internalError(
+      error,
+      "Verify that the product id and branchCode come from a recent GET /api/products response, then retry.",
     );
   }
 }
