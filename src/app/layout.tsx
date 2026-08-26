@@ -5,33 +5,11 @@ import { GoogleAnalytics } from "./GoogleAnalytics";
 import Provider from "./provider";
 import { WebMCP } from "./webmcp";
 import { branchSearchKeywords } from "@/lib/seoBranches";
+import { buildSiteJsonLd } from "@/lib/jsonLd";
+import { getBaseUrl } from "@/lib/site";
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
-const APP_URL = (
-  process.env.NEXT_PUBLIC_APP_URL || "https://daiso-finder.kr"
-).replace(/\/$/, "");
-
-const webAppJsonLd = {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "WebApplication",
-      "@id": `${APP_URL}/#webapp`,
-      name: "다이소 파인더",
-      description: "다이소 매장의 상품 재고, 가격, 진열 위치를 확인하세요.",
-      applicationCategory: "ShoppingApplication",
-      operatingSystem: "All",
-      offers: { "@type": "Offer", price: "0", priceCurrency: "KRW" },
-      inLanguage: "ko-KR",
-      audience: {
-        "@type": "Audience",
-        audienceType: "Korean shoppers",
-        geographicArea: { "@type": "Country", name: "South Korea" },
-      },
-      keywords: branchSearchKeywords.join(", "),
-    },
-  ],
-};
+const APP_URL = getBaseUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
@@ -105,12 +83,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
-      <body
-        className={css({ padding: "24px !important", height: "100dvh" })}
-      >
+      <body className={css({ padding: "24px !important", height: "100dvh" })}>
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(webAppJsonLd) }}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(buildSiteJsonLd(APP_URL)),
+          }}
         />
         <Provider>{children}</Provider>
         <WebMCP />

@@ -4,6 +4,7 @@ import {
   selOfflStrStckList,
   selPdStDispInfo,
 } from "@/generated/daiso/client";
+import { internalError, missingParameter } from "@/lib/apiError";
 import {
   Product,
   ProductApiResponse,
@@ -187,13 +188,6 @@ async function collectProducts(
   };
 }
 
-function errorResponse(message: string, status: number) {
-  return new Response(JSON.stringify({ error: message }), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  });
-}
-
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const keyword = searchParams.get("keyword");
@@ -205,11 +199,19 @@ export async function GET(request: NextRequest) {
     (request.headers.get("accept") ?? "").includes("application/x-ndjson");
 
   if (!keyword?.trim()) {
-    return errorResponse("상품명을 입력해주세요.", 400);
+    return missingParameter(
+      "상품명을 입력해주세요.",
+      "The `keyword` query parameter is required and must not be blank.",
+      "Retry with ?branchCode=<store code>&keyword=<product name>.",
+    );
   }
 
   if (!branchCode) {
-    return errorResponse("매장 정보가 필요합니다.", 400);
+    return missingParameter(
+      "매장 정보가 필요합니다.",
+      "The `branchCode` query parameter is required.",
+      "Call GET /api/branches/search first and pass the `code` field of the store you want as `branchCode`.",
+    );
   }
 
   if (!wantsStream) {
@@ -220,15 +222,9 @@ export async function GET(request: NextRequest) {
       });
     } catch (error) {
       console.error("API 오류:", error);
-      return new Response(
-        JSON.stringify({
-          error: "서버 오류가 발생했습니다.",
-          detail: error instanceof Error ? error.message : String(error),
-        }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        },
+      return internalError(
+        error,
+        "Retry the request, or add stream=1 to receive partial progress while the store catalogue is scanned.",
       );
     }
   }

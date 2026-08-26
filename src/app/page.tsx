@@ -1,338 +1,167 @@
-"use client";
-
 import { css } from "@styled-system/css";
-import { InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
-import { IconHistory, IconX } from "@tabler/icons-react";
 import clsx from "clsx";
-import { ImageWithFallback } from "@/components/ImageWithFallback";
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { SimplifiedBranchResponse } from "./api/branches/types";
-import { Search } from "@/components/Search";
-import { useRecentBranches } from "@/hooks/useRecentBranches";
-import { trackEvent } from "@/lib/gtag";
+import { HomeClient } from "./HomeClient";
+import { SiteFooter } from "@/components/SiteFooter";
+import { popularBranches } from "@/lib/seoBranches";
+import { CLI_PACKAGE_NAME, SITE_NAME, SITE_NAME_EN } from "@/lib/site";
+
+const sectionClass = css({
+  marginTop: "24px",
+  display: "flex",
+  flexDirection: "column",
+  gap: "8px",
+});
+
+const headingClass = css({
+  margin: 0,
+  fontSize: "1rem",
+  fontWeight: 700,
+  color: "#1f2937",
+});
+
+const paragraphClass = css({
+  margin: 0,
+  fontSize: "0.875rem",
+  lineHeight: 1.75,
+  color: "#374151",
+});
+
+const listClass = css({
+  margin: 0,
+  paddingLeft: "18px",
+  listStyle: "disc outside",
+  display: "flex",
+  flexDirection: "column",
+  gap: "4px",
+  fontSize: "0.875rem",
+  lineHeight: 1.7,
+  color: "#374151",
+});
 
 /**
- * 매장 검색 방식. 키워드 검색과 위치 검색이 서로를 덮어쓰지 않도록
- * 하나의 상태로 관리하고, 그대로 React Query 키로 사용한다.
+ * 홈은 검색 UI(클라이언트)와 서비스 설명(서버 렌더링)으로 나뉜다.
+ * 검색 영역은 기존과 동일하게 첫 화면을 그대로 채우고, 설명 영역은
+ * 스크롤해야 보이므로 화면 구성은 바뀌지 않으면서 원본 HTML 에는
+ * 자바스크립트 없이도 읽히는 본문이 남는다.
  */
-type BranchSearchMode =
-  | { type: "keyword"; keyword: string }
-  | { type: "location"; lat: number; lng: number };
-
 export default function Home() {
-  const [searchInput, setSearchInput] = useState("");
-  const [mode, setMode] = useState<BranchSearchMode | null>(null);
-  const ref = useRef<HTMLDivElement>(null);
-  const { recentBranches, removeRecentBranch } = useRecentBranches();
-  const { data, error, fetchNextPage, isError, isFetching, refetch } =
-    useInfiniteQuery<
-      SimplifiedBranchResponse,
-      Error,
-      InfiniteData<SimplifiedBranchResponse>,
-      ["branches", BranchSearchMode | null],
-      number
-    >({
-      queryKey: ["branches", mode],
-      enabled: mode !== null,
-      // 무한 쿼리는 refetch 시 로드된 페이지를 전부 다시 부른다.
-      // 매장 목록은 자주 바뀌지 않으므로 탭 복귀만으로 재조회하지 않는다.
-      refetchOnWindowFocus: false,
-      meta: { suppressGlobalError: true },
-      initialPageParam: 1,
-      getNextPageParam: (lastPage, _pages, lastPageParam) =>
-        lastPage.length < 10 ? undefined : lastPageParam + 1,
-      queryFn: async ({ pageParam = 1, queryKey: [, searchMode] }) => {
-        if (!searchMode) {
-          // enabled 가 막아주므로 실제로는 도달하지 않는다.
-          return [];
-        }
-
-        const url = new URL("/api/branches/search", window.location.origin);
-        if (searchMode.type === "location") {
-          url.searchParams.set("curLttd", searchMode.lat.toFixed(14));
-          url.searchParams.set("curLitd", searchMode.lng.toFixed(14));
-        } else {
-          url.searchParams.set("keyword", searchMode.keyword);
-        }
-        url.searchParams.set("currentPage", pageParam.toString());
-        url.searchParams.set("pageSize", "10");
-        url.searchParams.set("pageIndex", "0");
-        const response = await fetch(url);
-        if (!response.ok) {
-          const body = await response.json().catch(() => null);
-          throw new Error(body?.error || "매장 검색 중 오류가 발생했습니다.", {
-            cause: body?.detail,
-          });
-        }
-        const data: SimplifiedBranchResponse = await response.json();
-        return data;
-      },
-    });
-  const branches = useMemo(
-    () => data?.pages.flatMap((page) => page) ?? [],
-    [data],
-  );
-  // Search 의 안내 문구는 "검색을 한 적이 있는지" 만 알면 된다.
-  const searchLabel = mode
-    ? mode.type === "keyword"
-      ? mode.keyword
-      : "현재 위치"
-    : "";
-
-  const getCurrentPosition = async () => {
-    if (!navigator.geolocation) {
-      throw new Error("이 브라우저는 위치 정보를 지원하지 않습니다.");
-    }
-
-    return new Promise<GeolocationPosition>((resolve, reject) => {
-      navigator.geolocation.getCurrentPosition(
-        resolve,
-        (error: GeolocationPositionError) => {
-          let errorMessage = "위치 정보를 가져오는데 실패했습니다.";
-
-          switch (error.code) {
-            case error.PERMISSION_DENIED:
-              errorMessage =
-                "위치 정보 접근 권한이 거부되었습니다. 브라우저 설정에서 위치 정보 권한을 허용해주세요.";
-              break;
-            case error.POSITION_UNAVAILABLE:
-              errorMessage =
-                "위치 정보를 사용할 수 없습니다. GPS가 켜져있는지 확인하거나, 잠시 후 다시 시도해주세요.";
-              break;
-            case error.TIMEOUT:
-              errorMessage =
-                "위치 정보 요청 시간이 초과되었습니다. 다시 시도해주세요.";
-              break;
-            default:
-              errorMessage = `위치 정보 오류: ${error.message || "알 수 없는 오류가 발생했습니다."}`;
-          }
-
-          reject(new Error(errorMessage));
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0,
-        },
-      );
-    });
-  };
-
-  const handleSearch = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const button = (e.nativeEvent as SubmitEvent)
-      .submitter as HTMLButtonElement | null;
-    const action = button?.value ?? "keyword";
-
-    if (action === "location") {
-      try {
-        const position = await getCurrentPosition();
-        setMode({
-          type: "location",
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-        });
-        trackEvent("branch_location_search");
-      } catch (error) {
-        console.error("위치 정보 오류:", error);
-        const errorMessage =
-          error instanceof Error
-            ? error.message
-            : "위치 정보를 가져오는데 실패했습니다. 다시 시도해주세요.";
-        alert(errorMessage);
-      }
-    } else {
-      if (!searchInput.trim()) {
-        return;
-      }
-      trackEvent("branch_search", { keyword: searchInput });
-      setMode({ type: "keyword", keyword: searchInput });
-    }
-  };
-
-  useEffect(() => {
-    if (ref.current) {
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && branches.length > 0) {
-            fetchNextPage();
-            trackEvent("branches_load_more");
-          }
-        });
-      });
-      observer.observe(ref.current);
-      return () => observer.disconnect();
-    }
-  }, [fetchNextPage, branches]);
-
   return (
-    <main
+    <div
       className={css({
-        width: "100%",
-        maxWidth: "480px",
-        margin: "0 auto",
         height: "100%",
-        display: "flex",
-        flexDirection: "column",
+        overflowY: "auto",
+        overflowX: "hidden",
       })}
     >
-      <ImageWithFallback
-        src="/logo.svg"
-        alt="다이소 파인더"
-        width={200}
-        height={80}
-        priority
-        draggable={false}
-        style={{ WebkitUserDrag: "none" } as React.CSSProperties}
+      <main
         className={css({
-          userSelect: "none",
-          marginBottom: "24px",
-          width: "150px",
-          height: "60px",
-          lg: {
-            width: "200px",
-            height: "80px",
-          },
+          width: "100%",
+          maxWidth: "480px",
+          margin: "0 auto",
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
         })}
-      />
-      <h1>당신이 있는 매장의 상품을 찾아드립니다</h1>
-      <Search
-        title="매장을 선택해주세요"
-        placeholder="주소 혹은 지점명을 입력하세요"
-        searchInput={searchInput}
-        onSearchInputChange={(value) => setSearchInput(value)}
-        onSubmit={handleSearch}
-        isFetching={isFetching}
-        hasResults={branches.length > 0}
-        keyword={searchLabel}
-        withLocation
-        searchButtonLabel="매장 검색"
-        locationButtonLabel="현재 위치로 주변 매장 검색"
-        toolName="search_daiso_stores"
-        toolDescription="Search Daiso stores by address or store name and show selectable results."
-        toolParamDescription="Address, neighborhood, or Daiso store name"
-        errorMessage={isError ? error.message : undefined}
-        onRetry={mode ? () => refetch() : undefined}
-        beforeForm={
-          recentBranches.length > 0 ? (
-            <nav
-              aria-label="최근 본 다이소 매장"
-              className={css({
-                display: "flex",
-                gap: "10px",
-                overflowX: "auto",
-                paddingBlock: 4,
-                paddingInline: 4,
-                marginBottom: "10px",
-                scrollbarWidth: "none",
-                WebkitMaskImage:
-                  "linear-gradient(90deg, transparent 0, black 14px, black calc(100% - 22px), transparent 100%)",
-                maskImage:
-                  "linear-gradient(90deg, transparent 0, black 14px, black calc(100% - 22px), transparent 100%)",
-                "&::-webkit-scrollbar": { display: "none" },
-              })}
-            >
-              <span
-                aria-hidden="true"
-                className={css({
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "4px",
-                  flexShrink: 0,
-                  color: "#666",
-                  fontSize: "0.8125rem",
-                  fontWeight: 500,
-                })}
-              >
-                <IconHistory width={15} height={15} />
-                최근
-              </span>
-              {recentBranches.map((branch) => (
-                <span
-                  key={branch.code}
-                  className={clsx(
-                    "badge bg-blue-lt",
-                    css({
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "4px",
-                      flexShrink: 0,
-                      minHeight: "32px",
-                      padding: "4px 4px 4px 11px",
-                      fontSize: "0.875rem",
-                      lineHeight: 1.2,
-                    }),
-                  )}
-                >
-                  <Link
-                    href={`/branch/${branch.code}`}
-                    onClick={() =>
-                      trackEvent("recent_branch_click", {
-                        branch_code: branch.code,
-                        branch_name: branch.name,
-                      })
-                    }
-                    className={css({
-                      color: "inherit",
-                      textDecoration: "none",
-                    })}
-                  >
-                    {branch.name}
-                  </Link>
-                  <button
-                    type="button"
-                    aria-label={`${branch.name} 최근 본 매장에서 제거`}
-                    onClick={() => {
-                      removeRecentBranch(branch.code);
-                      trackEvent("recent_branch_remove", {
-                        branch_code: branch.code,
-                      });
-                    }}
-                    className={css({
-                      display: "inline-flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      width: "28px",
-                      height: "28px",
-                      padding: 0,
-                      border: "none",
-                      borderRadius: "50%",
-                      backgroundColor: "transparent",
-                      color: "inherit",
-                      cursor: "pointer",
-                      opacity: 0.7,
-                      _hover: { opacity: 1 },
-                    })}
-                  >
-                    <IconX aria-hidden="true" width={14} height={14} />
-                  </button>
-                </span>
-              ))}
-            </nav>
-          ) : undefined
-        }
       >
-        {branches?.map((branch) => (
-          <Link
-            href={`/branch/${branch.code}`}
-            className="card"
-            key={branch.code}
-            onClick={() =>
-              trackEvent("branch_click", {
-                branch_code: branch.code,
-                branch_name: branch.name,
-              })
-            }
+        <HomeClient />
+      </main>
+
+      <div
+        className={css({
+          width: "100%",
+          maxWidth: "480px",
+          margin: "0 auto",
+          paddingTop: "32px",
+          paddingBottom: "32px",
+        })}
+      >
+        <section className={sectionClass}>
+          <h2 className={headingClass}>{SITE_NAME}는 어떤 서비스인가요</h2>
+          <p className={paragraphClass}>
+            {SITE_NAME}({SITE_NAME_EN})는 전국 다이소 매장을 찾고, 그 매장에
+            원하는 상품이 지금 있는지 확인하는 무료 웹 서비스입니다. 주소나
+            지점명으로 검색하거나 현재 위치를 기준으로 가까운 매장을 찾은 다음,
+            매장 안에서 상품명을 검색하면 재고 수량과 가격은 물론 그 상품이 몇
+            층 몇 번 구역에 진열돼 있는지까지 알려줍니다. 매장에 헛걸음하지
+            않고, 도착해서도 진열대를 헤매지 않도록 돕는 것이 목표입니다.
+          </p>
+        </section>
+
+        <section className={sectionClass}>
+          <h2 className={headingClass}>이렇게 사용하세요</h2>
+          <ol
+            className={clsx(listClass, css({ listStyle: "decimal outside" }))}
           >
-            <div className="card-body">
-              <h5 className="card-title">{branch.name}</h5>
-              <p className="card-text">{branch.address}</p>
-            </div>
-          </Link>
-        ))}
-        <div ref={ref} className={css({ width: "100%", height: "10px" })} />
-      </Search>
-    </main>
+            <li>
+              위 검색창에 주소나 지점명을 입력하거나, 위치 버튼을 눌러 주변
+              매장을 찾습니다.
+            </li>
+            <li>매장을 선택해 매장 상세 페이지로 이동합니다.</li>
+            <li>
+              상품명을 검색하면 그 매장에 재고가 있는 상품만 가격·재고 수량과
+              함께 보여줍니다.
+            </li>
+            <li>
+              상품을 선택하면 진열 층과 구역, 그리고 재고가 있는 주변 매장을
+              확인할 수 있습니다.
+            </li>
+          </ol>
+        </section>
+
+        <section className={sectionClass}>
+          <h2 className={headingClass}>많이 찾는 다이소 매장</h2>
+          <p className={paragraphClass}>
+            아래 매장은 바로 열어볼 수 있습니다. 검색으로 전국 어느 매장이든
+            찾을 수 있습니다.
+          </p>
+          <ul className={listClass}>
+            {popularBranches.slice(0, 8).map((branch) => (
+              <li key={branch.code}>
+                <Link href={`/branch/${branch.code}`}>
+                  다이소 {branch.name} 상품 찾기
+                </Link>{" "}
+                — {branch.address}
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section className={sectionClass}>
+          <h2 className={headingClass}>
+            개발자와 AI 에이전트를 위한 {SITE_NAME} API
+          </h2>
+          <p className={paragraphClass}>
+            {SITE_NAME}의 매장·재고 데이터는 API 키 없이 무료로 호출할 수 있는
+            공개 REST API 로도 제공됩니다. 전체 스펙은{" "}
+            <Link href="/developers">개발자 포털</Link>과{" "}
+            <a href="/openapi.json">OpenAPI 문서</a>에 공개돼 있고,{" "}
+            <a href="/api/sandbox">샌드박스</a>에서 고정된 예시 데이터로 먼저
+            시험해 볼 수 있습니다. AI 에이전트는 <code>/api/mcp</code> MCP
+            서버에 연결하거나{" "}
+            <a href="/agent-instructions.md">에이전트 사용 안내</a>와{" "}
+            <a href="/llms.txt">llms.txt</a>를 참고하세요. 터미널에서는{" "}
+            <code>npx {CLI_PACKAGE_NAME} stores 강남</code> 으로 바로 조회할 수
+            있습니다.
+          </p>
+        </section>
+
+        <section className={sectionClass}>
+          <h2 className={headingClass}>데이터 출처와 정확도</h2>
+          <p className={paragraphClass}>
+            매장 정보와 재고, 진열 위치는 다이소가 운영하는 다이소몰 API 에서
+            조회 시점마다 실시간으로 가져오며 별도로 저장하지 않습니다. 표시되는
+            재고는 다이소몰이 제공하는 값이라 실제 매장 상황과 다를 수 있으니,
+            꼭 필요한 물건이라면 방문 전 매장에 확인해주세요. {SITE_NAME}는
+            아성다이소의 공식 서비스가 아닌 개인 오픈소스 프로젝트입니다. 자세한
+            내용은 <Link href="/about">서비스 소개</Link>와{" "}
+            <Link href="/privacy">개인정보 처리방침</Link>에서 확인할 수
+            있습니다.
+          </p>
+        </section>
+
+        <SiteFooter />
+      </div>
+    </div>
   );
 }

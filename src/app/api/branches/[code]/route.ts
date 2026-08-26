@@ -1,4 +1,5 @@
 import { DaisoBranchApiError, fetchBranchByCode } from "@/lib/daisoBranches";
+import { internalError, notFound, upstreamError } from "@/lib/apiError";
 
 export async function GET(
   _request: Request,
@@ -10,14 +11,10 @@ export async function GET(
     const branch = await fetchBranchByCode(code);
 
     if (!branch) {
-      return new Response(
-        JSON.stringify({
-          error: "매장 정보를 찾을 수 없습니다.",
-        }),
-        {
-          status: 404,
-          headers: { "Content-Type": "application/json" },
-        },
+      return notFound(
+        "매장 정보를 찾을 수 없습니다.",
+        `No Daiso store matches the store code "${code}".`,
+        "Store codes come from the `code` field of GET /api/branches/search. Search for the store by name or address first.",
       );
     }
 
@@ -28,28 +25,18 @@ export async function GET(
     });
   } catch (error) {
     if (error instanceof DaisoBranchApiError) {
-      return new Response(
-        JSON.stringify({
-          error: error.message,
-          detail: error.detail,
-        }),
-        {
-          status: error.status,
-          headers: { "Content-Type": "application/json" },
-        },
+      return upstreamError(
+        error.message,
+        error.status,
+        error.detail,
+        "Verify the store code, then retry after a short delay. The upstream Daiso service is occasionally unavailable.",
       );
     }
 
     console.error("API 오류:", error);
-    return new Response(
-      JSON.stringify({
-        error: "서버 오류가 발생했습니다.",
-        detail: error instanceof Error ? error.message : String(error),
-      }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      },
+    return internalError(
+      error,
+      "Retry the request. If it keeps failing, report the `detail` field at https://github.com/yutaejeong/daiso-finder/issues.",
     );
   }
 }

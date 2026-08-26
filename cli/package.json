@@ -1,0 +1,36 @@
+{
+  "name": "daiso-finder-cli",
+  "version": "1.0.0",
+  "description": "Command line client for Daiso Finder — find Daiso stores in Korea and check in-store product stock, price, and shelf location.",
+  "keywords": [
+    "daiso",
+    "daiso-finder",
+    "다이소",
+    "store-locator",
+    "inventory",
+    "korea",
+    "cli"
+  ],
+  "homepage": "https://daiso-finder.kr/developers",
+  "bugs": "https://github.com/yutaejeong/daiso-finder/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yutaejeong/daiso-finder.git",
+    "directory": "cli"
+  },
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "daiso-finder": "src/index.mjs"
+  },
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test"
+  }
+}
