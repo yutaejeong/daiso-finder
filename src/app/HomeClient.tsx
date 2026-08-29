@@ -10,19 +10,20 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { SimplifiedBranchResponse } from "@/app/api/branches/types";
 import { Search } from "@/components/Search";
 import { useRecentBranches } from "@/hooks/useRecentBranches";
+import { useUrlSearchParams } from "@/hooks/useUrlSearchParams";
 import { trackEvent } from "@/lib/gtag";
-
-/**
- * 매장 검색 방식. 키워드 검색과 위치 검색이 서로를 덮어쓰지 않도록
- * 하나의 상태로 관리하고, 그대로 React Query 키로 사용한다.
- */
-type BranchSearchMode =
-  | { type: "keyword"; keyword: string }
-  | { type: "location"; lat: number; lng: number };
+import {
+  BranchSearchMode,
+  branchSearchModeToParams,
+  parseBranchSearchMode,
+} from "@/lib/searchParams";
+import { BRANCH_SEARCH_CACHE } from "@/lib/queryCache";
 
 export function HomeClient() {
   const [searchInput, setSearchInput] = useState("");
-  const [mode, setMode] = useState<BranchSearchMode | null>(null);
+  // 검색 조건은 URL 에 두어야 뒤로/앞으로 가기로 결과가 그대로 돌아온다.
+  const [params, setParams] = useUrlSearchParams();
+  const mode = useMemo(() => parseBranchSearchMode(params), [params]);
   const ref = useRef<HTMLDivElement>(null);
   const { recentBranches, removeRecentBranch } = useRecentBranches();
   const { data, error, fetchNextPage, isError, isFetching, refetch } =
@@ -38,6 +39,8 @@ export function HomeClient() {
       // 무한 쿼리는 refetch 시 로드된 페이지를 전부 다시 부른다.
       // 매장 목록은 자주 바뀌지 않으므로 탭 복귀만으로 재조회하지 않는다.
       refetchOnWindowFocus: false,
+      // 매장 상세를 보고 뒤로 돌아왔을 때 다시 불러오지 않도록 캐시를 오래 둔다.
+      ...BRANCH_SEARCH_CACHE,
       meta: { suppressGlobalError: true },
       initialPageParam: 1,
       getNextPageParam: (lastPage, _pages, lastPageParam) =>
@@ -79,6 +82,13 @@ export function HomeClient() {
       ? mode.keyword
       : "현재 위치"
     : "";
+
+  // 뒤로/앞으로 가기로 검색어가 바뀌면 입력창도 함께 되돌린다.
+  useEffect(() => {
+    if (mode?.type === "keyword") {
+      setSearchInput(mode.keyword);
+    }
+  }, [mode]);
 
   const getCurrentPosition = async () => {
     if (!navigator.geolocation) {
@@ -128,11 +138,13 @@ export function HomeClient() {
     if (action === "location") {
       try {
         const position = await getCurrentPosition();
-        setMode({
-          type: "location",
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-        });
+        setParams(
+          branchSearchModeToParams({
+            type: "location",
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          }),
+        );
         trackEvent("branch_location_search");
       } catch (error) {
         console.error("위치 정보 오류:", error);
@@ -147,7 +159,9 @@ export function HomeClient() {
         return;
       }
       trackEvent("branch_search", { keyword: searchInput });
-      setMode({ type: "keyword", keyword: searchInput });
+      setParams(
+        branchSearchModeToParams({ type: "keyword", keyword: searchInput }),
+      );
     }
   };
 
@@ -205,6 +219,7 @@ export function HomeClient() {
         toolParamDescription="Address, neighborhood, or Daiso store name"
         errorMessage={isError ? error.message : undefined}
         onRetry={mode ? () => refetch() : undefined}
+        scrollRestorationKey={mode ? `branches:${params.toString()}` : null}
         beforeForm={
           recentBranches.length > 0 ? (
             <nav

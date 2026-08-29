@@ -9,6 +9,7 @@ import {
 } from "@tabler/icons-react";
 import clsx from "clsx";
 import { ReactNode, useId } from "react";
+import { useScrollRestoration } from "@/hooks/useScrollRestoration";
 
 interface SearchProps {
   title: string;
@@ -33,6 +34,11 @@ interface SearchProps {
   progressPercent?: number;
   /** 진행률 옆에 함께 보여줄 보조 설명 */
   progressLabel?: string;
+  /**
+   * 결과 목록의 스크롤 위치를 기억할 키. 검색 조건마다 다른 값을 주면
+   * 뒤로가기로 돌아왔을 때 보고 있던 위치가 복원된다.
+   */
+  scrollRestorationKey?: string | null;
 }
 
 export function Search({
@@ -56,8 +62,10 @@ export function Search({
   toolParamDescription,
   progressPercent,
   progressLabel,
+  scrollRestorationKey = null,
 }: SearchProps) {
   const inputId = useId();
+  const resultsRef = useScrollRestoration<HTMLDivElement>(scrollRestorationKey);
   const hasError = Boolean(errorMessage);
   const clampedPercent =
     typeof progressPercent === "number"
@@ -192,6 +200,7 @@ export function Search({
         </div>
       )}
       <div
+        ref={resultsRef}
         className={css({
           display: "flex",
           flexDirection: "column",

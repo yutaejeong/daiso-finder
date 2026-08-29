@@ -9,8 +9,11 @@ import {
 import { BranchLocationDialog } from "@/components/BranchLocationDialog";
 import { Search } from "@/components/Search";
 import { useRecentBranches } from "@/hooks/useRecentBranches";
+import { useUrlSearchParams } from "@/hooks/useUrlSearchParams";
 import { trackEvent } from "@/lib/gtag";
 import { fetchProductsWithProgress } from "@/lib/productSearchStream";
+import { PRODUCT_SEARCH_CACHE } from "@/lib/queryCache";
+import { parseSearchKeyword, searchKeywordToParams } from "@/lib/searchParams";
 import { css } from "@styled-system/css";
 import { IconMapPin, IconPhotoX, IconStairs } from "@tabler/icons-react";
 import {
@@ -20,7 +23,7 @@ import {
 } from "@tanstack/react-query";
 import { ImageWithFallback } from "@/components/ImageWithFallback";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 interface Props {
   code: string;
@@ -29,9 +32,18 @@ interface Props {
 
 export function BranchClient({ code, initialBranch }: Props) {
   const [searchInput, setSearchInput] = useState("");
-  const [keyword, setKeyword] = useState("");
+  // 검색어는 URL 에 두어야 뒤로/앞으로 가기로 결과가 그대로 돌아온다.
+  const [params, setParams] = useUrlSearchParams();
+  const keyword = useMemo(() => parseSearchKeyword(params), [params]);
   const [progress, setProgress] = useState<ProductSearchProgress | null>(null);
   const { addRecentBranch } = useRecentBranches();
+
+  // 뒤로/앞으로 가기로 검색어가 바뀌면 입력창도 함께 되돌린다.
+  useEffect(() => {
+    if (keyword) {
+      setSearchInput(keyword);
+    }
+  }, [keyword]);
 
   const { data: branch } = useQuery<SimplifiedBranch>({
     queryKey: ["branch", code],
@@ -100,13 +112,15 @@ export function BranchClient({ code, initialBranch }: Props) {
     },
     enabled: !!keyword,
     meta: { suppressGlobalError: true },
+    // 상품 상세를 보고 뒤로 돌아왔을 때 다시 검색하지 않도록 캐시를 오래 둔다.
+    ...PRODUCT_SEARCH_CACHE,
     initialPageParam: 1,
   });
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     trackEvent("product_search", { keyword: searchInput, branch_code: code });
-    setKeyword(searchInput);
+    setParams(searchKeywordToParams(searchInput));
   };
 
   const products = data?.pages.flatMap((page) => page.products) || [];
@@ -198,6 +212,7 @@ export function BranchClient({ code, initialBranch }: Props) {
         toolParamDescription="Product name to search in the current store"
         errorMessage={isError ? error.message : undefined}
         onRetry={keyword ? () => refetch() : undefined}
+        scrollRestorationKey={keyword ? `products:${code}:${keyword}` : null}
       >
         {products.map((product: SimplifiedProduct) => (
           <Link

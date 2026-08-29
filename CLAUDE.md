@@ -76,6 +76,15 @@ It has no dependency on the Next.js app and is covered by `tests/cli.test.mjs`.
 
 React Query (`@tanstack/react-query`) handles all server state, caching, and pagination. Provider is in `src/app/provider.tsx`.
 
+Search conditions live in the URL query string (`?q=`, or `?lat=&lng=` for the home page's
+location search) so browser back/forward restores them. `src/lib/searchParams.ts` parses and
+serializes them, `src/hooks/useUrlSearchParams.ts` reads the query string and updates it with
+`history.pushState` (no RSC round trip, synced back via `popstate`), and the cache windows in
+`src/lib/queryCache.ts` keep the results around so returning from a detail page does not
+re-search. `useSearchParams()` is deliberately avoided — it would push `/` out of static
+rendering. Result lists scroll inside their own container, so `Search` restores their scroll
+position via `src/hooks/useScrollRestoration.ts`.
+
 ### Styling
 
 - **PandaCSS** for CSS-in-JS — use `css()` from `@styled-system/css`
