@@ -4,7 +4,11 @@ import {
   selOfflStrStckList,
   selPdStDispInfo,
 } from "@/generated/daiso/client";
-import { internalError, missingParameter } from "@/lib/apiError";
+import {
+  getOnlyMethodNotAllowed,
+  internalError,
+  missingParameter,
+} from "@/lib/apiError";
 import {
   Product,
   ProductApiResponse,
@@ -273,3 +277,8 @@ export async function GET(request: NextRequest) {
     },
   });
 }
+
+export const POST = getOnlyMethodNotAllowed;
+export const PUT = getOnlyMethodNotAllowed;
+export const PATCH = getOnlyMethodNotAllowed;
+export const DELETE = getOnlyMethodNotAllowed;

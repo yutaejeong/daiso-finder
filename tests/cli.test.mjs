@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { test } from "node:test";
+import { fileURLToPath } from "node:url";
 import {
   apiRoot,
   buildUrl,
@@ -58,6 +60,23 @@ test("--sandbox routes every request to the fixture endpoints", () => {
     buildUrl("/branches/search", sandbox, { keyword: "강남" }).pathname,
     "/api/sandbox/branches/search",
   );
+  assert.equal(
+    buildUrl("/products/1019373", sandbox, { branchCode: "11199" })
+      .pathname,
+    "/api/sandbox/products/1019373",
+  );
+});
+
+test("the CLI entrypoint executes directly on this platform", () => {
+  const entrypoint = fileURLToPath(
+    new URL("../cli/src/index.mjs", import.meta.url),
+  );
+  const result = spawnSync(process.execPath, [entrypoint, "--version"], {
+    encoding: "utf8",
+  });
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /^\d+\.\d+\.\d+\s*$/);
 });
 
 test("buildUrl drops empty query values", () => {

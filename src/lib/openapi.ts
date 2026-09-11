@@ -78,10 +78,7 @@ export function buildOpenApiDocument(baseUrl: string): JsonObject {
       termsOfService: `${base}/privacy`,
       "x-repository": SOURCE_REPOSITORY,
     },
-    servers: [
-      { url: base, description: "Production" },
-      { url: `${base}/api/sandbox`, description: "Sandbox (fixture data)" },
-    ],
+    servers: [{ url: base, description: "Production and fixture endpoints" }],
     externalDocs: {
       description: `${SITE_NAME_EN} developer portal`,
       url: `${base}/developers`,
@@ -418,6 +415,41 @@ export function buildOpenApiDocument(baseUrl: string): JsonObject {
               content: {
                 "application/json": {
                   schema: { $ref: "#/components/schemas/ProductSearchResult" },
+                },
+              },
+            },
+            "400": { $ref: "#/components/responses/BadRequest" },
+          },
+        },
+      },
+      "/api/sandbox/products/{id}": {
+        get: {
+          operationId: "getSandboxProductAvailability",
+          tags: ["products"],
+          summary: "Sandbox copy of getProductAvailability",
+          description:
+            "Returns fixed stock, shelf placement, and nearby-store data for a fixture product without contacting the upstream Daiso service.",
+          parameters: [
+            {
+              name: "id",
+              in: "path",
+              required: true,
+              description: "Fixture product id.",
+              schema: { type: "string", examples: ["1019373"] },
+            },
+            queryParam(
+              "branchCode",
+              "Fixture store code.",
+              { type: "string", examples: ["11199"] },
+              true,
+            ),
+          ],
+          responses: {
+            "200": {
+              description: "Fixture product availability",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ProductAvailability" },
                 },
               },
             },

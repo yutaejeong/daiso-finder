@@ -1,5 +1,9 @@
 import { NextRequest } from "next/server";
-import { internalError, missingParameter } from "@/lib/apiError";
+import {
+  getOnlyMethodNotAllowed,
+  internalError,
+  missingParameter,
+} from "@/lib/apiError";
 import {
   selOfflStrStckList,
   selPdStDispInfo,
@@ -166,3 +170,8 @@ export async function GET(
     );
   }
 }
+
+export const POST = getOnlyMethodNotAllowed;
+export const PUT = getOnlyMethodNotAllowed;
+export const PATCH = getOnlyMethodNotAllowed;
+export const DELETE = getOnlyMethodNotAllowed;

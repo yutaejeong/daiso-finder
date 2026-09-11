@@ -3,6 +3,7 @@ import { test } from "node:test";
 import {
   filterSandboxProducts,
   filterSandboxStores,
+  findSandboxProduct,
   findSandboxStore,
   SANDBOX_PRODUCTS,
   SANDBOX_STORES,
@@ -42,6 +43,13 @@ test("documented sandbox store codes exist", () => {
     assert.ok(findSandboxStore(code), `missing fixture store ${code}`);
   }
   assert.equal(findSandboxStore("00000"), null);
+});
+
+test("documented sandbox product ids exist", () => {
+  for (const id of ["1019373", "1024881", "1031244"]) {
+    assert.ok(findSandboxProduct(id), `missing fixture product ${id}`);
+  }
+  assert.equal(findSandboxProduct("0000000"), null);
 });
 
 test("store search filters by name or address", () => {

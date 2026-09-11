@@ -70,6 +70,10 @@ export function findSandboxStore(code: string) {
   return SANDBOX_STORES.find((store) => store.code === code) ?? null;
 }
 
+export function findSandboxProduct(id: string) {
+  return SANDBOX_PRODUCTS.find((product) => product.id === id) ?? null;
+}
+
 export function filterSandboxStores(keyword: string) {
   const needle = keyword.trim();
 

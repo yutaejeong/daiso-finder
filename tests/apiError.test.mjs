@@ -4,6 +4,7 @@ import {
   API_ERROR_CODES,
   buildApiErrorBody,
   internalError,
+  methodNotAllowed,
   missingParameter,
   notFound,
   upstreamError,
@@ -75,4 +76,17 @@ test("internalError keeps the exception message in detail", async () => {
   assert.equal(body.code, "internal_error");
   assert.equal(body.detail, "boom");
   assert.equal(body.hint, "retry later");
+});
+
+test("methodNotAllowed returns the shared JSON shape and Allow header", async () => {
+  const response = methodNotAllowed(
+    new Request("https://daiso-finder.kr/api/products", { method: "POST" }),
+    ["GET", "HEAD", "OPTIONS"],
+  );
+
+  assert.equal(response.status, 405);
+  assert.equal(response.headers.get("allow"), "GET, HEAD, OPTIONS");
+  const body = await bodyOf(response);
+  assert.equal(body.code, "method_not_allowed");
+  assert.match(body.message, /POST.*\/api\/products/);
 });

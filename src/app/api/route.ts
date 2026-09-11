@@ -1,4 +1,5 @@
 import { buildOpenApiDocument } from "@/lib/openapi";
+import { getOnlyMethodNotAllowed } from "@/lib/apiError";
 import { SITE_NAME_EN, SITE_TAGLINE_EN } from "@/lib/site";
 
 type OperationSummary = {
@@ -71,3 +72,8 @@ export function GET(request: Request) {
     },
   );
 }
+
+export const POST = getOnlyMethodNotAllowed;
+export const PUT = getOnlyMethodNotAllowed;
+export const PATCH = getOnlyMethodNotAllowed;
+export const DELETE = getOnlyMethodNotAllowed;

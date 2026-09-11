@@ -1,4 +1,5 @@
 import { SITE_NAME_EN } from "@/lib/site";
+import { getOnlyMethodNotAllowed } from "@/lib/apiError";
 
 /** 샌드박스 루트. 어떤 픽스처가 준비돼 있는지 알려준다. */
 export function GET(request: Request) {
@@ -31,6 +32,13 @@ export function GET(request: Request) {
           description:
             "Fixture product search. Try ?branchCode=11199&keyword=수세미.",
         },
+        {
+          method: "GET",
+          path: "/api/sandbox/products/{id}",
+          operationId: "getSandboxProductAvailability",
+          description:
+            "Fixture product availability. Try /1019373?branchCode=11199.",
+        },
       ],
       fixtures: {
         storeCodes: ["11199", "10528", "10962"],
@@ -46,3 +54,8 @@ export function GET(request: Request) {
     },
   );
 }
+
+export const POST = getOnlyMethodNotAllowed;
+export const PUT = getOnlyMethodNotAllowed;
+export const PATCH = getOnlyMethodNotAllowed;
+export const DELETE = getOnlyMethodNotAllowed;
