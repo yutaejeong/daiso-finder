@@ -49,9 +49,22 @@ function collectRefs(value, refs = []) {
 test("declares OpenAPI 3.1 with servers and external docs", () => {
   assert.equal(document.openapi, "3.1.0");
   assert.equal(document.servers[0].url, BASE);
-  assert.equal(document.servers[1].url, `${BASE}/api/sandbox`);
+  assert.equal(document.servers.length, 1);
   assert.equal(document.externalDocs.url, `${BASE}/developers`);
   assert.deepEqual(document.security, []);
+});
+
+test("no server prefix duplicates the paths declared by the document", () => {
+  for (const server of document.servers) {
+    const pathname = new URL(server.url).pathname.replace(/\/$/, "");
+    for (const path of Object.keys(document.paths)) {
+      assert.equal(
+        `${pathname}${path}`.includes("/api/sandbox/api/"),
+        false,
+        `${server.url} duplicates the API prefix for ${path}`,
+      );
+    }
+  }
 });
 
 test("the description tells an agent when to use the API", () => {
@@ -144,6 +157,7 @@ test("documents the endpoints the site actually serves", () => {
     "/api/sandbox/branches/search",
     "/api/sandbox/branches/{code}",
     "/api/sandbox/products",
+    "/api/sandbox/products/{id}",
     "/api/mcp",
   ];
 

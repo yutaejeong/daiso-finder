@@ -1,5 +1,10 @@
 import { DaisoBranchApiError, fetchBranchByCode } from "@/lib/daisoBranches";
-import { internalError, notFound, upstreamError } from "@/lib/apiError";
+import {
+  getOnlyMethodNotAllowed,
+  internalError,
+  notFound,
+  upstreamError,
+} from "@/lib/apiError";
 
 export async function GET(
   _request: Request,
@@ -40,3 +45,8 @@ export async function GET(
     );
   }
 }
+
+export const POST = getOnlyMethodNotAllowed;
+export const PUT = getOnlyMethodNotAllowed;
+export const PATCH = getOnlyMethodNotAllowed;
+export const DELETE = getOnlyMethodNotAllowed;

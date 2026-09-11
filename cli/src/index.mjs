@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { buildUrl, parseArgs, UsageError } from "./args.mjs";
 import {
   formatApiError,
@@ -179,7 +181,8 @@ export async function run(argv) {
 }
 
 const isDirectRun =
-  process.argv[1] && import.meta.url === `file://${process.argv[1]}`;
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(resolve(process.argv[1])).href;
 
 if (isDirectRun) {
   try {

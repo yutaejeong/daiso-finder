@@ -101,6 +101,27 @@ export function notFound(
   });
 }
 
+export function methodNotAllowed(
+  request: Request,
+  allowedMethods: readonly string[],
+): Response {
+  const { pathname } = new URL(request.url);
+
+  return apiErrorResponse({
+    status: 405,
+    code: "method_not_allowed",
+    error: "지원하지 않는 요청 방식입니다.",
+    message: `${request.method} is not supported for ${pathname}.`,
+    hint: `Retry with one of the supported methods: ${allowedMethods.join(", ")}.`,
+    headers: { Allow: allowedMethods.join(", ") },
+  });
+}
+
+/** GET 전용 API 라우트가 공유하는 명시적 405 핸들러. */
+export function getOnlyMethodNotAllowed(request: Request): Response {
+  return methodNotAllowed(request, ["GET", "HEAD", "OPTIONS"]);
+}
+
 /**
  * 다이소 외부 API 오류. 4xx 는 그대로 전달하고 5xx 는 게이트웨이 오류로 정규화한다.
  */

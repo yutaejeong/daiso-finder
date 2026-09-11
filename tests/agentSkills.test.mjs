@@ -14,7 +14,8 @@ const indexSource = readFileSync(
 function digestOf(skill) {
   const content = readFileSync(
     new URL(`public/.well-known/agent-skills/${skill}/SKILL.md`, root),
-  );
+    "utf8",
+  ).replace(/\r\n?/g, "\n");
   return createHash("sha256").update(content).digest("hex");
 }
 
@@ -33,7 +34,7 @@ test("each skill file declares the required front matter", () => {
       new URL(`public/.well-known/agent-skills/${skill}/SKILL.md`, root),
       "utf8",
     );
-    assert.match(content, new RegExp(`^---\\nname: ${skill}\\n`));
+    assert.match(content, new RegExp(`^---\\r?\\nname: ${skill}\\r?\\n`));
     assert.match(content, /^description: .{40,}$/m);
   }
 });

@@ -1,7 +1,12 @@
 import { BranchResponse } from "../types";
 import { selStr } from "@/generated/daiso/client";
 import { DaisoApiError } from "@/lib/daisoApiClient";
-import { internalError, missingParameter, upstreamError } from "@/lib/apiError";
+import {
+  getOnlyMethodNotAllowed,
+  internalError,
+  missingParameter,
+  upstreamError,
+} from "@/lib/apiError";
 
 export const dynamic = "force-dynamic";
 
@@ -75,3 +80,8 @@ export async function GET(request: Request) {
     );
   }
 }
+
+export const POST = getOnlyMethodNotAllowed;
+export const PUT = getOnlyMethodNotAllowed;
+export const PATCH = getOnlyMethodNotAllowed;
+export const DELETE = getOnlyMethodNotAllowed;

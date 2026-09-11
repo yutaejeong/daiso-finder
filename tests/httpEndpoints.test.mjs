@@ -71,6 +71,18 @@ test("markdown negotiation varies on Accept", options, async () => {
   assert.match(await response.text(), /## 언제 쓰나요/);
 });
 
+test("markdown negotiation preserves trust-page content", options, async () => {
+  const response = await fetch(url("/privacy"), {
+    headers: { Accept: "text/markdown" },
+  });
+
+  assert.equal(response.status, 200);
+  const markdown = await response.text();
+  assert.match(markdown, /# 다이소 파인더 개인정보 처리방침/);
+  assert.match(markdown, /## 위치 정보/);
+  assert.match(markdown, /Google Analytics/);
+});
+
 test("OpenAPI spec is served as JSON and YAML", options, async () => {
   for (const path of ["/openapi.json", "/api/openapi.json"]) {
     const { response, body } = await getJson(path);
@@ -109,6 +121,17 @@ test("parameter validation errors are structured JSON", options, async () => {
   assert.equal(response.status, 400);
   assert.equal(body.code, "missing_parameter");
   assert.match(body.message, /keyword/);
+  assert.ok(body.hint);
+});
+
+test("unsupported methods use the structured API error shape", options, async () => {
+  const { response, body } = await getJson("/api/products", {
+    method: "POST",
+  });
+
+  assert.equal(response.status, 405);
+  assert.equal(response.headers.get("allow"), "GET, HEAD, OPTIONS");
+  assert.equal(body.code, "method_not_allowed");
   assert.ok(body.hint);
 });
 
@@ -157,6 +180,14 @@ test("sandbox answers from fixtures without an API key", options, async () => {
   const invalid = await getJson("/api/sandbox/products?keyword=수세미");
   assert.equal(invalid.response.status, 400);
   assert.equal(invalid.body.code, "missing_parameter");
+
+  const availability = await getJson(
+    "/api/sandbox/products/1019373?branchCode=11199",
+  );
+  assert.equal(availability.response.status, 200);
+  assert.equal(availability.body.stock, 12);
+  assert.equal(availability.body.stairNo, 1);
+  assert.ok(availability.body.otherBranches.length > 0);
 });
 
 test("MCP endpoint speaks Streamable HTTP JSON-RPC", options, async () => {
@@ -220,6 +251,20 @@ test("MCP endpoint speaks Streamable HTTP JSON-RPC", options, async () => {
   });
   assert.equal(malformed.status, 400);
   assert.equal(JSON.parse(await malformed.text()).error.code, -32700);
+
+  const failedToolCall = await fetch(url("/api/mcp"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: 4,
+      method: "tools/call",
+      params: { name: "search_stores", arguments: {} },
+    }),
+  });
+  const failedToolBody = JSON.parse(await failedToolCall.text());
+  assert.equal(failedToolBody.result.isError, true);
+  assert.match(failedToolBody.result.content[0].text, /missing_parameter/);
 });
 
 test("discovery documents are reachable", options, async () => {

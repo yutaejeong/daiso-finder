@@ -60,11 +60,23 @@ test("markdown representation carries when-to-use guidance and error shape", () 
 });
 
 test("markdown representation is page-aware", () => {
-  assert.match(
-    buildMarkdownForPath("/developers"),
-    /개발자 포털 \(\/developers\)/,
-  );
-  assert.match(buildMarkdownForPath("/about"), /서비스 소개 \(\/about\)/);
+  const developers = buildMarkdownForPath("/developers");
+  assert.match(developers, /개발자 포털 \(\/developers\)/);
+  assert.match(developers, /## 1분 퀵스타트/);
+  assert.match(developers, /sandbox\/products\/1019373/);
+
+  const about = buildMarkdownForPath("/about");
+  assert.match(about, /서비스 소개 \(\/about\)/);
+  assert.match(about, /## 데이터 정확도/);
+
+  const privacy = buildMarkdownForPath("/privacy");
+  assert.match(privacy, /개인정보 처리방침 \(\/privacy\)/);
+  assert.match(privacy, /## 위치 정보/);
+  assert.match(privacy, /Google Analytics/);
+
+  const contact = buildMarkdownForPath("/contact");
+  assert.match(contact, /문의 \(\/contact\)/);
+  assert.match(contact, /contact@daiso-finder\.kr/);
   assert.match(
     buildMarkdownForPath("/branch/11199"),
     /매장 상세 \(\/branch\/11199\)/,

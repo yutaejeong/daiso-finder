@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { methodNotAllowed } from "@/lib/apiError";
 import { MCP_TOOLS as TOOLS } from "@/lib/mcpTools";
 
 export const dynamic = "force-dynamic";
@@ -24,6 +25,17 @@ type JsonRpcRequest = {
   id?: string | number | null;
 };
 
+class ToolExecutionError extends Error {}
+
+class McpProtocolError extends Error {
+  constructor(
+    readonly code: number,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
 function clampPageSize(value: unknown) {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return 10;
@@ -31,16 +43,34 @@ function clampPageSize(value: unknown) {
 }
 
 async function fetchJson(url: URL) {
-  const res = await fetch(url);
-  const data = await res.json();
+  let res: Response;
+  try {
+    res = await fetch(url);
+  } catch (error) {
+    throw new ToolExecutionError(
+      `Failed to reach the Daiso Finder API: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+
+  let data: unknown;
+  try {
+    data = await res.json();
+  } catch {
+    throw new ToolExecutionError(
+      `The Daiso Finder API returned non-JSON content with HTTP ${res.status}.`,
+    );
+  }
 
   if (!res.ok) {
-    return {
-      error: data?.error ?? `HTTP ${res.status}`,
-      code: data?.code,
-      hint: data?.hint,
-      detail: data?.detail,
-    };
+    const body = data as Record<string, unknown>;
+    throw new ToolExecutionError(
+      JSON.stringify({
+        error: body?.error ?? `HTTP ${res.status}`,
+        code: body?.code,
+        hint: body?.hint,
+        detail: body?.detail,
+      }),
+    );
   }
 
   return data;
@@ -97,7 +127,7 @@ async function callTool(
     return content(await fetchJson(url));
   }
 
-  throw new Error(`Unknown tool: ${name}`);
+  throw new McpProtocolError(-32602, `Unknown tool: ${name}`);
 }
 
 function negotiateProtocolVersion(requested: unknown) {
@@ -169,6 +199,20 @@ async function handleRpc(
       name: string;
       arguments?: Record<string, unknown>;
     };
+
+    if (
+      typeof name !== "string" ||
+      !args ||
+      typeof args !== "object" ||
+      Array.isArray(args)
+    ) {
+      return {
+        jsonrpc: "2.0",
+        error: { code: -32602, message: "Invalid tools/call parameters" },
+        id,
+      };
+    }
+
     try {
       return {
         jsonrpc: "2.0",
@@ -176,6 +220,14 @@ async function handleRpc(
         id,
       };
     } catch (err) {
+      if (err instanceof McpProtocolError) {
+        return {
+          jsonrpc: "2.0",
+          error: { code: err.code, message: err.message },
+          id,
+        };
+      }
+
       return {
         jsonrpc: "2.0",
         result: {
@@ -348,3 +400,9 @@ export async function POST(request: NextRequest) {
     headers: { ...CORS_HEADERS, ...extraHeaders },
   });
 }
+
+const rejectUnsupportedMethod = (request: Request) =>
+  methodNotAllowed(request, ["GET", "HEAD", "POST", "DELETE", "OPTIONS"]);
+
+export const PUT = rejectUnsupportedMethod;
+export const PATCH = rejectUnsupportedMethod;

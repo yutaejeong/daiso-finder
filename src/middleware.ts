@@ -9,7 +9,11 @@ export function middleware(request: NextRequest) {
     const originalPath = request.nextUrl.pathname;
     url.pathname = "/md";
     url.searchParams.set("path", originalPath);
-    const rewritten = NextResponse.rewrite(url);
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-daiso-markdown-path", originalPath);
+    const rewritten = NextResponse.rewrite(url, {
+      request: { headers: requestHeaders },
+    });
     rewritten.headers.set("Vary", appendVary(rewritten.headers.get("Vary")));
     return rewritten;
   }

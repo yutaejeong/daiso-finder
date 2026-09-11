@@ -1,4 +1,4 @@
-import { notFound } from "@/lib/apiError";
+import { getOnlyMethodNotAllowed, notFound } from "@/lib/apiError";
 import { findSandboxStore } from "@/lib/sandboxFixtures";
 
 export function GET(
@@ -22,3 +22,8 @@ export function GET(
     },
   });
 }
+
+export const POST = getOnlyMethodNotAllowed;
+export const PUT = getOnlyMethodNotAllowed;
+export const PATCH = getOnlyMethodNotAllowed;
+export const DELETE = getOnlyMethodNotAllowed;

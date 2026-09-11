@@ -1,4 +1,4 @@
-import { missingParameter } from "@/lib/apiError";
+import { getOnlyMethodNotAllowed, missingParameter } from "@/lib/apiError";
 import { filterSandboxProducts, findSandboxStore } from "@/lib/sandboxFixtures";
 
 export function GET(request: Request) {
@@ -37,3 +37,8 @@ export function GET(request: Request) {
     },
   );
 }
+
+export const POST = getOnlyMethodNotAllowed;
+export const PUT = getOnlyMethodNotAllowed;
+export const PATCH = getOnlyMethodNotAllowed;
+export const DELETE = getOnlyMethodNotAllowed;
