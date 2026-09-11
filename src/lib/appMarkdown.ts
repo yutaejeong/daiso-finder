@@ -1,10 +1,14 @@
 import {
   CLI_PACKAGE_NAME,
   CONTACT_EMAIL,
+  getBaseUrl,
   SITE_NAME,
   SITE_NAME_EN,
   SOURCE_REPOSITORY,
 } from "@/lib/site";
+
+/** 문서 안의 예시 URL 도 canonical 호스트를 쓴다. apex 는 www 로 리다이렉트된다. */
+const BASE = getBaseUrl();
 
 /**
  * `Accept: text/markdown` 협상 시 내려주는 앱 설명 본문.
@@ -84,7 +88,7 @@ const APP_MARKDOWN = `# Daiso Finder (다이소 파인더)
 모든 오류는 HTML 이 아닌 JSON 입니다.
 
 \`\`\`json
-{"error":"매장 정보가 필요합니다.","code":"missing_parameter","message":"The \`branchCode\` query parameter is required.","hint":"Call GET /api/branches/search first ...","status":400,"documentation":"https://daiso-finder.kr/developers"}
+{"error":"매장 정보가 필요합니다.","code":"missing_parameter","message":"The \`branchCode\` query parameter is required.","hint":"Call GET /api/branches/search first ...","status":400,"documentation":"${BASE}/developers"}
 \`\`\`
 
 ## 에이전트 리소스
@@ -192,13 +196,13 @@ ${SITE_NAME_EN} API는 API 키, 가입, 승인 절차 없이 무료로 호출할
 
 \`\`\`bash
 # 1. 매장 검색
-curl "https://daiso-finder.kr/api/branches/search?keyword=강남"
+curl "${BASE}/api/branches/search?keyword=강남"
 
 # 2. 매장 코드로 상품 재고 검색
-curl "https://daiso-finder.kr/api/products?branchCode=11199&keyword=수세미"
+curl "${BASE}/api/products?branchCode=11199&keyword=수세미"
 
 # 3. 상품 단건 재고와 진열 위치
-curl "https://daiso-finder.kr/api/products/1019373?branchCode=11199"
+curl "${BASE}/api/products/1019373?branchCode=11199"
 \`\`\`
 
 ## 인증과 사용량
@@ -222,9 +226,9 @@ curl "https://daiso-finder.kr/api/products/1019373?branchCode=11199"
 \`/api/sandbox\` 이하 경로는 외부 API를 호출하지 않고 고정 데이터를 반환합니다.
 
 \`\`\`bash
-curl "https://daiso-finder.kr/api/sandbox/branches/search?keyword=강남"
-curl "https://daiso-finder.kr/api/sandbox/products?branchCode=11199&keyword=수세미"
-curl "https://daiso-finder.kr/api/sandbox/products/1019373?branchCode=11199"
+curl "${BASE}/api/sandbox/branches/search?keyword=강남"
+curl "${BASE}/api/sandbox/products?branchCode=11199&keyword=수세미"
+curl "${BASE}/api/sandbox/products/1019373?branchCode=11199"
 \`\`\`
 
 ## 오류 응답
@@ -233,7 +237,7 @@ curl "https://daiso-finder.kr/api/sandbox/products/1019373?branchCode=11199"
 
 ## MCP
 
-\`https://daiso-finder.kr/api/mcp\`를 원격 Streamable HTTP MCP 서버로 등록할 수 있습니다. \`search_stores\`, \`search_nearby_stores\`, \`get_store\`, \`search_products\`, \`get_product_availability\` 도구를 제공합니다.
+\`${BASE}/api/mcp\`를 원격 Streamable HTTP MCP 서버로 등록할 수 있습니다. \`search_stores\`, \`search_nearby_stores\`, \`get_store\`, \`search_products\`, \`get_product_availability\` 도구를 제공합니다.
 
 ## CLI
 

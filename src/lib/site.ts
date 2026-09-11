@@ -9,7 +9,12 @@ export const SITE_TAGLINE =
 export const SITE_TAGLINE_EN =
   "Find Daiso stores in Korea and check in-store product stock, price, and shelf location.";
 
-export const DEFAULT_APP_URL = "https://daiso-finder.kr";
+/**
+ * 배포된 canonical 호스트. apex(daiso-finder.kr)는 www 로 307 리다이렉트되므로
+ * sitemap·canonical 태그·오류 documentation 이 리다이렉트되지 않는 주소를 가리키도록
+ * www 를 기준으로 삼는다.
+ */
+export const DEFAULT_APP_URL = "https://www.daiso-finder.kr";
 
 /** 문의용 공개 메일 주소. 실제 수신함 연결은 배포 담당자가 설정한다. */
 export const CONTACT_EMAIL = "contact@daiso-finder.kr";

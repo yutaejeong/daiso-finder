@@ -45,9 +45,13 @@ a test asserts they stay in sync.
   JSON-RPC 2.0 over Streamable HTTP (JSON by default, SSE for clients that only accept it).
 - `src/lib/jsonLd.ts` builds the homepage Organization/WebSite/WebApplication graph.
 - `src/middleware.ts` serves a Markdown representation of any HTML page for
-  `Accept: text/markdown` and merges `Accept` into `Vary`. Because Next.js overwrites
-  `Vary` for app routes, the HTML variant also gets it from the `headers()` rules in
-  `next.config.js`, which the hosting edge applies after the response is produced.
+  `Accept: text/markdown` by rewriting to `src/app/md/route.ts`, which sets its own
+  `Vary: Accept, Accept-Encoding`. The HTML representation cannot carry `Accept` in
+  `Vary`: Next 14 rewrites `Vary` to the RSC values when it renders an app-router page,
+  discarding both middleware headers and `headers()` rules from `next.config.js` (other
+  headers from those rules, such as `Link`, do apply). So the Markdown response is sent
+  `private, no-store` instead — a shared cache must never hold it under the shared URL.
+  Do not re-add a `Vary` rule for the page routes; it looks effective but is dropped.
 - Static agent files live in `public/`: `llms.txt`, `agent-instructions.md`, `auth.md`,
   `.well-known/agent-skills/*/SKILL.md`. Changing a SKILL.md means updating its sha256
   digest in `src/app/.well-known/agent-skills/index.json/route.ts` (a test enforces this).

@@ -83,3 +83,19 @@ test("markdown representation is page-aware", () => {
   );
   assert.match(buildMarkdownForPath("/unknown"), /현재 페이지: \/unknown/);
 });
+
+test("markdown documentation points at the canonical host", () => {
+  // apex 는 www 로 307 리다이렉트되므로 문서에 남은 apex 주소는 에이전트에게
+  // 불필요한 왕복을 시킨다.
+  for (const path of ["/", "/developers", "/privacy"]) {
+    const markdown = buildMarkdownForPath(path);
+    assert.doesNotMatch(
+      markdown,
+      /https:\/\/daiso-finder\.kr/,
+      `${path} still links the redirecting apex host`,
+    );
+  }
+
+  const developers = buildMarkdownForPath("/developers");
+  assert.match(developers, /https:\/\/www\.daiso-finder\.kr\/api\/products/);
+});

@@ -43,7 +43,7 @@
   "message": "The `branchCode` query parameter is required.",
   "hint": "Call GET /api/branches/search first and pass the `code` field ...",
   "status": 400,
-  "documentation": "https://daiso-finder.kr/developers"
+  "documentation": "https://www.daiso-finder.kr/developers"
 }
 ```
 

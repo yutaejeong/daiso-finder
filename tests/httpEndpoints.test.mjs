@@ -71,6 +71,26 @@ test("markdown negotiation varies on Accept", options, async () => {
   assert.match(await response.text(), /## 언제 쓰나요/);
 });
 
+test("the negotiated markdown variant is never shared-cached", options, async () => {
+  // 앱 라우터 페이지 응답의 Vary 는 Next 가 덮어써서 HTML 표현에 Accept 를 넣을 수
+  // 없다. 대신 Markdown 표현을 저장 불가로 내려 공유 캐시가 두 표현을 섞지 못하게
+  // 한다. 이 보장이 깨지면 브라우저가 raw Markdown 을 받을 수 있다.
+  for (const path of ["/", "/privacy", "/developers"]) {
+    const response = await fetch(url(path), {
+      headers: { Accept: "text/markdown" },
+    });
+
+    assert.equal(response.status, 200);
+    assert.match(response.headers.get("content-type"), /text\/markdown/);
+    assert.match(
+      response.headers.get("cache-control") ?? "",
+      /no-store/,
+      `${path} markdown variant is storable by shared caches`,
+    );
+    assert.match(response.headers.get("vary"), /accept/i);
+  }
+});
+
 test("markdown negotiation preserves trust-page content", options, async () => {
   const response = await fetch(url("/privacy"), {
     headers: { Accept: "text/markdown" },
