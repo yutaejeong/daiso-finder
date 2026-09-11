@@ -18,9 +18,11 @@ export function middleware(request: NextRequest) {
     return rewritten;
   }
 
-  const response = NextResponse.next();
-  response.headers.set("Vary", appendVary(response.headers.get("Vary")));
-  return response;
+  // HTML 표현에는 Vary 를 붙이지 않는다. matcher 가 잡는 경로는 모두 앱 라우터
+  // 페이지이고, Next 는 렌더 시점에 Vary 를 RSC 값들로 다시 쓰면서 미들웨어가
+  // set/append 한 값을 버린다(rewrite 로 바꿔도 동일). 협상된 Markdown 쪽을
+  // no-store 로 내려 두 표현이 공유 캐시에서 섞이지 않게 한다.
+  return NextResponse.next();
 }
 
 export const config = {

@@ -70,26 +70,12 @@ const nextConfig = {
         source: "/:path*",
         headers: sharedHeaders(),
       },
-      // HTML 문서는 Accept 헤더로 Markdown 표현과 협상되므로 Vary 에 Accept 가
-      // 있어야 CDN 이 한쪽 표현을 다른 요청에 재사용하지 않는다. Next 가 앱
-      // 라우트 응답에 강제로 넣는 RSC 값들을 잃지 않도록 함께 나열한다.
-      ...[
-        "/",
-        "/about",
-        "/contact",
-        "/privacy",
-        "/developers",
-        "/branch/:code*",
-      ].map((source) => ({
-        source,
-        headers: [
-          {
-            key: "Vary",
-            value:
-              "RSC, Next-Router-State-Tree, Next-Router-Prefetch, Accept, Accept-Encoding",
-          },
-        ],
-      })),
+      // 여기에 HTML 페이지용 Vary 규칙을 두지 말 것. Next 14 는 앱 라우터 페이지를
+      // 렌더할 때 Vary 를 RSC 값들로 다시 써서 headers() 규칙도, 미들웨어가 설정한
+      // 값도 모두 덮어쓴다(같은 블록의 Link 등 다른 헤더는 정상 적용된다).
+      // 규칙을 남겨두면 적용되는 것처럼 보여 오해를 부르므로 제거했다.
+      // 대신 협상된 Markdown 응답을 no-store 로 내려 공유 캐시가 두 표현을
+      // 섞지 못하게 막는다. src/app/md/route.ts 참고.
     ];
   },
 };
