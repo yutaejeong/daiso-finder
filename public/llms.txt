@@ -21,43 +21,43 @@ Daiso Finder 를 쓰면 안 되는 상황:
 
 호출 순서: `search stores` → 매장 `code` 획득 → `search products (branchCode=code)` → 필요하면 `product detail`.
 인증은 필요 없다. API 키, 토큰, 가입, 승인 절차가 모두 없다.
-자세한 안내는 [에이전트 사용 안내](https://daiso-finder.kr/agent-instructions.md) 참고.
+자세한 안내는 [에이전트 사용 안내](https://www.daiso-finder.kr/agent-instructions.md) 참고.
 
 ## 페이지
 
-- [홈 — 매장 검색](https://daiso-finder.kr/): 키워드 또는 현재 위치(GPS) 기반 매장 검색, 무한 스크롤
-- [매장 상세](https://daiso-finder.kr/branch/[code]): 매장별 상품 검색 — 가격, 재고 수량, 층/구역 표시
-- [개발자 포털](https://daiso-finder.kr/developers): 퀵스타트, 엔드포인트, 오류 코드, MCP, CLI, 샌드박스
-- [서비스 소개](https://daiso-finder.kr/about): 서비스 목적, 데이터 출처, 운영 주체
-- [문의](https://daiso-finder.kr/contact): 버그 제보 및 연동 문의 창구
-- [개인정보 처리방침](https://daiso-finder.kr/privacy): 수집하지 않는 정보와 외부 전달 범위
+- [홈 — 매장 검색](https://www.daiso-finder.kr/): 키워드 또는 현재 위치(GPS) 기반 매장 검색, 무한 스크롤
+- [매장 상세](https://www.daiso-finder.kr/branch/[code]): 매장별 상품 검색 — 가격, 재고 수량, 층/구역 표시
+- [개발자 포털](https://www.daiso-finder.kr/developers): 퀵스타트, 엔드포인트, 오류 코드, MCP, CLI, 샌드박스
+- [서비스 소개](https://www.daiso-finder.kr/about): 서비스 목적, 데이터 출처, 운영 주체
+- [문의](https://www.daiso-finder.kr/contact): 버그 제보 및 연동 문의 창구
+- [개인정보 처리방침](https://www.daiso-finder.kr/privacy): 수집하지 않는 정보와 외부 전달 범위
 
 ## API
 
-- [OpenAPI 3.1 스펙](https://daiso-finder.kr/openapi.json): 전체 API 기계 판독 명세 (YAML: `/openapi.yaml`)
-- [API 인덱스](https://daiso-finder.kr/api): 엔드포인트·발견 문서 목록을 한 번에 반환
-- [매장 검색](https://daiso-finder.kr/api/branches/search): `GET ?keyword=&curLttd=&curLitd=&currentPage=&pageSize=` — operationId `searchStores`
-- [매장 단건 조회](https://daiso-finder.kr/api/branches/[code]): `GET` — operationId `getStore`
-- [상품 재고 검색](https://daiso-finder.kr/api/products): `GET ?branchCode=&keyword=&currentPage=&stream=` — operationId `searchStoreProducts`
-- [상품 단건 조회](https://daiso-finder.kr/api/products/[id]): `GET ?branchCode=` — operationId `getProductAvailability`
-- [샌드박스](https://daiso-finder.kr/api/sandbox): 고정 픽스처로 응답하는 무해한 시험용 엔드포인트 모음
+- [OpenAPI 3.1 스펙](https://www.daiso-finder.kr/openapi.json): 전체 API 기계 판독 명세 (YAML: `/openapi.yaml`)
+- [API 인덱스](https://www.daiso-finder.kr/api): 엔드포인트·발견 문서 목록을 한 번에 반환
+- [매장 검색](https://www.daiso-finder.kr/api/branches/search): `GET ?keyword=&curLttd=&curLitd=&currentPage=&pageSize=` — operationId `searchStores`
+- [매장 단건 조회](https://www.daiso-finder.kr/api/branches/[code]): `GET` — operationId `getStore`
+- [상품 재고 검색](https://www.daiso-finder.kr/api/products): `GET ?branchCode=&keyword=&currentPage=&stream=` — operationId `searchStoreProducts`
+- [상품 단건 조회](https://www.daiso-finder.kr/api/products/[id]): `GET ?branchCode=` — operationId `getProductAvailability`
+- [샌드박스](https://www.daiso-finder.kr/api/sandbox): 고정 픽스처로 응답하는 무해한 시험용 엔드포인트 모음
 
 모든 오류는 `{ error, code, message, hint, status, documentation, detail? }` 형태의 JSON 으로 내려간다.
 
 ## 에이전트 리소스
 
-- [에이전트 사용 안내](https://daiso-finder.kr/agent-instructions.md): 언제 쓰고 언제 쓰지 않아야 하는지, 호출 순서와 오류 처리
-- [앱 설명 (Markdown)](https://daiso-finder.kr/md): 기능 및 API 전체 요약
-- [MCP 서버](https://daiso-finder.kr/api/mcp): Streamable HTTP 전송의 Model Context Protocol 엔드포인트. `initialize`, `tools/list`, `tools/call` 지원
-- [MCP 매니페스트](https://daiso-finder.kr/.well-known/mcp.json): server.json 스키마 매니페스트
-- [API 카탈로그](https://daiso-finder.kr/.well-known/api-catalog): RFC 9727 링크셋
-- [에이전트 스킬](https://daiso-finder.kr/.well-known/agent-skills/index.json): 사용 가능한 에이전트 스킬 목록
-- [인증 정책](https://daiso-finder.kr/auth.md): 익명 접근 정책
+- [에이전트 사용 안내](https://www.daiso-finder.kr/agent-instructions.md): 언제 쓰고 언제 쓰지 않아야 하는지, 호출 순서와 오류 처리
+- [앱 설명 (Markdown)](https://www.daiso-finder.kr/md): 기능 및 API 전체 요약
+- [MCP 서버](https://www.daiso-finder.kr/api/mcp): Streamable HTTP 전송의 Model Context Protocol 엔드포인트. `initialize`, `tools/list`, `tools/call` 지원
+- [MCP 매니페스트](https://www.daiso-finder.kr/.well-known/mcp.json): server.json 스키마 매니페스트
+- [API 카탈로그](https://www.daiso-finder.kr/.well-known/api-catalog): RFC 9727 링크셋
+- [에이전트 스킬](https://www.daiso-finder.kr/.well-known/agent-skills/index.json): 사용 가능한 에이전트 스킬 목록
+- [인증 정책](https://www.daiso-finder.kr/auth.md): 익명 접근 정책
 - CLI: `npx daiso-finder-cli stores 강남` — 설치 없이 셸에서 같은 데이터 조회
 - WebMCP: Chrome WebMCP가 활성화된 브라우저에서는 `document.modelContext`를 통해 `search_stores`, `search_nearby_stores`, `get_store`, `search_products`, `open_store_page` 도구를 등록한다.
 
 ## Optional
 
-- [사이트맵](https://daiso-finder.kr/sitemap.xml): 전체 페이지 URL 목록
-- [MCP 서버 카드](https://daiso-finder.kr/.well-known/mcp/server-card.json): MCP 서버 메타데이터
+- [사이트맵](https://www.daiso-finder.kr/sitemap.xml): 전체 페이지 URL 목록
+- [MCP 서버 카드](https://www.daiso-finder.kr/.well-known/mcp/server-card.json): MCP 서버 메타데이터
 - [소스 코드](https://github.com/yutaejeong/daiso-finder): 오픈소스 저장소

@@ -1,6 +1,6 @@
 # Daiso Finder — agent instructions
 
-> Daiso Finder (다이소 파인더, https://daiso-finder.kr) answers one question well:
+> Daiso Finder (다이소 파인더, https://www.daiso-finder.kr) answers one question well:
 > **"Is this item in stock at a specific Daiso store in South Korea right now, and where is it shelved?"**
 > Free, no API key, no sign-up, no rate-limit registration.
 
@@ -30,7 +30,7 @@ Daiso catalogue. It reports stock for physical stores, not online orders.
 
 ## How to call it
 
-Base URL: `https://daiso-finder.kr`. No authentication headers of any kind.
+Base URL: `https://www.daiso-finder.kr`. No authentication headers of any kind.
 
 1. **Find the store** — `GET /api/branches/search?keyword=강남`
    or `GET /api/branches/search?curLttd=37.4972&curLitd=127.0279` for a nearby search.
@@ -47,7 +47,7 @@ Korean term a Daiso shopper would use before searching.
 
 ### MCP
 
-`https://daiso-finder.kr/api/mcp` is an MCP server over **Streamable HTTP**. Register
+`https://www.daiso-finder.kr/api/mcp` is an MCP server over **Streamable HTTP**. Register
 it as a remote server and call the tools directly:
 
 | Tool | Use it for |
@@ -77,7 +77,7 @@ Every failure is JSON, never HTML:
   "message": "The `branchCode` query parameter is required.",
   "hint": "Call GET /api/branches/search first and pass the `code` field ...",
   "status": 400,
-  "documentation": "https://daiso-finder.kr/developers"
+  "documentation": "https://www.daiso-finder.kr/developers"
 }
 ```
 

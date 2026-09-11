@@ -3,16 +3,10 @@ import { SimplifiedProductInfo } from "@/app/api/products/types";
 import { formatDaisoBranchName } from "@/lib/branchNames";
 import { fetchBranchByCode } from "@/lib/daisoBranches";
 import { fetchProductById } from "@/lib/daisoProducts";
+import { getBaseUrl } from "@/lib/site";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProductClient } from "./ProductClient";
-
-function getBaseUrl() {
-  return (process.env.NEXT_PUBLIC_APP_URL || "https://daiso-finder.kr").replace(
-    /\/$/,
-    "",
-  );
-}
 
 export async function generateMetadata({
   params,
