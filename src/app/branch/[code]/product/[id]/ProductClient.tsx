@@ -16,6 +16,9 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { ImageWithFallback } from "@/components/ImageWithFallback";
 import Link from "next/link";
+import { useEffect, useRef } from "react";
+import { trackEvent } from "@/lib/gtag";
+import { trackJourneyStep } from "@/lib/journey";
 
 interface Props {
   code: string;
@@ -56,6 +59,61 @@ export function ProductClient({ code, productId, branch, product }: Props) {
   const stairNo = data?.stairNo ?? null;
   const zoneNo = data?.zoneNo ?? null;
   const otherBranches = data?.otherBranches ?? [];
+
+  // 상품 상세 도달. 목록에서 눌러 들어왔든 링크로 바로 들어왔든 한 번만 남긴다.
+  const reportedViewRef = useRef<string | null>(null);
+  useEffect(() => {
+    const key = `${code}:${productId}`;
+    if (reportedViewRef.current === key) return;
+    reportedViewRef.current = key;
+    trackJourneyStep("product_view", {
+      branch_code: code,
+      product_id: productId,
+      product_name: name ?? undefined,
+    });
+  }, [code, productId, name]);
+
+  // 재고·진열 위치까지 확인한 순간이 이 서비스의 목적 달성 지점이다.
+  // 위치를 못 받았거나 품절이면 여기까지 와서 이탈한 것으로 읽어야 한다.
+  const reportedResultRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (isLoading || isFetching) return;
+    if (!isError && data === undefined) return;
+
+    const key = `${code}:${productId}`;
+    if (reportedResultRef.current === key) return;
+    reportedResultRef.current = key;
+
+    if (isError) {
+      trackEvent("product_detail_error", {
+        branch_code: code,
+        product_id: productId,
+        message: error?.message?.slice(0, 100),
+      });
+      return;
+    }
+
+    trackJourneyStep("product_located", {
+      branch_code: code,
+      product_id: productId,
+      has_location: stairNo !== null && zoneNo !== null,
+      is_out_of_stock: (stock ?? 0) <= 0,
+      stock: stock ?? 0,
+      other_branch_count: otherBranches.length,
+    });
+  }, [
+    code,
+    productId,
+    isLoading,
+    isFetching,
+    isError,
+    error,
+    data,
+    stairNo,
+    zoneNo,
+    stock,
+    otherBranches.length,
+  ]);
 
   return (
     <main
@@ -465,10 +523,19 @@ export function ProductClient({ code, productId, branch, product }: Props) {
                 gap: "8px",
               })}
             >
-              {otherBranches.map((other) => (
+              {otherBranches.map((other, index) => (
                 <li key={other.code}>
                   <Link
                     href={`/branch/${other.code}/product/${productId}`}
+                    onClick={() =>
+                      trackEvent("other_branch_click", {
+                        from_branch_code: code,
+                        branch_code: other.code,
+                        product_id: productId,
+                        result_position: index + 1,
+                        distance_km: other.distanceKm ?? undefined,
+                      })
+                    }
                     className={css({
                       display: "flex",
                       alignItems: "center",

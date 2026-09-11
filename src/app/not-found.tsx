@@ -1,6 +1,7 @@
 import { css } from "@styled-system/css";
 import { IconArrowLeft, IconMapSearch } from "@tabler/icons-react";
 import { ImageWithFallback } from "@/components/ImageWithFallback";
+import { JourneyEvent } from "@/components/JourneyEvent";
 import Link from "next/link";
 
 export default function NotFound() {
@@ -15,6 +16,8 @@ export default function NotFound() {
         flexDirection: "column",
       })}
     >
+      {/* 없는 주소로 들어온 것 자체가 유입-이탈 분석의 신호다. */}
+      <JourneyEvent name="page_not_found" />
       <Link href="/" aria-label="다이소 파인더 홈으로 이동">
         <ImageWithFallback
           src="/logo.svg"

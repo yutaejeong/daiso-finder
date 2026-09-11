@@ -13,6 +13,11 @@ import { useRecentBranches } from "@/hooks/useRecentBranches";
 import { useUrlSearchParams } from "@/hooks/useUrlSearchParams";
 import { trackEvent } from "@/lib/gtag";
 import {
+  trackJourneyStep,
+  trackSearchError,
+  trackSearchResult,
+} from "@/lib/journey";
+import {
   BranchSearchMode,
   branchSearchModeToParams,
   parseBranchSearchMode,
@@ -90,6 +95,40 @@ export function HomeClient() {
     }
   }, [mode]);
 
+  // 검색 결과가 도착한 시점을 검색 조건마다 한 번씩 기록한다.
+  // 결과가 0건이거나 오류로 끝난 자리가 곧 대표적인 이탈 지점이다.
+  const reportedSearchRef = useRef<string | null>(null);
+  const didFetchRef = useRef(false);
+  useEffect(() => {
+    if (isFetching) didFetchRef.current = true;
+  }, [isFetching]);
+  useEffect(() => {
+    if (!mode || isFetching) return;
+    if (!isError && data === undefined) return;
+
+    const searchKey = JSON.stringify(mode);
+    if (reportedSearchRef.current === searchKey) return;
+    reportedSearchRef.current = searchKey;
+
+    const keyword = mode.type === "keyword" ? mode.keyword : "(location)";
+    if (isError) {
+      trackSearchError("branch", { message: error?.message, keyword });
+      return;
+    }
+
+    trackSearchResult("branch", {
+      result_count: branches.length,
+      search_mode: mode.type,
+      keyword,
+    });
+    trackJourneyStep("branch_results", {
+      result_count: branches.length,
+      search_mode: mode.type,
+      // 뒤로가기로 돌아와 캐시된 결과를 다시 본 경우와 새 검색을 구분한다.
+      is_restored: !didFetchRef.current,
+    });
+  }, [mode, isFetching, isError, error, data, branches.length]);
+
   const getCurrentPosition = async () => {
     if (!navigator.geolocation) {
       throw new Error("이 브라우저는 위치 정보를 지원하지 않습니다.");
@@ -146,12 +185,18 @@ export function HomeClient() {
           }),
         );
         trackEvent("branch_location_search");
+        trackJourneyStep("branch_search", { search_mode: "location" });
       } catch (error) {
         console.error("위치 정보 오류:", error);
         const errorMessage =
           error instanceof Error
             ? error.message
             : "위치 정보를 가져오는데 실패했습니다. 다시 시도해주세요.";
+        // 위치 권한 거부는 첫 화면에서 바로 이탈로 이어지는 흔한 원인이다.
+        trackSearchError("branch", {
+          message: errorMessage,
+          keyword: "(location)",
+        });
         alert(errorMessage);
       }
     } else {
@@ -159,6 +204,10 @@ export function HomeClient() {
         return;
       }
       trackEvent("branch_search", { keyword: searchInput });
+      trackJourneyStep("branch_search", {
+        search_mode: "keyword",
+        keyword: searchInput,
+      });
       setParams(
         branchSearchModeToParams({ type: "keyword", keyword: searchInput }),
       );
@@ -319,7 +368,7 @@ export function HomeClient() {
           ) : undefined
         }
       >
-        {branches?.map((branch) => (
+        {branches?.map((branch, index) => (
           <Link
             href={`/branch/${branch.code}`}
             className="card"
@@ -328,6 +377,10 @@ export function HomeClient() {
               trackEvent("branch_click", {
                 branch_code: branch.code,
                 branch_name: branch.name,
+                // 결과 몇 번째를 고르는지 보면 목록이 쓸 만한지 알 수 있다.
+                result_position: index + 1,
+                result_count: branches.length,
+                search_mode: mode?.type ?? "(none)",
               })
             }
           >
