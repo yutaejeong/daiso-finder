@@ -1,27 +1,18 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import Script from "next/script";
-import { useEffect } from "react";
+import { useJourneyTracking } from "@/hooks/useJourneyTracking";
 
-declare global {
-  interface Window {
-    gtag: (...args: unknown[]) => void;
-    dataLayer: unknown[];
-  }
-}
-
-function GATracker({ gaId }: { gaId: string }) {
-  const pathname = usePathname();
-
-  useEffect(() => {
-    if (typeof window.gtag !== "function") return;
-    window.gtag("config", gaId, { page_path: pathname });
-  }, [pathname, gaId]);
-
+function JourneyTracker() {
+  useJourneyTracking();
   return null;
 }
 
+/**
+ * gtag.js 라이브러리만 불러온다. dataLayer 초기화와 `config` 는
+ * `src/lib/gtag.ts` 가 이벤트보다 항상 먼저 큐에 넣어주므로
+ * 별도의 인라인 스니펫을 두지 않는다(페이지뷰 중복 방지).
+ */
 export function GoogleAnalytics({ gaId }: { gaId: string }) {
   return (
     <>
@@ -29,13 +20,7 @@ export function GoogleAnalytics({ gaId }: { gaId: string }) {
         src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
         strategy="afterInteractive"
       />
-      <Script id="gtag-init" strategy="afterInteractive">{`
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', '${gaId}');
-      `}</Script>
-      <GATracker gaId={gaId} />
+      <JourneyTracker />
     </>
   );
 }

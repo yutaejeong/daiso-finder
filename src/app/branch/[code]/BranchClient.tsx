@@ -11,6 +11,11 @@ import { Search } from "@/components/Search";
 import { useRecentBranches } from "@/hooks/useRecentBranches";
 import { useUrlSearchParams } from "@/hooks/useUrlSearchParams";
 import { trackEvent } from "@/lib/gtag";
+import {
+  trackJourneyStep,
+  trackSearchError,
+  trackSearchResult,
+} from "@/lib/journey";
 import { fetchProductsWithProgress } from "@/lib/productSearchStream";
 import { PRODUCT_SEARCH_CACHE } from "@/lib/queryCache";
 import { parseSearchKeyword, searchKeywordToParams } from "@/lib/searchParams";
@@ -23,7 +28,7 @@ import {
 } from "@tanstack/react-query";
 import { ImageWithFallback } from "@/components/ImageWithFallback";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 interface Props {
   code: string;
@@ -64,6 +69,20 @@ export function BranchClient({ code, initialBranch }: Props) {
   useEffect(() => {
     if (branch) addRecentBranch(branch);
   }, [branch, addRecentBranch]);
+
+  // 매장 페이지 도달. 검색 결과에서 눌러 들어왔든 검색엔진에서 바로
+  // 들어왔든 여기서 한 번만 기록해야 퍼널 수치가 어긋나지 않는다.
+  const reportedBranchRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (reportedBranchRef.current === code) return;
+    reportedBranchRef.current = code;
+    trackJourneyStep("branch_view", {
+      branch_code: code,
+      branch_name: branch?.name,
+      // 서버에서 받아온 매장 정보 없이 열렸다면 이름조차 못 보여준 상태다.
+      has_branch_info: Boolean(initialBranch),
+    });
+  }, [code, branch?.name, initialBranch]);
 
   const {
     data,
@@ -120,10 +139,47 @@ export function BranchClient({ code, initialBranch }: Props) {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     trackEvent("product_search", { keyword: searchInput, branch_code: code });
+    trackJourneyStep("product_search", {
+      keyword: searchInput,
+      branch_code: code,
+    });
     setParams(searchKeywordToParams(searchInput));
   };
 
   const products = data?.pages.flatMap((page) => page.products) || [];
+
+  // 상품 검색 결과가 도착한 시점. 재고가 없어 0건으로 끝나는 경우가 잦고,
+  // 그 자리가 이 서비스에서 가장 깊은 이탈 지점이라 따로 남긴다.
+  const reportedSearchRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!keyword || isFetching) return;
+    if (!isError && data === undefined) return;
+
+    const searchKey = `${code}:${keyword}`;
+    if (reportedSearchRef.current === searchKey) return;
+    reportedSearchRef.current = searchKey;
+
+    if (isError) {
+      trackSearchError("product", {
+        message: error?.message,
+        keyword,
+        branch_code: code,
+      });
+      return;
+    }
+
+    const resultCount = data?.pages.flatMap((page) => page.products).length ?? 0;
+    trackSearchResult("product", {
+      result_count: resultCount,
+      keyword,
+      branch_code: code,
+    });
+    trackJourneyStep("product_results", {
+      result_count: resultCount,
+      keyword,
+      branch_code: code,
+    });
+  }, [code, keyword, isFetching, isError, error, data]);
 
   return (
     <main
@@ -214,7 +270,7 @@ export function BranchClient({ code, initialBranch }: Props) {
         onRetry={keyword ? () => refetch() : undefined}
         scrollRestorationKey={keyword ? `products:${code}:${keyword}` : null}
       >
-        {products.map((product: SimplifiedProduct) => (
+        {products.map((product: SimplifiedProduct, index: number) => (
           <Link
             key={product.id}
             href={`/branch/${code}/product/${product.id}`}
@@ -222,6 +278,10 @@ export function BranchClient({ code, initialBranch }: Props) {
               trackEvent("product_detail_view", {
                 branch_code: code,
                 product_id: product.id,
+                product_name: product.name,
+                result_position: index + 1,
+                result_count: products.length,
+                keyword,
               })
             }
             className={css({

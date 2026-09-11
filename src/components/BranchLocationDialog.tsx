@@ -2,6 +2,7 @@
 
 import { SimplifiedBranch } from "@/app/api/branches/types";
 import { trackEvent } from "@/lib/gtag";
+import { trackJourneyStep } from "@/lib/journey";
 import { css } from "@styled-system/css";
 import {
   IconCopy,
@@ -273,11 +274,14 @@ export function BranchLocationDialog({ branch }: Props) {
               href={kakaoDirectionsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={() =>
+              onClick={() => {
                 trackEvent("branch_directions_click", {
                   branch_code: branch.code,
-                })
-              }
+                });
+                // 길찾기를 누르면 카카오맵으로 나간다. 여정의 마지막 단계이자
+                // "성공적인 이탈" 이므로 단계로도 남긴다.
+                trackJourneyStep("directions", { branch_code: branch.code });
+              }}
               className={`btn btn-red ${css({
                 width: "100%",
                 minHeight: "46px",

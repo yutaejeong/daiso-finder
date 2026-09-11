@@ -89,6 +89,25 @@ re-search. `useSearchParams()` is deliberately avoided — it would push `/` out
 rendering. Result lists scroll inside their own container, so `Search` restores their scroll
 position via `src/hooks/useScrollRestoration.ts`.
 
+### Analytics
+
+GA4 tracks the whole visit as a journey: acquisition → funnel → exit. See
+`docs/analytics.md` for the event dictionary and the GA4 console setup.
+
+- `src/lib/gtag.ts` owns the dataLayer bootstrap. It pushes `js`/`config` before any
+  event so nothing queued before gtag.js loads gets dropped, and it configures with
+  `send_page_view: false` — page views are sent by hand so they carry journey params.
+  Do not re-add an inline gtag snippet; that is what caused duplicate page views.
+- `src/lib/journey.ts` defines `JOURNEY_STEPS` (the funnel, in order), classifies the
+  entry channel, and keeps the per-session journey state in `sessionStorage`. Every
+  event automatically carries the entry params and the current step via `gtag('set')`.
+- `src/hooks/useJourneyTracking.ts` wires page views, engaged time, scroll depth,
+  outbound clicks, and the `page_exit` event to browser events.
+- Fire funnel steps with `trackJourneyStep()` only — it also updates the state that
+  the exit event reports as `reached_step`. Adding a step means appending to
+  `JOURNEY_STEPS` (inserting in the middle renumbers past data) and updating
+  `docs/analytics.md`.
+
 ### Styling
 
 - **PandaCSS** for CSS-in-JS — use `css()` from `@styled-system/css`

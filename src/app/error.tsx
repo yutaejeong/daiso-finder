@@ -3,6 +3,7 @@
 import { css } from "@styled-system/css";
 import { IconRefresh, IconAlertTriangle } from "@tabler/icons-react";
 import { ImageWithFallback } from "@/components/ImageWithFallback";
+import { trackEvent } from "@/lib/gtag";
 import Link from "next/link";
 import { useEffect } from "react";
 
@@ -15,6 +16,12 @@ export default function Error({
 }) {
   useEffect(() => {
     console.error("화면 오류:", error);
+    // 화면이 통째로 깨진 자리. 여정 어디에서 터졌는지는 기본 파라미터로 붙는다.
+    trackEvent("app_error", {
+      message: error.message.slice(0, 100),
+      error_digest: error.digest,
+      page_path: window.location.pathname,
+    });
   }, [error]);
 
   return (

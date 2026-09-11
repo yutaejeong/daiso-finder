@@ -1,5 +1,6 @@
 "use client";
 
+import { trackEvent } from "@/lib/gtag";
 import { css } from "@styled-system/css";
 import {
   createContext,
@@ -41,6 +42,13 @@ export function ErrorModalProvider({
 
   const showError = useCallback((message: string, detail?: string) => {
     setError({ isOpen: true, message, detail });
+    // 오류 모달은 사용자가 흐름을 멈추는 자리다. 어느 단계에서 떴는지는
+    // 기본 파라미터(journey_step)에 실려 함께 기록된다.
+    trackEvent("error_modal_view", {
+      message: message.slice(0, 100),
+      page_path:
+        typeof window === "undefined" ? undefined : window.location.pathname,
+    });
   }, []);
 
   const closeError = useCallback(() => {
