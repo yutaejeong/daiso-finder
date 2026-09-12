@@ -96,7 +96,8 @@ GA4 tracks the whole visit as a journey: acquisition → funnel → exit. See
   Do not re-add an inline gtag snippet; that is what caused duplicate page views.
 - `src/lib/journey.ts` defines `JOURNEY_STEPS` (the funnel, in order), classifies the
   entry channel, and keeps the per-session journey state in `sessionStorage`. Every
-  event automatically carries the entry params and the current step via `gtag('set')`.
+  event carries the entry params and the current step: `setEventDefaults()` merges
+  them in `trackEvent()`, because GA4 drops custom params passed to `gtag('set')`.
 - `src/hooks/useJourneyTracking.ts` wires page views, engaged time, scroll depth,
   outbound clicks, and the `page_exit` event to browser events.
 - Fire funnel steps with `trackJourneyStep()` only — it also updates the state that

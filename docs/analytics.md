@@ -15,21 +15,32 @@
 
 ## 1. 유입 — 어떻게 들어왔나
 
-세션이 시작될 때 한 번 `app_entry` 를 보내고, 같은 값을 **이후 모든 이벤트의
-기본 파라미터**로 붙인다(`gtag('set', …)`). 그래서 어떤 이벤트를 보든 그 사람이
-어디서 들어온 사람인지 함께 보인다.
+세션이 시작될 때 한 번 `app_entry` 를 보내고, 핵심 값은 **이후 모든 이벤트에
+함께 실어 보낸다**. 그래서 어떤 이벤트를 보든 그 사람이 어디서 들어온 사람이고
+지금 어느 단계에 있는지 함께 보인다.
+
+모든 이벤트에 붙는 7개:
 
 | 파라미터 | 설명 |
 | --- | --- |
 | `journey_id` | 세션 단위 여정 식별자 (sessionStorage) |
 | `entry_path` | 처음 도착한 경로 (`/`, `/branch/11199` 등) |
 | `entry_channel` | `direct` \| `organic_search` \| `social` \| `ai_assistant` \| `referral` \| `internal` \| UTM medium |
-| `entry_source` | UTM source, 없으면 리퍼러 호스트 |
-| `entry_medium`, `entry_campaign` | UTM 값 |
-| `entry_referrer_host` | `www.` 를 뗀 리퍼러 호스트 |
 | `display_mode` | `browser` \| `standalone` \| `minimal-ui` \| `fullscreen` (PWA 실행 여부) |
 | `visitor_type` | `new` \| `returning` \| `unknown` (localStorage 기준) |
-| `journey_step`, `journey_step_index`, `journey_max_step_index` | 이벤트 발생 시점의 퍼널 위치 |
+| `journey_step` | 이벤트 발생 시점의 퍼널 단계 |
+| `journey_max_step_index` | 그때까지 가장 멀리 간 단계 순번 |
+
+`app_entry` 만 추가로 싣는 것(세션당 한 번이면 충분하다):
+`entry_source`(UTM source, 없으면 리퍼러 호스트), `entry_medium`,
+`entry_campaign`, `entry_referrer_host`, `entry_query`.
+
+> **`gtag('set', …)` 로는 안 된다.** GA4 태그는 `set` 으로 넘긴 커스텀
+> 파라미터를 후속 이벤트에 붙여주지 않아서 실제 전송 payload 에서 통째로
+> 빠진다(dataLayer 큐에는 남아 있어서 눈에 잘 띄지 않는다). 그래서
+> `src/lib/gtag.ts` 가 기본 파라미터를 직접 들고 있다가 이벤트마다 병합한다.
+> 이벤트당 파라미터 25개 한도가 있어 기본 파라미터는 7개로 묶어 두었다
+> (가장 무거운 `funnel_step(product_located)` 이 21개).
 
 `entry_channel` 분류는 `classifyChannel()` 이 담당한다. 네이버 블로그·카페는
 검색 도메인을 공유하지만 `social` 로, `gemini.google.com` 은 구글 도메인이지만
