@@ -3,6 +3,7 @@ import {
   ProductSearchProgress,
   ProductStreamEvent,
 } from "@/app/api/products/types";
+import { SEARCH_SOURCE_HEADER } from "@/lib/searchLog";
 
 const DEFAULT_ERROR_MESSAGE = "상품 검색 중 오류가 발생했습니다.";
 
@@ -32,7 +33,11 @@ export async function fetchProductsWithProgress(
   query.set("stream", "1");
 
   const response = await fetch(`/api/products?${query.toString()}`, {
-    headers: { Accept: "application/x-ndjson" },
+    headers: {
+      Accept: "application/x-ndjson",
+      // 검색어 수집에서 웹 UI 검색과 API 직접 호출을 구분하기 위한 표식.
+      [SEARCH_SOURCE_HEADER]: "web",
+    },
     signal,
   });
 

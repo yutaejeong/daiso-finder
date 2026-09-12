@@ -105,6 +105,21 @@ GA4 tracks the whole visit as a journey: acquisition → funnel → exit. See
   `JOURNEY_STEPS` (inserting in the middle renumbers past data) and updating
   `docs/analytics.md`.
 
+### Search-term collection
+
+Every keyword search — store search and in-store product search — is appended to a
+Google Sheet through an Apps Script web app. See `docs/search-logs.md` for the sheet
+setup and the Apps Script source.
+
+- `src/lib/searchLog.ts` owns it. `logSearch()` never blocks or fails a search response,
+  and the whole thing stays off unless `SEARCH_LOG_WEBHOOK_URL` is set.
+- The two API routes (`/api/branches/search`, `/api/products`) call it after the results
+  are in, and only for the first page — later pages of infinite scroll are the same search.
+- Location-only store searches have no keyword, so nothing is recorded for them.
+- The web UI sends `x-search-source: web` (`SEARCH_SOURCE_HEADER`) so the sheet can tell
+  site searches apart from direct API/MCP/CLI calls. Changing the row shape means changing
+  `HEADERS` in the Apps Script too, and the privacy page describes what is stored.
+
 ### Styling
 
 - **PandaCSS** for CSS-in-JS — use `css()` from `@styled-system/css`

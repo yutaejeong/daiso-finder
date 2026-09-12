@@ -9,6 +9,7 @@ import {
   internalError,
   missingParameter,
 } from "@/lib/apiError";
+import { SearchLogEntry, logSearch, searchLogSource } from "@/lib/searchLog";
 import {
   Product,
   ProductApiResponse,
@@ -201,6 +202,23 @@ export async function GET(request: NextRequest) {
   const wantsStream =
     searchParams.get("stream") === "1" ||
     (request.headers.get("accept") ?? "").includes("application/x-ndjson");
+  // "더 보기" 로 이어지는 다음 페이지는 같은 검색의 연장이므로 첫 페이지만 기록한다.
+  const isFirstPage = currentPage === 1 || isNaN(currentPage);
+  const source = searchLogSource(request.headers);
+
+  /** 검색어를 스프레드시트에 쌓는다. 응답을 막지 않는다. */
+  const logProductSearch = (
+    result: Pick<SearchLogEntry, "resultCount" | "status">,
+  ) => {
+    if (!isFirstPage) return;
+    logSearch({
+      type: "product",
+      keyword: keyword ?? "",
+      branchCode,
+      source,
+      ...result,
+    });
+  };
 
   if (!keyword?.trim()) {
     return missingParameter(
@@ -221,10 +239,12 @@ export async function GET(request: NextRequest) {
   if (!wantsStream) {
     try {
       const result = await collectProducts(keyword, currentPage, branchCode);
+      logProductSearch({ resultCount: result.products.length });
       return new Response(JSON.stringify(result), {
         headers: { "Content-Type": "application/json" },
       });
     } catch (error) {
+      logProductSearch({ status: "error" });
       console.error("API 오류:", error);
       return internalError(
         error,
@@ -254,8 +274,10 @@ export async function GET(request: NextRequest) {
           branchCode,
           (progress) => send({ type: "progress", ...progress }),
         );
+        logProductSearch({ resultCount: result.products.length });
         send({ type: "result", ...result });
       } catch (error) {
+        logProductSearch({ status: "error" });
         console.error("API 오류:", error);
         send({
           type: "error",
