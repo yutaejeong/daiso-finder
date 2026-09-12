@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import { getBaseUrl } from "@/lib/site";
 
 /**
@@ -144,6 +145,13 @@ export function upstreamError(
 }
 
 export function internalError(error: unknown, contextHint: string): Response {
+  // API 라우트는 오류를 모두 잡아서 JSON 으로 바꾸므로 Sentry 의 자동 계측에는
+  // 아무것도 걸리지 않는다. 진짜 500 은 이 자리에서만 알 수 있어 직접 올린다.
+  // 예상 범위인 상류 오류(`upstreamError`)는 올리지 않는다.
+  Sentry.captureException(error, {
+    tags: { api_error_code: "internal_error" },
+  });
+
   return apiErrorResponse({
     status: 500,
     code: "internal_error",

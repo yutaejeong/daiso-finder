@@ -1,3 +1,5 @@
+const { withSentryConfig } = require("@sentry/nextjs/config");
+
 /** @type {import('next').NextConfig} */
 const withPWA = require("next-pwa")({
   dest: "public",
@@ -45,6 +47,8 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   experimental: {
+    // src/instrumentation.ts 를 켜는 스위치. Next 15 부터는 기본값이다.
+    instrumentationHook: true,
     outputFileTracingIncludes: {
       "/opengraph-image": [
         "./src/app/NotoSansCJKkr-Regular.otf",
@@ -80,4 +84,33 @@ const nextConfig = {
   },
 };
 
-module.exports = withPWA(nextConfig);
+/**
+ * Sentry 빌드 설정. 소스맵 업로드는 SENTRY_AUTH_TOKEN 이 있을 때만 한다.
+ * 토큰 없이 빌드해도(로컬, PR CI) 경고 한 줄 없이 그대로 성공해야 한다.
+ * 자세한 설정은 docs/sentry.md 참고.
+ */
+module.exports = withSentryConfig(withPWA(nextConfig), {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  // 이 프로젝트의 Sentry 조직은 EU 리전(ingest.de.sentry.io)이다. 업로드 기본값은
+  // sentry.io 라서 그대로 두면 소스맵만 조용히 실패한다.
+  sentryUrl: process.env.SENTRY_URL || "https://de.sentry.io",
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: !process.env.CI,
+  telemetry: false,
+  // 스택 트레이스를 원본 코드로 되돌리려면 소스맵이 필요하다. 업로드한 뒤에는
+  // 빌드 결과물에서 지워 브라우저로 원본 코드가 새어 나가지 않게 한다.
+  sourcemaps: {
+    disable: !process.env.SENTRY_AUTH_TOKEN,
+    deleteSourcemapsAfterUpload: true,
+  },
+  widenClientFileUpload: true,
+  // 브라우저에서 Sentry 로 바로 나가는 요청은 광고·추적 차단기에 흔히 막힌다.
+  // 같은 도메인의 이 경로로 우회시켜 클라이언트 오류가 통째로 사라지지 않게 한다.
+  // 서버가 대신 전달하므로 미들웨어를 태울 이유도 없다(src/middleware.ts 참고).
+  tunnelRoute: "/monitoring",
+  webpack: {
+    // Sentry 자체 디버그 로거는 번들에서 뺀다.
+    treeshake: { removeDebugLogging: true },
+  },
+});

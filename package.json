@@ -13,6 +13,7 @@
     "test": "node --test --import ./tests/register.mjs \"tests/**/*.test.mjs\""
   },
   "dependencies": {
+    "@sentry/nextjs": "^10.74.0",
     "@tabler/core": "^1.4.0",
     "@tabler/icons-react": "^3.36.1",
     "@tanstack/react-query": "^5.90.20",

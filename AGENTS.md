@@ -120,6 +120,40 @@ setup and the Apps Script source.
   site searches apart from direct API/MCP/CLI calls. Changing the row shape means changing
   `HEADERS` in the Apps Script too, and the privacy page describes what is stored.
 
+### Error tracking
+
+Sentry (`@sentry/nextjs`) reports crashes from all three runtimes. See `docs/sentry.md`
+for the setup and what is deliberately left unreported.
+
+- `src/lib/sentry.ts` builds the options the three runtimes share and owns the scrubbing.
+  It imports no SDK code so the options and the scrubbing stay unit-testable.
+- `sentry.{client,server,edge}.config.ts` sit at the repo root — the Sentry webpack
+  plugin looks for those exact paths. `src/instrumentation.ts` loads the server/edge
+  ones, which needs `experimental.instrumentationHook` on Next 14.
+- Everything stays off unless `NEXT_PUBLIC_SENTRY_DSN` is set, and source maps are only
+  built and uploaded when `SENTRY_AUTH_TOKEN` is present, so a token-less build is clean.
+- API routes turn every error into JSON, so nothing reaches Sentry's automatic
+  instrumentation. `internalError()` in `src/lib/apiError.ts` reports 500s by hand;
+  `upstreamError()` deliberately stays silent (expected Daiso API failures).
+- Search terms and coordinates never leave in a report: four hooks
+  (`beforeSend`, `beforeSendTransaction`, `beforeSendSpan`, `beforeBreadcrumb`) redact
+  the `SENSITIVE_QUERY_KEYS` query params. `beforeSend` only sees error events, so
+  dropping the transaction/span hooks would leak keywords through performance traces.
+  Renaming a param in `src/lib/searchParams.ts` means updating that list — a test
+  enforces it.
+- The Sentry org is on the **EU region** (`ingest.de.sentry.io`). Event delivery needs
+  nothing extra — the region is baked into the DSN — but source-map upload defaults to
+  `sentry.io` and fails silently there, so `next.config.js` pins
+  `sentryUrl` to `https://de.sentry.io` (override with `SENTRY_URL`).
+- Browser events go through the same-origin tunnel at `/monitoring` (`tunnelRoute`), so
+  ad blockers do not silently erase client-side errors. The middleware matcher and
+  `robots.txt` both exclude that path.
+- `Sentry.init()` deliberately sets no `release`: the bundler plugin picks the commit SHA,
+  uploads source maps under it, and injects the same value. Setting it by hand risks a
+  mismatch that silently unlinks the source maps (`SENTRY_RELEASE` overrides both).
+- Tests load `tests/sentryStub.mjs` instead of the real SDK (`STUBS` in
+  `tests/alias-hook.mjs`); Node's ESM interop cannot read the SDK's CJS named exports.
+
 ### Styling
 
 - **PandaCSS** for CSS-in-JS — use `css()` from `@styled-system/css`
