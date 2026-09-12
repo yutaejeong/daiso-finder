@@ -7,12 +7,17 @@ import {
   missingParameter,
   upstreamError,
 } from "@/lib/apiError";
+import { logSearch, searchLogSource } from "@/lib/searchLog";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  // 무한 스크롤의 다음 페이지는 같은 검색의 연장이므로 첫 페이지만 기록한다.
+  const isFirstPage = (searchParams.get("currentPage") ?? "1") === "1";
+  const source = searchLogSource(request.headers);
+
   try {
-    const { searchParams } = new URL(request.url);
     const keyword = searchParams.get("keyword") || "";
     const currentPage = searchParams.get("currentPage");
     const pageSize = searchParams.get("pageSize");
@@ -45,6 +50,15 @@ export async function GET(request: Request) {
     const data = (await selStr(payload)) as unknown as BranchResponse;
     const branches = data.data ?? [];
 
+    if (isFirstPage) {
+      logSearch({
+        type: "branch",
+        keyword,
+        source,
+        resultCount: branches.length,
+      });
+    }
+
     return new Response(
       JSON.stringify(
         branches.map((branch) => ({
@@ -64,6 +78,15 @@ export async function GET(request: Request) {
       },
     );
   } catch (error) {
+    if (isFirstPage) {
+      logSearch({
+        type: "branch",
+        keyword: searchParams.get("keyword") || "",
+        source,
+        status: "error",
+      });
+    }
+
     if (error instanceof DaisoApiError) {
       return upstreamError(
         "매장 검색 중 오류가 발생했습니다.",

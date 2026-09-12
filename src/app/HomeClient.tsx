@@ -23,6 +23,7 @@ import {
   parseBranchSearchMode,
 } from "@/lib/searchParams";
 import { BRANCH_SEARCH_CACHE } from "@/lib/queryCache";
+import { SEARCH_SOURCE_HEADER } from "@/lib/searchLog";
 
 export function HomeClient() {
   const [searchInput, setSearchInput] = useState("");
@@ -66,7 +67,10 @@ export function HomeClient() {
         url.searchParams.set("currentPage", pageParam.toString());
         url.searchParams.set("pageSize", "10");
         url.searchParams.set("pageIndex", "0");
-        const response = await fetch(url);
+        const response = await fetch(url, {
+          // 검색어 수집에서 웹 UI 검색과 API 직접 호출을 구분하기 위한 표식.
+          headers: { [SEARCH_SOURCE_HEADER]: "web" },
+        });
         if (!response.ok) {
           const body = await response.json().catch(() => null);
           throw new Error(body?.error || "매장 검색 중 오류가 발생했습니다.", {
