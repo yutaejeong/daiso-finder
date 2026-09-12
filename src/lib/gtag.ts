@@ -41,18 +41,28 @@ function ensureGtag() {
   return window.gtag;
 }
 
+// 모든 이벤트에 함께 보낼 파라미터. gtag 가 아니라 여기서 직접 들고 있는다.
+let eventDefaults: Record<string, unknown> = {};
+
 export function trackEvent(
   eventName: string,
   params?: Record<string, unknown>,
 ) {
-  ensureGtag()?.("event", eventName, params);
+  ensureGtag()?.("event", eventName, { ...eventDefaults, ...params });
 }
 
 /**
- * 이후 보내는 모든 이벤트에 자동으로 붙는 기본 파라미터를 설정한다.
- * 유입 경로와 현재 여정 단계를 여기에 실어두면 개별 이벤트마다 다시
- * 넘기지 않아도 GA4 탐색에서 세그먼트로 쓸 수 있다.
+ * 이후 보내는 모든 이벤트에 함께 실을 기본 파라미터를 설정한다.
+ * 유입 경로와 현재 여정 단계를 여기에 넣어두면 어떤 이벤트를 보든
+ * 그 방문자가 어디서 와서 지금 어느 단계에 있는지 함께 보인다.
+ *
+ * `gtag('set', …)` 로는 안 된다. GA4 태그는 set 으로 넘긴 커스텀
+ * 파라미터를 후속 이벤트에 붙여주지 않아서(예약된 몇 개만 반영된다)
+ * 실제 전송 payload 에서 통째로 빠진다. 그래서 직접 병합해 보낸다.
+ *
+ * 이벤트당 파라미터는 25개가 GA4 한도라 기본 파라미터는 꼭 필요한 것만
+ * 둔다. 나머지 유입 정보는 `app_entry` 이벤트가 한 번 싣고 간다.
  */
 export function setEventDefaults(params: Record<string, unknown>) {
-  ensureGtag()?.("set", params);
+  eventDefaults = { ...params };
 }

@@ -201,19 +201,22 @@ function readVisitorType(): string {
   }
 }
 
+/**
+ * 모든 이벤트에 함께 실을 여정 정보.
+ *
+ * 이벤트당 파라미터 25개 한도가 있어서 꼭 필요한 7개만 둔다. 빠진 유입
+ * 정보(`entry_source`, `entry_medium`, `entry_campaign`,
+ * `entry_referrer_host`)는 세션당 한 번 `app_entry` 가 싣고 가므로,
+ * GA4 에서는 세션 범위 세그먼트로 묶어 쓰면 된다.
+ */
 function applyDefaults(state: JourneyState) {
   setEventDefaults({
     journey_id: state.id,
     entry_path: state.entryPath,
     entry_channel: state.entryChannel,
-    entry_source: state.entrySource,
-    entry_medium: state.entryMedium,
-    entry_campaign: state.entryCampaign,
-    entry_referrer_host: state.entryReferrerHost,
     display_mode: state.displayMode,
     visitor_type: state.visitorType,
     journey_step: state.step,
-    journey_step_index: journeyStepIndex(state.step),
     journey_max_step_index: state.maxStepIndex,
   });
 }
@@ -273,7 +276,6 @@ export function ensureJourney(): JourneyState | null {
     entry_query: url.search.slice(1, 100),
     display_mode: state.displayMode,
     visitor_type: state.visitorType,
-    language: window.navigator.language,
   });
 
   trackEvent("funnel_step", {
@@ -329,7 +331,10 @@ export function trackJourneyStep(
   });
 }
 
-/** 현재까지의 여정 요약. 이탈·체류 이벤트에 붙인다. */
+/**
+ * 현재까지의 여정 요약. 이탈·체류 이벤트에 붙인다.
+ * 유입 정보는 기본 파라미터로 이미 따라가므로 여기서는 뺀다.
+ */
 function journeySummary(state: JourneyState | null, now: number) {
   if (!state) return {};
   return {
@@ -338,8 +343,6 @@ function journeySummary(state: JourneyState | null, now: number) {
     max_step_index: state.maxStepIndex,
     step_count: state.stepCount,
     seconds_since_entry: Math.round((now - state.startedAt) / 1000),
-    entry_path: state.entryPath,
-    entry_channel: state.entryChannel,
   };
 }
 
