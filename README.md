@@ -56,6 +56,8 @@ http://localhost:3000 에서 확인.
 | `NEXT_PUBLIC_APP_URL` | 배포 도메인 (sitemap, canonical URL 등에 사용) |
 | `NEXT_PUBLIC_GA_ID` | Google Analytics 4 측정 ID |
 | `WEBMCP_ORIGIN_TRIAL_TOKEN` | Chrome WebMCP Origin Trial 토큰. 설정하면 `Origin-Trial` 헤더로 내려가 배포 origin에서 `document.modelContext`를 활성화 |
+| `NEXT_PUBLIC_SENTRY_DSN` | Sentry 오류 수집 DSN. 비우면 수집이 꺼짐 (`docs/sentry.md`) |
+| `SENTRY_ORG` / `SENTRY_PROJECT` / `SENTRY_AUTH_TOKEN` | Sentry 소스맵 업로드용. 없으면 업로드만 건너뜀 |
 
 ### 테스트
 

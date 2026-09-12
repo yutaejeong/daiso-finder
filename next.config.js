@@ -1,3 +1,5 @@
+const { withSentryConfig } = require("@sentry/nextjs/config");
+
 /** @type {import('next').NextConfig} */
 const withPWA = require("next-pwa")({
   dest: "public",
@@ -45,6 +47,8 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   experimental: {
+    // src/instrumentation.ts 를 켜는 스위치. Next 15 부터는 기본값이다.
+    instrumentationHook: true,
     outputFileTracingIncludes: {
       "/opengraph-image": [
         "./src/app/NotoSansCJKkr-Regular.otf",
@@ -80,4 +84,26 @@ const nextConfig = {
   },
 };
 
-module.exports = withPWA(nextConfig);
+/**
+ * Sentry 빌드 설정. 소스맵 업로드는 SENTRY_AUTH_TOKEN 이 있을 때만 한다.
+ * 토큰 없이 빌드해도(로컬, PR CI) 경고 한 줄 없이 그대로 성공해야 한다.
+ * 자세한 설정은 docs/sentry.md 참고.
+ */
+module.exports = withSentryConfig(withPWA(nextConfig), {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: !process.env.CI,
+  telemetry: false,
+  // 스택 트레이스를 원본 코드로 되돌리려면 소스맵이 필요하다. 업로드한 뒤에는
+  // 빌드 결과물에서 지워 브라우저로 원본 코드가 새어 나가지 않게 한다.
+  sourcemaps: {
+    disable: !process.env.SENTRY_AUTH_TOKEN,
+    deleteSourcemapsAfterUpload: true,
+  },
+  widenClientFileUpload: true,
+  webpack: {
+    // Sentry 자체 디버그 로거는 번들에서 뺀다.
+    treeshake: { removeDebugLogging: true },
+  },
+});

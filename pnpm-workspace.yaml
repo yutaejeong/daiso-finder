@@ -1,3 +1,5 @@
 allowBuilds:
   esbuild: true
   unrs-resolver: true
+  # 소스맵 업로드에 쓰는 sentry-cli 바이너리를 내려받는 설치 스크립트
+  "@sentry/cli": true

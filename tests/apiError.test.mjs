@@ -9,6 +9,7 @@ import {
   notFound,
   upstreamError,
 } from "@/lib/apiError";
+import { capturedExceptions } from "./sentryStub.mjs";
 
 const REQUIRED_FIELDS = [
   "error",
@@ -76,6 +77,23 @@ test("internalError keeps the exception message in detail", async () => {
   assert.equal(body.code, "internal_error");
   assert.equal(body.detail, "boom");
   assert.equal(body.hint, "retry later");
+});
+
+test("internalError reports to Sentry, upstreamError does not", () => {
+  capturedExceptions.length = 0;
+
+  upstreamError("실패", 503, "detail", "hint");
+  assert.equal(capturedExceptions.length, 0);
+
+  const error = new Error("boom");
+  internalError(error, "retry later");
+
+  assert.equal(capturedExceptions.length, 1);
+  assert.equal(capturedExceptions[0].error, error);
+  assert.equal(
+    capturedExceptions[0].context.tags.api_error_code,
+    "internal_error",
+  );
 });
 
 test("methodNotAllowed returns the shared JSON shape and Allow header", async () => {
