@@ -141,6 +141,10 @@ for the setup and what is deliberately left unreported.
   dropping the transaction/span hooks would leak keywords through performance traces.
   Renaming a param in `src/lib/searchParams.ts` means updating that list — a test
   enforces it.
+- The Sentry org is on the **EU region** (`ingest.de.sentry.io`). Event delivery needs
+  nothing extra — the region is baked into the DSN — but source-map upload defaults to
+  `sentry.io` and fails silently there, so `next.config.js` pins
+  `sentryUrl` to `https://de.sentry.io` (override with `SENTRY_URL`).
 - Tests load `tests/sentryStub.mjs` instead of the real SDK (`STUBS` in
   `tests/alias-hook.mjs`); Node's ESM interop cannot read the SDK's CJS named exports.
 

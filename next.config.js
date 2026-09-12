@@ -92,6 +92,9 @@ const nextConfig = {
 module.exports = withSentryConfig(withPWA(nextConfig), {
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
+  // 이 프로젝트의 Sentry 조직은 EU 리전(ingest.de.sentry.io)이다. 업로드 기본값은
+  // sentry.io 라서 그대로 두면 소스맵만 조용히 실패한다.
+  sentryUrl: process.env.SENTRY_URL || "https://de.sentry.io",
   authToken: process.env.SENTRY_AUTH_TOKEN,
   silent: !process.env.CI,
   telemetry: false,

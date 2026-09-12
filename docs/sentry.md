@@ -28,9 +28,18 @@ GA4 가 "얼마나 터졌는지" 를 센다면 Sentry 는 "무엇이 왜 터졌�
 | `NEXT_PUBLIC_SENTRY_ENVIRONMENT`                      | 대시보드에서 환경을 가르는 이름. 기본값은 `NEXT_PUBLIC_VERCEL_ENV` 또는 `NODE_ENV` |
 | `NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE`               | 성능 트레이스 표본 비율 0~1. 기본값 0.1, 범위를 벗어나면 기본값                    |
 | `SENTRY_ORG` / `SENTRY_PROJECT` / `SENTRY_AUTH_TOKEN` | 소스맵 업로드용. 빌드 서버에만 둔다                                                |
+| `SENTRY_URL`                                          | Sentry 인스턴스 주소. 기본값 `https://de.sentry.io` (아래 EU 리전 항목 참고)       |
 
 DSN 은 공개 값이라 클라이언트에 노출돼도 문제없다. 반면 `SENTRY_AUTH_TOKEN` 은
 시크릿이므로 `.env.local` 이나 배포 플랫폼의 환경변수로만 넣는다.
+
+### EU 리전
+
+이 서비스의 Sentry 조직(`taejeong`)은 **EU 리전**이라 수집 주소가
+`o…ingest.de.sentry.io` 다. DSN 에 리전이 이미 박혀 있어 이벤트 전송은 신경 쓸 게
+없지만, **소스맵 업로드는 기본값이 `sentry.io` 라 그대로 두면 조용히 실패한다.**
+그래서 `next.config.js` 가 `sentryUrl` 을 `https://de.sentry.io` 로 기본 설정한다.
+조직을 미국 리전으로 옮기면 `SENTRY_URL=https://sentry.io` 로 덮어쓴다.
 
 ### 소스맵
 
@@ -96,8 +105,18 @@ SDK 는 DSN 이 없어도 번들에 들어간다. `pnpm build` 기준으로 도�
 
 ## 확인하는 법
 
-DSN 을 넣고 빌드한 뒤, 없는 매장 코드로 상세 API 를 찌르거나 임시로 예외를 던져
-이슈가 대시보드에 올라오는지 본다. 개발 모드에서도 DSN 만 있으면 전송된다.
+DSN 이 살아 있는지만 보려면 봉투(envelope)를 하나 직접 쏴 보는 게 제일 빠르다.
+200 과 함께 이벤트 id 가 돌아오면 그 DSN 은 정상이다.
+
+```bash
+curl -i -X POST \
+  "https://o<조직id>.ingest.de.sentry.io/api/<프로젝트id>/envelope/?sentry_key=<키>&sentry_version=7" \
+  -H "Content-Type: application/x-sentry-envelope" \
+  --data-binary $'{"event_id":"<32자리 hex>"}\n{"type":"event"}\n{"message":"test"}'
+```
+
+앱까지 묶어서 보려면 DSN 을 넣고 빌드한 뒤 임시로 예외를 던지는 라우트를 하나 두고
+찔러 본다. 개발 모드에서도 DSN 만 있으면 전송된다.
 
 ```bash
 NEXT_PUBLIC_SENTRY_DSN=https://...@o0.ingest.sentry.io/0 pnpm dev
