@@ -145,6 +145,12 @@ for the setup and what is deliberately left unreported.
   nothing extra — the region is baked into the DSN — but source-map upload defaults to
   `sentry.io` and fails silently there, so `next.config.js` pins
   `sentryUrl` to `https://de.sentry.io` (override with `SENTRY_URL`).
+- Browser events go through the same-origin tunnel at `/monitoring` (`tunnelRoute`), so
+  ad blockers do not silently erase client-side errors. The middleware matcher and
+  `robots.txt` both exclude that path.
+- `Sentry.init()` deliberately sets no `release`: the bundler plugin picks the commit SHA,
+  uploads source maps under it, and injects the same value. Setting it by hand risks a
+  mismatch that silently unlinks the source maps (`SENTRY_RELEASE` overrides both).
 - Tests load `tests/sentryStub.mjs` instead of the real SDK (`STUBS` in
   `tests/alias-hook.mjs`); Node's ESM interop cannot read the SDK's CJS named exports.
 

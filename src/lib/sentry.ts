@@ -59,11 +59,6 @@ export function getSentryEnvironment(): string {
   );
 }
 
-/** 배포를 구분할 릴리스. Vercel 이 주는 커밋 SHA 가 있으면 쓴다. */
-export function getSentryRelease(): string | undefined {
-  return process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA?.trim() || undefined;
-}
-
 /**
  * 트레이스 표본 비율. 환경변수가 없거나 0~1 밖의 값이면 기본값으로 돌아간다.
  */
@@ -236,7 +231,6 @@ export interface SentryInitOptions {
   dsn: string;
   enabled: boolean;
   environment: string;
-  release?: string;
   tracesSampleRate: number;
   sendDefaultPii: false;
   ignoreErrors: string[];
@@ -255,7 +249,9 @@ export function baseSentryOptions(): SentryInitOptions {
     dsn: getSentryDsn(),
     enabled: isSentryEnabled(),
     environment: getSentryEnvironment(),
-    release: getSentryRelease(),
+    // release 는 일부러 지정하지 않는다. Sentry 번들러 플러그인이 빌드할 때
+    // 커밋 SHA 로 릴리스를 정해 소스맵을 그 이름으로 올리고 같은 값을 번들에
+    // 주입한다. 여기서 따로 넣으면 두 값이 어긋나 소스맵만 조용히 안 붙는다.
     tracesSampleRate: getTracesSampleRate(),
     // 이 서비스에는 로그인이 없다. IP·쿠키 같은 값을 굳이 보내지 않는다.
     sendDefaultPii: false,

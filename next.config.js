@@ -105,6 +105,10 @@ module.exports = withSentryConfig(withPWA(nextConfig), {
     deleteSourcemapsAfterUpload: true,
   },
   widenClientFileUpload: true,
+  // 브라우저에서 Sentry 로 바로 나가는 요청은 광고·추적 차단기에 흔히 막힌다.
+  // 같은 도메인의 이 경로로 우회시켜 클라이언트 오류가 통째로 사라지지 않게 한다.
+  // 서버가 대신 전달하므로 미들웨어를 태울 이유도 없다(src/middleware.ts 참고).
+  tunnelRoute: "/monitoring",
   webpack: {
     // Sentry 자체 디버그 로거는 번들에서 뺀다.
     treeshake: { removeDebugLogging: true },

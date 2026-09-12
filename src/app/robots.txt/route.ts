@@ -15,6 +15,7 @@ Allow: /api/mcp`;
 Allow: /
 ${allowedApiPaths}
 Disallow: /api/
+Disallow: /monitoring
 
 User-agent: GPTBot
 Allow: /
