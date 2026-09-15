@@ -1,11 +1,10 @@
 import { BranchResponse } from "../types";
 import { selStr } from "@/generated/daiso/client";
-import { DaisoApiError } from "@/lib/daisoApiClient";
 import {
   getOnlyMethodNotAllowed,
   internalError,
   missingParameter,
-  upstreamError,
+  upstreamErrorOrNull,
 } from "@/lib/apiError";
 import { logSearch, searchLogSource } from "@/lib/searchLog";
 
@@ -87,13 +86,13 @@ export async function GET(request: Request) {
       });
     }
 
-    if (error instanceof DaisoApiError) {
-      return upstreamError(
-        "매장 검색 중 오류가 발생했습니다.",
-        error.status,
-        error.detail,
-        "Verify the query parameters, then retry after a short delay. The upstream Daiso service is occasionally unavailable.",
-      );
+    const upstream = upstreamErrorOrNull(
+      error,
+      "Verify the query parameters, then retry after a short delay. The upstream Daiso service is occasionally unavailable.",
+      "매장 검색 중 오류가 발생했습니다.",
+    );
+    if (upstream) {
+      return upstream;
     }
 
     console.error("API 오류:", error);

@@ -64,6 +64,17 @@ test("URL 의 검색어와 좌표를 가린다", () => {
   assert.equal(located.searchParams.get("lng"), REDACTED);
 });
 
+test("이미지 최적화 URL 의 q 는 품질값이라 건드리지 않는다", () => {
+  const url =
+    "https://www.daiso-finder.kr/_next/image?url=https%3A%2F%2Fcdn.daisomall.co.kr%2Fa.jpg&w=256&q=75";
+  assert.equal(scrubUrl(url), url);
+
+  // 같은 경로라도 좌표는 여전히 가린다.
+  const located = scrubUrl("/_next/image?url=%2Fa.jpg&q=75&lat=37.1");
+  assert.ok(located.includes("q=75"));
+  assert.ok(!located.includes("37.1"));
+});
+
 test("가릴 것이 없는 URL 은 그대로 둔다", () => {
   const url = "https://www.daiso-finder.kr/branch/11199?page=2";
   assert.equal(scrubUrl(url), url);

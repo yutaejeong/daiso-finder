@@ -86,6 +86,11 @@ API 라우트는 오류를 전부 잡아서 JSON 으로 바꾸기 때문에 자�
 없다. 그래서 `internalError()` 안에서 직접 올린다. 반대로 상류 다이소 API 가 준
 오류(`upstreamError()`)는 우리가 고칠 수 있는 버그가 아니고 양도 많아 올리지 않는다.
 
+이 구분은 라우트가 상류 오류를 제대로 알아볼 때만 성립한다. 실제로 `/api/products`
+계열 두 라우트에 분기가 빠져 있어서 상류 장애가 500 `internal_error` 로 나가고
+하루 300건 넘게 Sentry 로 올라왔다. 지금은 네 라우트 모두 `upstreamErrorOrNull()`
+한 곳을 거친다. 새 라우트를 만들 때도 그 헬퍼를 쓴다.
+
 React Query 의 쿼리 실패도 올리지 않는다. 대부분 상류 오류라 화면의 오류 모달로
 충분하다. 필요해지면 `src/app/provider.tsx` 의 `QueryCache.onError` 에서 올리면
 되지만, 무료 할당량을 금방 먹는다는 점을 감안한다.
@@ -99,6 +104,8 @@ React Query 의 쿼리 실패도 올리지 않는다. 대부분 상류 오류라
 - URL 에 담긴 `q`, `keyword`, `lat`, `lng` 값을 `[redacted]` 로 바꾼다. 대상 키는
   `SENSITIVE_QUERY_KEYS` 한 곳에 있고, `tests/sentry.test.mjs` 가 앱이 실제로 쓰는
   검색 파라미터를 다 덮는지 확인한다.
+- 예외가 하나 있다. `/_next/image` 의 `q` 는 검색어가 아니라 이미지 품질값이라
+  가리지 않는다. 실제로 프로덕션 스팬에 `?w=256&q=[redacted]` 로 남아 있었다.
 - 마스킹 훅은 네 개다. `beforeSend`(오류), `beforeSendTransaction`(성능 트랜잭션),
   `beforeSendSpan`(스팬), `beforeBreadcrumb`(네비게이션·fetch 기록). **`beforeSend`
   는 오류 이벤트에만 걸린다.** 트랜잭션 훅을 빼면 성능 트레이스에 실린 요청 URL

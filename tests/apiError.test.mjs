@@ -8,7 +8,11 @@ import {
   missingParameter,
   notFound,
   upstreamError,
+  UPSTREAM_ERROR_NAMES,
+  upstreamErrorOrNull,
 } from "@/lib/apiError";
+import { DaisoApiError } from "@/lib/daisoApiClient";
+import { DaisoBranchApiError } from "@/lib/daisoBranches";
 import { capturedExceptions } from "./sentryStub.mjs";
 
 const REQUIRED_FIELDS = [
@@ -93,6 +97,57 @@ test("internalError reports to Sentry, upstreamError does not", () => {
   assert.equal(
     capturedExceptions[0].context.tags.api_error_code,
     "internal_error",
+  );
+});
+
+test("upstreamErrorOrNull recognises every upstream error class", async () => {
+  // 클래스 이름으로 판별하므로, 클래스가 이름을 바꾸면 여기서 먼저 깨져야 한다.
+  const errors = [
+    new DaisoApiError("상품 조회 실패", 503, "detail"),
+    new DaisoBranchApiError("매장 조회 실패", 404, "detail"),
+  ];
+
+  for (const error of errors) {
+    assert.ok(
+      UPSTREAM_ERROR_NAMES.includes(error.name),
+      `${error.name} 가 목록에 없다`,
+    );
+
+    const response = upstreamErrorOrNull(error, "retry");
+    assert.ok(response, `${error.name} 를 상류 오류로 보지 못했다`);
+
+    const body = await bodyOf(response);
+    assert.equal(body.code, "upstream_error");
+    assert.equal(body.error, error.message);
+    assert.equal(body.detail, "detail");
+  }
+
+  // 5xx 는 게이트웨이 오류로, 4xx 는 그대로 전달한다.
+  assert.equal(upstreamErrorOrNull(errors[0], "retry").status, 502);
+  assert.equal(upstreamErrorOrNull(errors[1], "retry").status, 404);
+});
+
+test("upstreamErrorOrNull lets other errors fall through to internalError", () => {
+  assert.equal(upstreamErrorOrNull(new Error("boom"), "retry"), null);
+  assert.equal(upstreamErrorOrNull("문자열", "retry"), null);
+  assert.equal(upstreamErrorOrNull(undefined, "retry"), null);
+
+  // 이름만 흉내 내고 status/detail 이 없으면 상류 오류로 보지 않는다.
+  const impostor = new Error("가짜");
+  impostor.name = "DaisoApiError";
+  assert.equal(upstreamErrorOrNull(impostor, "retry"), null);
+});
+
+test("upstreamErrorOrNull can override the Korean message", async () => {
+  const response = upstreamErrorOrNull(
+    new DaisoApiError("원본 메시지", 503, "detail"),
+    "retry",
+    "매장 검색 중 오류가 발생했습니다.",
+  );
+
+  assert.equal(
+    (await bodyOf(response)).error,
+    "매장 검색 중 오류가 발생했습니다.",
   );
 });
 
