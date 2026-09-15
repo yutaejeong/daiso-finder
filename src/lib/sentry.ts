@@ -24,6 +24,18 @@ export const SENSITIVE_QUERY_KEYS = ["q", "keyword", "lat", "lng"] as const;
 
 export const REDACTED = "[redacted]";
 
+/**
+ * Next 이미지 최적화 라우트. 여기 붙는 `q` 는 검색어가 아니라 이미지 품질값이라
+ * 가릴 이유가 없다(가리면 `/_next/image?...&q=[redacted]` 처럼 남아 디버깅만 어렵다).
+ */
+const IMAGE_OPTIMIZER_PATH = "/_next/image";
+
+function sensitiveKeysFor(path: string): readonly string[] {
+  return path.endsWith(IMAGE_OPTIMIZER_PATH)
+    ? SENSITIVE_QUERY_KEYS.filter((key) => key !== "q")
+    : SENSITIVE_QUERY_KEYS;
+}
+
 /** 트레이스 표본 비율 기본값. 무료 할당량을 넘기지 않을 만큼만 본다. */
 const DEFAULT_TRACES_SAMPLE_RATE = 0.1;
 
@@ -94,7 +106,7 @@ export function scrubUrl(value: string): string {
 
   const params = new URLSearchParams(query);
   let changed = false;
-  for (const key of SENSITIVE_QUERY_KEYS) {
+  for (const key of sensitiveKeysFor(path)) {
     if (params.has(key)) {
       params.set(key, REDACTED);
       changed = true;

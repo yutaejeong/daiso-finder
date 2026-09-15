@@ -8,6 +8,7 @@ import {
   getOnlyMethodNotAllowed,
   internalError,
   missingParameter,
+  upstreamErrorOrNull,
 } from "@/lib/apiError";
 import { SearchLogEntry, logSearch, searchLogSource } from "@/lib/searchLog";
 import {
@@ -245,6 +246,15 @@ export async function GET(request: NextRequest) {
       });
     } catch (error) {
       logProductSearch({ status: "error" });
+
+      const upstream = upstreamErrorOrNull(
+        error,
+        "Verify the branchCode and keyword, then retry after a short delay. The upstream Daiso service is occasionally unavailable.",
+      );
+      if (upstream) {
+        return upstream;
+      }
+
       console.error("API 오류:", error);
       return internalError(
         error,

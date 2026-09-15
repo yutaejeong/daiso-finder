@@ -144,6 +144,53 @@ export function upstreamError(
   });
 }
 
+/**
+ * 상류 오류 클래스들의 `name`. 클래스 자체를 import 하면 라우트 번들에 다이소
+ * 클라이언트가 딸려오고 순환 참조도 생기므로 이름으로 판별한다.
+ * `tests/apiError.test.mjs` 가 실제 클래스와 이 목록이 어긋나지 않는지 지킨다.
+ */
+export const UPSTREAM_ERROR_NAMES = [
+  "DaisoApiError",
+  "DaisoBranchApiError",
+] as const;
+
+type UpstreamErrorLike = Error & { status: number; detail: string };
+
+function isUpstreamError(error: unknown): error is UpstreamErrorLike {
+  return (
+    error instanceof Error &&
+    (UPSTREAM_ERROR_NAMES as readonly string[]).includes(error.name) &&
+    typeof (error as UpstreamErrorLike).status === "number" &&
+    typeof (error as UpstreamErrorLike).detail === "string"
+  );
+}
+
+/**
+ * 상류 다이소 API 오류면 `upstreamError` 응답을, 아니면 `null` 을 돌려준다.
+ * 호출한 쪽은 `null` 일 때만 `internalError` 로 넘긴다.
+ *
+ * 라우트마다 instanceof 분기를 손으로 쓰다가 `/api/products` 계열 두 곳에서
+ * 빠졌고, 그 바람에 상류 장애가 500 `internal_error` 로 나가면서 Sentry 까지
+ * 올라갔다. 분기를 여기 한 곳에만 두어 같은 누락이 반복되지 않게 한다.
+ */
+export function upstreamErrorOrNull(
+  error: unknown,
+  hint: string,
+  /** 화면에 보일 한국어 문구. 없으면 상류 오류가 들고 온 메시지를 그대로 쓴다. */
+  userMessage?: string,
+): Response | null {
+  if (!isUpstreamError(error)) {
+    return null;
+  }
+
+  return upstreamError(
+    userMessage ?? error.message,
+    error.status,
+    error.detail,
+    hint,
+  );
+}
+
 export function internalError(error: unknown, contextHint: string): Response {
   // API 라우트는 오류를 모두 잡아서 JSON 으로 바꾸므로 Sentry 의 자동 계측에는
   // 아무것도 걸리지 않는다. 진짜 500 은 이 자리에서만 알 수 있어 직접 올린다.

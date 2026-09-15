@@ -15,7 +15,8 @@ Daiso Finder is a Next.js 14 PWA (App Router) that helps users find Daiso stores
 - **PandaCSS codegen:** `pnpm prepare` (run after changing panda.config.ts or when styled-system is stale)
 
 Tests live in `tests/*.test.mjs` and run on `node --test`. `tests/register.mjs` installs a
-resolve hook so tests can import `@/…` aliases and TypeScript sources directly.
+resolve hook so tests can import `@/…` aliases and TypeScript sources directly; it also
+fills in the extensionless relative imports that orval writes into `src/generated/`.
 
 ## Architecture
 
@@ -30,6 +31,11 @@ All external Daiso API calls are proxied through Next.js API routes (`src/app/ap
 - `GET /api` — machine-readable index of every operation and discovery document
 - `GET /api/sandbox/**` — fixture-backed copies of the endpoints above (`src/lib/sandboxFixtures.ts`), no upstream calls
 - `ANY /api/**` (unmatched) — `src/app/api/[...unknown]/route.ts` answers with a JSON 404 instead of Next's HTML page
+
+Every route's `catch` runs `upstreamErrorOrNull()` from `src/lib/apiError.ts` first, so a
+Daiso outage answers `upstream_error` with the upstream status instead of a 500 — and stays
+out of Sentry. Two routes were missing that branch, which is how upstream noise ended up in
+error tracking; keep new routes on the helper rather than hand-writing the `instanceof`.
 
 All error responses go through `src/lib/apiError.ts` so every failure carries
 `{ error, code, message, hint, status, documentation, detail? }`. Adding a new error code
@@ -135,6 +141,8 @@ for the setup and what is deliberately left unreported.
 - API routes turn every error into JSON, so nothing reaches Sentry's automatic
   instrumentation. `internalError()` in `src/lib/apiError.ts` reports 500s by hand;
   `upstreamError()` deliberately stays silent (expected Daiso API failures).
+- `/_next/image`'s `q` is an image quality value, not a search term, so the scrubber leaves
+  it alone (it was showing up as `?w=256&q=[redacted]` in production spans).
 - Search terms and coordinates never leave in a report: four hooks
   (`beforeSend`, `beforeSendTransaction`, `beforeSendSpan`, `beforeBreadcrumb`) redact
   the `SENSITIVE_QUERY_KEYS` query params. `beforeSend` only sees error events, so

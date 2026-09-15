@@ -1,9 +1,9 @@
-import { DaisoBranchApiError, fetchBranchByCode } from "@/lib/daisoBranches";
+import { fetchBranchByCode } from "@/lib/daisoBranches";
 import {
   getOnlyMethodNotAllowed,
   internalError,
   notFound,
-  upstreamError,
+  upstreamErrorOrNull,
 } from "@/lib/apiError";
 
 export async function GET(
@@ -29,13 +29,12 @@ export async function GET(
       },
     });
   } catch (error) {
-    if (error instanceof DaisoBranchApiError) {
-      return upstreamError(
-        error.message,
-        error.status,
-        error.detail,
-        "Verify the store code, then retry after a short delay. The upstream Daiso service is occasionally unavailable.",
-      );
+    const upstream = upstreamErrorOrNull(
+      error,
+      "Verify the store code, then retry after a short delay. The upstream Daiso service is occasionally unavailable.",
+    );
+    if (upstream) {
+      return upstream;
     }
 
     console.error("API 오류:", error);

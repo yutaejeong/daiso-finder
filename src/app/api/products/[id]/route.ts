@@ -3,6 +3,7 @@ import {
   getOnlyMethodNotAllowed,
   internalError,
   missingParameter,
+  upstreamErrorOrNull,
 } from "@/lib/apiError";
 import {
   selOfflStrStckList,
@@ -163,6 +164,14 @@ export async function GET(
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
+    const upstream = upstreamErrorOrNull(
+      error,
+      "Verify the product id and branchCode, then retry after a short delay. The upstream Daiso service is occasionally unavailable.",
+    );
+    if (upstream) {
+      return upstream;
+    }
+
     console.error("API 오류:", error);
     return internalError(
       error,
