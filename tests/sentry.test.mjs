@@ -1,13 +1,16 @@
 import assert from "node:assert/strict";
 import { afterEach, test } from "node:test";
 import { KEYWORD_PARAM, LAT_PARAM, LNG_PARAM } from "@/lib/searchParams";
+import { UPSTREAM_ERROR_NAMES } from "@/lib/upstreamErrors";
 import {
+  CLIENT_ALLOW_URLS,
   REDACTED,
   SENSITIVE_QUERY_KEYS,
   baseSentryOptions,
   getSentryEnvironment,
   getTracesSampleRate,
   isSentryEnabled,
+  isUpstreamErrorEvent,
   scrubBreadcrumb,
   scrubEvent,
   scrubQueryString,
@@ -235,5 +238,52 @@ test("공통 옵션은 PII 를 끄고 마스킹 훅을 달고 나간다", () => 
   assert.equal(
     options.beforeBreadcrumb({ data: { url: "/?q=우산" } }).data.url,
     `/?q=${encodeURIComponent(REDACTED)}`,
+  );
+});
+
+test("상류 다이소 API 오류는 서버 컴포넌트에서 튀어나와도 보내지 않는다", () => {
+  const { beforeSend } = baseSentryOptions();
+
+  // 서버 컴포넌트 자동 계측이 올리는 모양. 이름만 보고 판별한다.
+  const branchError = new Error("매장 정보를 불러오는 중 오류가 발생했습니다.");
+  branchError.name = "DaisoBranchApiError";
+  assert.equal(
+    beforeSend(
+      { exception: { values: [{ type: "DaisoBranchApiError" }] } },
+      { originalException: branchError },
+    ),
+    null,
+  );
+
+  // 힌트가 없어도 예외 타입으로 걸러진다.
+  for (const name of UPSTREAM_ERROR_NAMES) {
+    assert.equal(
+      isUpstreamErrorEvent({ exception: { values: [{ type: name }] } }),
+      true,
+    );
+  }
+
+  // 우리 버그는 그대로 올라간다.
+  const bug = beforeSend(
+    { exception: { values: [{ type: "TypeError" }] } },
+    { originalException: new TypeError("x is undefined") },
+  );
+  assert.notEqual(bug, null);
+});
+
+test("브라우저는 우리 번들에서 난 오류만 받는다", () => {
+  const allowed = (url) =>
+    CLIENT_ALLOW_URLS.some((pattern) => pattern.test(url));
+
+  assert.ok(
+    allowed("https://www.daiso-finder.kr/_next/static/chunks/app/page-abc.js"),
+  );
+  assert.ok(allowed("app:///_next/static/chunks/4bd1b696-123.js"));
+
+  // Chrome iOS 가 끼워 넣은 스크립트는 파일명이 문서 주소로 잡힌다.
+  assert.ok(!allowed("app:///"));
+  assert.ok(!allowed("app:///branch/10837"));
+  assert.ok(
+    !allowed("https://www.daiso-finder.kr/branch/10837/product/1019929"),
   );
 });

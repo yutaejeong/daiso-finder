@@ -10,6 +10,7 @@
  */
 
 import type { Breadcrumb, ErrorEvent, EventHint, init } from "@sentry/nextjs";
+import { UPSTREAM_ERROR_NAMES } from "@/lib/upstreamErrors";
 
 // 트랜잭션·스팬 타입은 `@sentry/nextjs` 가 직접 내보내지 않는다. 내부 패키지를
 // 가져다 쓰는 대신 `Sentry.init()` 이 받는 훅의 시그니처에서 뽑아 쓴다.
@@ -51,6 +52,40 @@ const IGNORED_ERRORS = [
   "AbortError",
   "The user aborted a request.",
 ];
+
+/**
+ * 브라우저에서 우리 번들로 인정하는 스크립트 주소. Sentry 의 `allowUrls` 로 넘겨
+ * 스택 맨 위 프레임이 여기에 없는 오류는 보내지 않는다. 스택이 없는 오류
+ * (`Failed to fetch` 같은 것)는 이 필터와 상관없이 올라온다.
+ *
+ * 우리 코드는 전부 `/_next/` 아래 청크로 나간다(Sentry 가 `app:///_next/...` 로
+ * 바꿔 적어도 걸린다). 반면 Chrome iOS 는 번역·자동 채우기 스크립트를 페이지에
+ * 끼워 넣는데, 그 스크립트의 파일명이 문서 주소(`/branch/10837` 같은)로 잡힌다.
+ * 실제로 한 사용자에게서 6분 새 `RangeError: Maximum call stack size exceeded`
+ * 이슈 여섯 개가 서른 건 넘게 쌓였고, 프레임이 가리킨 "문서 226번째 줄" 은
+ * 한 줄짜리인 우리 HTML 에 있을 수 없는 자리였다.
+ */
+export const CLIENT_ALLOW_URLS: RegExp[] = [/\/_next\//];
+
+/**
+ * 상류 다이소 API 가 실패해서 난 오류인지. API 라우트는 이미 `upstreamError()`
+ * 로 돌려주고 올리지 않지만, 서버 컴포넌트(`/branch/[code]` 등)에서 밖으로
+ * 튀어나온 것은 자동 계측이 잡아 올린다. 크롤러가 상류 장애 중에 매장 페이지를
+ * 훑으면 그대로 수십 건이 쌓인다. 우리가 고칠 버그가 아니므로 같은 기준으로 뺀다.
+ * 페이지 자체는 그대로 5xx 로 나가서 크롤러는 나중에 다시 온다.
+ */
+export function isUpstreamErrorEvent(event: ErrorEvent, hint?: EventHint) {
+  const names: readonly string[] = UPSTREAM_ERROR_NAMES;
+  const original = hint?.originalException;
+
+  if (original instanceof Error && names.includes(original.name)) {
+    return true;
+  }
+
+  return (event.exception?.values ?? []).some(
+    (value) => value.type !== undefined && names.includes(value.type),
+  );
+}
 
 export function getSentryDsn(): string {
   return process.env.NEXT_PUBLIC_SENTRY_DSN?.trim() ?? "";
@@ -268,7 +303,8 @@ export function baseSentryOptions(): SentryInitOptions {
     // 이 서비스에는 로그인이 없다. IP·쿠키 같은 값을 굳이 보내지 않는다.
     sendDefaultPii: false,
     ignoreErrors: [...IGNORED_ERRORS],
-    beforeSend: (event) => scrubEvent(event),
+    beforeSend: (event, hint) =>
+      isUpstreamErrorEvent(event, hint) ? null : scrubEvent(event),
     beforeSendTransaction: (event) => scrubTransaction(event),
     beforeSendSpan: (span) => scrubSpan(span),
     beforeBreadcrumb: (breadcrumb) => scrubBreadcrumb(breadcrumb),
