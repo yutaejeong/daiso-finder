@@ -6,10 +6,13 @@
  */
 
 import * as Sentry from "@sentry/nextjs";
-import { baseSentryOptions } from "@/lib/sentry";
+import { CLIENT_ALLOW_URLS, baseSentryOptions } from "@/lib/sentry";
 
 // 세션 리플레이는 기본으로 켜지 않는다. 번들이 커지고 화면에 검색어가 그대로
 // 찍히므로, 필요해지면 docs/sentry.md 의 안내대로 integrations 에 추가한다.
 Sentry.init({
   ...baseSentryOptions(),
+  // 브라우저가 끼워 넣은 스크립트에서 난 오류는 받지 않는다. 서버 쪽 프레임은
+  // `/_next/` 경로가 아니므로 이 옵션은 브라우저 설정에만 둔다.
+  allowUrls: CLIENT_ALLOW_URLS,
 });

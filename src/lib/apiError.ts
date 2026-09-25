@@ -1,5 +1,6 @@
 import * as Sentry from "@sentry/nextjs";
 import { getBaseUrl } from "@/lib/site";
+import { UPSTREAM_ERROR_NAMES } from "@/lib/upstreamErrors";
 
 /**
  * 에이전트가 파싱할 수 있는 오류 코드. 문자열 값은 공개 계약이므로
@@ -144,15 +145,7 @@ export function upstreamError(
   });
 }
 
-/**
- * 상류 오류 클래스들의 `name`. 클래스 자체를 import 하면 라우트 번들에 다이소
- * 클라이언트가 딸려오고 순환 참조도 생기므로 이름으로 판별한다.
- * `tests/apiError.test.mjs` 가 실제 클래스와 이 목록이 어긋나지 않는지 지킨다.
- */
-export const UPSTREAM_ERROR_NAMES = [
-  "DaisoApiError",
-  "DaisoBranchApiError",
-] as const;
+export { UPSTREAM_ERROR_NAMES };
 
 type UpstreamErrorLike = Error & { status: number; detail: string };
 

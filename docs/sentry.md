@@ -91,6 +91,19 @@ API 라우트는 오류를 전부 잡아서 JSON 으로 바꾸기 때문에 자�
 하루 300건 넘게 Sentry 로 올라왔다. 지금은 네 라우트 모두 `upstreamErrorOrNull()`
 한 곳을 거친다. 새 라우트를 만들 때도 그 헬퍼를 쓴다.
 
+서버 컴포넌트는 사정이 다르다. `/branch/[code]` 처럼 렌더 중에 상류를 부르는
+페이지는 상류가 실패하면 예외가 밖으로 튀어나오고, 자동 계측이 그것을 올린다.
+크롤러(PetalBot·bingbot 등)가 장애 중에 매장 페이지를 훑으면 한 시간에 수십 건이
+쌓였다. 그래서 공통 `beforeSend` 가 `UPSTREAM_ERROR_NAMES`(`src/lib/upstreamErrors.ts`)
+에 든 오류를 런타임과 상관없이 버린다. 페이지 응답은 그대로 5xx 라 크롤러는
+색인을 지우지 않고 나중에 다시 온다.
+
+브라우저 설정에는 `allowUrls: CLIENT_ALLOW_URLS`(`/_next/`)가 더 붙는다. 오류가 난
+프레임이 우리 번들이 아니면 버린다. Chrome iOS 가 페이지에 끼워 넣는 스크립트는
+파일명이 문서 주소(`app:///branch/10837`)로 잡혀서, 한 사용자에게서 난
+`Maximum call stack size exceeded` 가 이슈 여섯 개로 갈라져 쌓였었다. 스택이 없는
+오류(`Failed to fetch` 등)는 이 필터에 걸리지 않고 그대로 올라온다.
+
 React Query 의 쿼리 실패도 올리지 않는다. 대부분 상류 오류라 화면의 오류 모달로
 충분하다. 필요해지면 `src/app/provider.tsx` 의 `QueryCache.onError` 에서 올리면
 되지만, 무료 할당량을 금방 먹는다는 점을 감안한다.
