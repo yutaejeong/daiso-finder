@@ -23,7 +23,7 @@ export class DaisoApiError extends Error {
 
 const DEFAULT_DAISO_API_BASE_URL = "https://fapi.daisomall.co.kr";
 
-function getDaisoApiBaseUrl() {
+export function getDaisoApiBaseUrl() {
   const configuredUrl =
     process.env.DAISO_API_URL ?? process.env.NEXT_PUBLIC_API_URL;
 

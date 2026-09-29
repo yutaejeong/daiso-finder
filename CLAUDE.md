@@ -32,6 +32,11 @@ All external Daiso API calls are proxied through Next.js API routes (`src/app/ap
 - `GET /api/sandbox/**` — fixture-backed copies of the endpoints above (`src/lib/sandboxFixtures.ts`), no upstream calls
 - `ANY /api/**` (unmatched) — `src/app/api/[...unknown]/route.ts` answers with a JSON 404 instead of Next's HTML page
 
+Store stock and shelf placement no longer come from the orval client: Daiso moved them behind
+a pre-auth handshake, so `src/lib/daisoStock.ts` calls them by hand (see
+`docs/daiso-openapi-client.md`). The old generated `selOfflStrStckList`/`selPdStDispInfo`
+still exist but answer 500 — do not switch back to them.
+
 Every route's `catch` runs `upstreamErrorOrNull()` from `src/lib/apiError.ts` first, so a
 Daiso outage answers `upstream_error` with the upstream status instead of a 500 — and stays
 out of Sentry. Two routes were missing that branch, which is how upstream noise ended up in

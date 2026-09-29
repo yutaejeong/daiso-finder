@@ -5,18 +5,10 @@ import {
   missingParameter,
   upstreamErrorOrNull,
 } from "@/lib/apiError";
-import {
-  selOfflStrStckList,
-  selPdStDispInfo,
-  selStr,
-} from "@/generated/daiso/client";
+import { selStr } from "@/generated/daiso/client";
+import { selStoreDisplay, selStoreStock } from "@/lib/daisoStock";
 import { Branch, BranchResponse } from "../../branches/types";
-import {
-  OtherBranchStock,
-  ProductDetailResponse,
-  ProductEquippingResponse,
-  ProductStockResponse,
-} from "../types";
+import { OtherBranchStock, ProductDetailResponse } from "../types";
 
 const MAX_NEARBY_BRANCHES = 50;
 const MAX_OTHER_BRANCHES = 20;
@@ -55,9 +47,9 @@ async function fetchStock(
   }
 
   try {
-    const data = (await selOfflStrStckList(
+    const data = await selStoreStock(
       branchCodes.map((strCd) => ({ pdNo, strCd })),
-    )) as unknown as ProductStockResponse;
+    );
 
     for (const item of data.data ?? []) {
       const stock = parseInt(item.stck);
@@ -75,10 +67,10 @@ async function fetchPlacement(
   branchCode: string,
 ): Promise<{ stairNo: number | null; zoneNo: number | null }> {
   try {
-    const data = (await selPdStDispInfo({
+    const data = await selStoreDisplay({
       pdNo,
       strCd: branchCode,
-    })) as unknown as ProductEquippingResponse;
+    });
     const placement = data.data?.[0];
 
     if (!placement) {

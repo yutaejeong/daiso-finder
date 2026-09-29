@@ -1,23 +1,18 @@
 import { NextRequest } from "next/server";
-import {
-  pdThumbSelSimple,
-  selOfflStrStckList,
-  selPdStDispInfo,
-} from "@/generated/daiso/client";
+import { pdThumbSelSimple } from "@/generated/daiso/client";
 import {
   getOnlyMethodNotAllowed,
   internalError,
   missingParameter,
   upstreamErrorOrNull,
 } from "@/lib/apiError";
+import { selStoreDisplay, selStoreStock } from "@/lib/daisoStock";
 import { SearchLogEntry, logSearch, searchLogSource } from "@/lib/searchLog";
 import {
   Product,
   ProductApiResponse,
-  ProductEquippingResponse,
   ProductResponse,
   ProductSearchProgress,
-  ProductStockResponse,
   ProductStreamEvent,
   SimplifiedProduct,
 } from "./types";
@@ -72,11 +67,9 @@ async function checkProductStock(products: Product[], branchCode: string) {
     strCd: branchCode,
   }));
 
-  const data = (await selOfflStrStckList(
-    payload,
-  )) as unknown as ProductStockResponse;
+  const data = await selStoreStock(payload);
 
-  return data.data;
+  return data.data ?? [];
 }
 
 async function collectProducts(
@@ -139,10 +132,10 @@ async function collectProducts(
           .filter((product) => product.stock > 0)
           .map(async (product) => {
             try {
-              const data = (await selPdStDispInfo({
+              const data = await selStoreDisplay({
                 pdNo: product.id,
                 strCd: branchCode,
-              })) as unknown as ProductEquippingResponse;
+              });
 
               if (seenProductIds.has(product.id)) {
                 return null;
