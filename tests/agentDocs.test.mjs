@@ -76,7 +76,7 @@ test("markdown representation is page-aware", () => {
 
   const contact = buildMarkdownForPath("/contact");
   assert.match(contact, /문의 \(\/contact\)/);
-  assert.match(contact, /contact@daiso-finder\.kr/);
+  assert.match(contact, /qmamsm123@naver\.com/);
   assert.match(
     buildMarkdownForPath("/branch/11199"),
     /매장 상세 \(\/branch\/11199\)/,
