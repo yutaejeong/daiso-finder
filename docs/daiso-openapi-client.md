@@ -29,5 +29,23 @@ pnpm generate:daiso-api
 - `POST /ms/msg/selStr`
 - `POST /pdo/pdThumbSel`
 - `POST /pdo/pdThumbSelSimple`
-- `POST /pdo/selOfflStrStck`
-- `POST /pdo/selPdStDispInfo`
+- `POST /pdo/selOfflStrStck` (더 이상 쓰지 않음, 아래 참고)
+- `POST /pdo/selPdStDispInfo` (더 이상 쓰지 않음, 아래 참고)
+
+## 매장 재고·진열 조회 (사전 인증)
+
+2026-09 다이소가 매장 재고·진열 조회를 인증 뒤로 옮겼다. 위 두 endpoint 는 무엇을 보내도
+500 을 돌려주고, `/v3/api-docs` 도 404 라 orval 로 다시 생성할 수 없다. 그래서
+`src/lib/daisoStock.ts` 가 다이소몰 웹과 같은 방식으로 손으로 호출한다.
+
+- `POST /pd/pdh/selStrPkupStck` — 본문 `[{ pdNo, strCd }]`, 응답 형식은 예전 재고 조회와 같다.
+  다이소가 모르는 상품은 응답에서 빠진다.
+- `POST /pdo/selIntPdStDispInfo` — 본문 `{ pdNo, strCd }`, 응답 `data[0].stairNo/zoneNo`.
+
+두 요청 모두 먼저 `GET /auth/request` 로 JWT 와 `X-DM-UID` 를 받고, JWT 를
+AES-128-CBC(키 `PRE_AUTH_ENC_KEY`, 임의 IV)로 암호화해
+`Authorization: Bearer base64(IV)+base64(암호문)` 으로 보낸다. JWT 는 요청한 IP·User-Agent 에
+묶이고 30초 뒤 만료되므로 20초만 재사용하고, 401/403 이 오면 한 번 새로 받아 다시 보낸다.
+
+다이소몰 번들이 바뀌면 이 방식도 다시 깨질 수 있다. 그때는 다이소몰 상품 페이지의 JS 에서
+`postWithAuth` 를 찾아 비교한다.

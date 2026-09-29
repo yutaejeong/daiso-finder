@@ -16,8 +16,8 @@ export const SITE_TAGLINE_EN =
  */
 export const DEFAULT_APP_URL = "https://www.daiso-finder.kr";
 
-/** 문의용 공개 메일 주소. 실제 수신함 연결은 배포 담당자가 설정한다. */
-export const CONTACT_EMAIL = "contact@daiso-finder.kr";
+/** 문의용 공개 메일 주소. */
+export const CONTACT_EMAIL = "qmamsm123@naver.com";
 export const SOURCE_REPOSITORY = "https://github.com/yutaejeong/daiso-finder";
 export const CLI_PACKAGE_NAME = "daiso-finder-cli";
 

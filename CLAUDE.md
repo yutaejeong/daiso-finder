@@ -32,6 +32,11 @@ All external Daiso API calls are proxied through Next.js API routes (`src/app/ap
 - `GET /api/sandbox/**` — fixture-backed copies of the endpoints above (`src/lib/sandboxFixtures.ts`), no upstream calls
 - `ANY /api/**` (unmatched) — `src/app/api/[...unknown]/route.ts` answers with a JSON 404 instead of Next's HTML page
 
+Store stock and shelf placement no longer come from the orval client: Daiso moved them behind
+a pre-auth handshake, so `src/lib/daisoStock.ts` calls them by hand (see
+`docs/daiso-openapi-client.md`). The old generated `selOfflStrStckList`/`selPdStDispInfo`
+still exist but answer 500 — do not switch back to them.
+
 Every route's `catch` runs `upstreamErrorOrNull()` from `src/lib/apiError.ts` first, so a
 Daiso outage answers `upstream_error` with the upstream status instead of a 500 — and stays
 out of Sentry. Two routes were missing that branch, which is how upstream noise ended up in
@@ -145,6 +150,10 @@ for the setup and what is deliberately left unreported.
 - API routes turn every error into JSON, so nothing reaches Sentry's automatic
   instrumentation. `internalError()` in `src/lib/apiError.ts` reports 500s by hand;
   `upstreamError()` deliberately stays silent (expected Daiso API failures).
+- Because of that, a Daiso-side break is caught by a Sentry uptime monitor instead:
+  it polls `GET /api/health/daiso` (`src/lib/daisoHealth.ts`), which walks search →
+  pre-auth stock → shelf placement and answers 503 naming the failed step. Keep that
+  check in step with the calls `/api/products` makes.
 - `/_next/image`'s `q` is an image quality value, not a search term, so the scrubber leaves
   it alone (it was showing up as `?w=256&q=[redacted]` in production spans).
 - Search terms and coordinates never leave in a report: four hooks
