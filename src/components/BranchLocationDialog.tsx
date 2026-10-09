@@ -337,9 +337,14 @@ export function BranchLocationDialog({ branch }: Props) {
                 textAlign: "center",
               })}
             >
-              {copyStatus === "copied" && "주소를 복사했습니다."}
-              {copyStatus === "failed" &&
-                "주소를 복사하지 못했습니다. 다시 시도해주세요."}
+              {/* 조건부 문구는 꼭 요소로 감싼다. 브라우저 번역(Safari·Chrome)이
+                  맨 텍스트 노드를 번역문으로 바꿔 끼우면, 다이얼로그를 닫으며
+                  문구를 지울 때 React 가 이미 없는 노드를 removeChild 하다
+                  NotFoundError 로 화면 전체가 오류 페이지로 넘어간다. */}
+              {copyStatus === "copied" && <span>주소를 복사했습니다.</span>}
+              {copyStatus === "failed" && (
+                <span>주소를 복사하지 못했습니다. 다시 시도해주세요.</span>
+              )}
             </p>
           </div>
         </div>
