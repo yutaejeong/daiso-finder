@@ -19,6 +19,7 @@ import {
 import { fetchProductsWithProgress } from "@/lib/productSearchStream";
 import { PRODUCT_SEARCH_CACHE } from "@/lib/queryCache";
 import { parseSearchKeyword, searchKeywordToParams } from "@/lib/searchParams";
+import { sendViewBeacon } from "@/lib/viewBeacon";
 import { css } from "@styled-system/css";
 import { IconMapPin, IconPhotoX, IconStairs } from "@tabler/icons-react";
 import {
@@ -82,6 +83,8 @@ export function BranchClient({ code, initialBranch }: Props) {
       // 서버에서 받아온 매장 정보 없이 열렸다면 이름조차 못 보여준 상태다.
       has_branch_info: Boolean(initialBranch),
     });
+    // 인기 매장 집계용. GA4 와 별개로 서버 로그에 남긴다.
+    sendViewBeacon({ type: "branch_view", branchCode: code });
   }, [code, branch?.name, initialBranch]);
 
   const {
