@@ -30,6 +30,7 @@ All external Daiso API calls are proxied through Next.js API routes (`src/app/ap
 - `GET /api/products/[id]` — one product's stock, shelf placement, and nearby stores that stock it
 - `GET /api` — machine-readable index of every operation and discovery document
 - `GET /api/sandbox/**` — fixture-backed copies of the endpoints above (`src/lib/sandboxFixtures.ts`), no upstream calls
+- `POST /api/views` — internal view beacon from the web UI (not in OpenAPI or the `/api` index)
 - `ANY /api/**` (unmatched) — `src/app/api/[...unknown]/route.ts` answers with a JSON 404 instead of Next's HTML page
 
 Store stock and shelf placement no longer come from the orval client: Daiso moved them behind
@@ -120,20 +121,28 @@ GA4 tracks the whole visit as a journey: acquisition → funnel → exit. See
   `JOURNEY_STEPS` (inserting in the middle renumbers past data) and updating
   `docs/analytics.md`.
 
-### Search-term collection
+### Search-term and view collection
 
-Every keyword search — store search and in-store product search — is appended to a
-Google Sheet through an Apps Script web app. See `docs/search-logs.md` for the sheet
-setup and the Apps Script source.
+Every keyword search — store search and in-store product search — and every store/product
+detail view is appended to a Google Sheet through an Apps Script web app, and written to
+the Vercel runtime log as one JSON line (`"log":"daiso_finder_activity"`). The view rows
+are the raw data for future popular-store/popular-product rankings. See
+`docs/search-logs.md` for the sheet setup and the Apps Script source.
 
 - `src/lib/searchLog.ts` owns it. `logSearch()` never blocks or fails a search response,
   and the whole thing stays off unless `SEARCH_LOG_WEBHOOK_URL` is set.
 - The two API routes (`/api/branches/search`, `/api/products`) call it after the results
   are in, and only for the first page — later pages of infinite scroll are the same search.
 - Location-only store searches have no keyword, so nothing is recorded for them.
+- Views come only from the web UI: `src/lib/viewBeacon.ts` sends `POST /api/views` with
+  `sendBeacon`, once per screen per tab session. Do not count `/api/branches/[code]` or
+  `/api/products/[id]` responses instead — React Query refetches on window focus.
+- The runtime-log line is on when `VERCEL` is set, or forced with `SEARCH_LOG_CONSOLE=1|0`.
+  It is independent of the webhook, so it still records when the sheet is off.
 - The web UI sends `x-search-source: web` (`SEARCH_SOURCE_HEADER`) so the sheet can tell
   site searches apart from direct API/MCP/CLI calls. Changing the row shape means changing
-  `HEADERS` in the Apps Script too, and the privacy page describes what is stored.
+  `HEADERS` in the Apps Script too (append columns at the end so existing rows stay
+  aligned), and the privacy page describes what is stored.
 
 ### Error tracking
 

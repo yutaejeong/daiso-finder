@@ -19,6 +19,7 @@ import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { trackEvent } from "@/lib/gtag";
 import { trackJourneyStep } from "@/lib/journey";
+import { sendViewBeacon } from "@/lib/viewBeacon";
 
 interface Props {
   code: string;
@@ -70,6 +71,13 @@ export function ProductClient({ code, productId, branch, product }: Props) {
       branch_code: code,
       product_id: productId,
       product_name: name ?? undefined,
+    });
+    // 인기 상품 집계용. GA4 와 별개로 서버 로그에 남긴다.
+    sendViewBeacon({
+      type: "product_view",
+      branchCode: code,
+      productId,
+      productName: name,
     });
   }, [code, productId, name]);
 
