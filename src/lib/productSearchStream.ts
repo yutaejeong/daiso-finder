@@ -7,6 +7,14 @@ import { SEARCH_SOURCE_HEADER } from "@/lib/searchLog";
 
 const DEFAULT_ERROR_MESSAGE = "상품 검색 중 오류가 발생했습니다.";
 
+/**
+ * 검색 오류 이벤트의 `error_kind` 로 쓰일 코드를 붙인 오류.
+ * 사용자에게 보이는 메시지는 그대로 두고 원인만 덧붙인다.
+ */
+function searchError(message: string, code: string, cause?: unknown) {
+  return Object.assign(new Error(message, { cause }), { code });
+}
+
 interface FetchOptions {
   onProgress?: (progress: ProductSearchProgress) => void;
   signal?: AbortSignal;
@@ -43,9 +51,11 @@ export async function fetchProductsWithProgress(
 
   if (!response.ok) {
     const body = await response.json().catch(() => null);
-    throw new Error(body?.error || DEFAULT_ERROR_MESSAGE, {
-      cause: body?.detail,
-    });
+    throw searchError(
+      body?.error || DEFAULT_ERROR_MESSAGE,
+      body?.code ?? `http_${response.status}`,
+      body?.detail,
+    );
   }
 
   // 스트림을 지원하지 않는 환경(프록시 등)에서는 일반 JSON 응답으로 처리한다.
@@ -78,9 +88,11 @@ export async function fetchProductsWithProgress(
     }
 
     if (event.type === "error") {
-      throw new Error(event.error || DEFAULT_ERROR_MESSAGE, {
-        cause: event.detail,
-      });
+      throw searchError(
+        event.error || DEFAULT_ERROR_MESSAGE,
+        "stream_error",
+        event.detail,
+      );
     }
 
     const { type: _type, ...payload } = event;
@@ -110,7 +122,9 @@ export async function fetchProductsWithProgress(
   }
 
   if (!result) {
-    throw new Error(DEFAULT_ERROR_MESSAGE);
+    // 결과 줄 없이 스트림이 끝났다. 매장 재고를 오래 훑다가 서버 함수의
+    // 실행 시간 한도에 걸려 끊긴 경우가 여기로 온다.
+    throw searchError(DEFAULT_ERROR_MESSAGE, "stream_incomplete");
   }
 
   return result;

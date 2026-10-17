@@ -180,6 +180,11 @@ async function collectProducts(
     report();
   }
 
+  // 마지막 진행률. 재고가 하나도 없어 found 가 오르지 않은 채 끝나면
+  // scanned 가 한 번도 전달되지 않아서, 화면이 "그런 상품이 없음" 과
+  // "이 매장에 재고가 없음" 을 가를 수 없다.
+  report();
+
   return {
     products: existingProducts,
     hasMore,

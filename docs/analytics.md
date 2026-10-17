@@ -47,6 +47,12 @@
 `ai_assistant` 로 갈라 놓았다. 이 서비스는 AI 에이전트 유입을 따로 보는 것이
 의미 있어서 어시스턴트를 별도 채널로 둔다.
 
+ChatGPT 는 답변 속 링크에 리퍼러 없이 `utm_source=chatgpt.com` 만 붙인다.
+UTM 규칙이 먼저 적용되던 때(2026-10-18 이전)에는 이 유입이 전부 `campaign` 으로
+잡혔다 — 28일 기준 약 1,100명, 전체의 4분의 1. 지금은 어시스턴트 호스트를
+가리키는 `utm_source` 를 UTM 규칙보다 먼저 `ai_assistant` 로 가른다. 그 이전
+기간을 볼 때는 `campaign` 을 사실상 AI 유입으로 읽으면 된다.
+
 ## 2. 퍼널 — 뭘 했나
 
 목적(원하는 상품의 매장 내 위치 확인)까지의 9단계. 단계를 밟을 때마다
@@ -76,13 +82,29 @@
 단계는 한 세션에서 여러 번 나올 수 있다(재검색, 뒤로가기). 퍼널 보고서에서는
 `journey_id` 별 `journey_max_step_index` 로 "가장 멀리 간 지점" 을 보면 된다.
 
+### 목적 달성 — `product_found`
+
+상품 검색 결과 카드는 이미 층·구역을 보여준다. 그래서 상세 화면의
+`product_located` 단계만 목적 달성으로 세면 성공 대부분이 빠진다(28일 기준
+결과를 받은 사람 2,372명 중 상세까지 간 사람은 612명). 목적 달성은 별도
+이벤트 `product_found` 로 센다.
+
+| `found_via` | 언제 |
+| --- | --- |
+| `list` | 상품 검색 결과가 1건 이상 도착 (`result_count`, `keyword`, `branch_code`, `is_restored`) |
+| `detail` | 상품 상세에서 위치를 받았고 품절이 아님 (`branch_code`, `product_id`) |
+
+`funnel_step` 은 단계 이름이 파라미터라서 GA4 의 주요 이벤트로 표시할 수가
+없다. 주요 이벤트는 이벤트 이름 단위로만 고를 수 있으므로 이름을 따로 둔다.
+`is_restored = true` 는 상세를 보고 돌아와 캐시된 목록을 다시 본 경우다.
+
 ## 3. 이탈 — 어디서 나갔나
 
 GA4 는 이탈 지점을 직접 알려주지 않으므로, 나가기 직전 상태를 직접 남긴다.
 
 | 이벤트 | 언제 | 핵심 파라미터 |
 | --- | --- | --- |
-| `page_exit` | 화면이 가려지거나(`hidden`) 문서가 닫힐 때(`pagehide`) | `exit_path`, `reached_step`, `max_step_index`, `engaged_seconds`, `max_scroll_percent`, `exit_intent`, `exit_reason`, `hidden_count` |
+| `page_exit` | 화면이 가려지거나(`hidden`) 문서가 닫힐 때(`pagehide`) | `exit_path`, `reached_step`, `max_step_index`, `engaged_seconds`, `max_scroll_percent`, `exit_intent`, `exit_reason`, `hidden_count`, `pending_search`, `pending_search_seconds` |
 | `page_engagement` | 사이트 안에서 다른 페이지로 이동할 때 | `page_path`, `to_path`, `engaged_seconds`, `max_scroll_percent` |
 | `outbound_click` | 외부 도메인 링크 클릭 | `link_domain`, `link_url`, `link_text` |
 | `scroll_depth` | 25/50/75/90% 도달 | `percent_scrolled` |
@@ -93,16 +115,42 @@ GA4 는 이탈 지점을 직접 알려주지 않으므로, 나가기 직전 상�
 큰 마지막 이벤트를 보면 된다. 체류 시간(`engaged_seconds`)은 화면이 실제로
 보이는 동안만 누적한다.
 
+`pending_search` 는 나가는 순간 응답을 기다리던 검색(`branch` | `product` |
+`none`)이고, `pending_search_seconds` 는 그때까지 기다린 시간이다. 상품 검색은
+매장 재고를 훑느라 수 초씩 걸려서, `reached_step = product_search` 로 끝난
+이탈이 "결과가 늦어서 포기" 인지 이 값으로 가른다. 검색을 시작한 화면을 벗어난
+뒤에는 대기 상태를 이탈에 싣지 않는다.
+
 이탈 **원인**을 가르는 이벤트도 따로 있다.
 
 | 이벤트 | 의미 |
 | --- | --- |
-| `search_result` (`is_empty`, `result_count`) | 검색 결과 0건 — 이 서비스에서 가장 흔한 이탈 원인 |
-| `search_error` | 검색 실패(네트워크·업스트림 오류, 위치 권한 거부) |
+| `search_result` (`is_empty`, `result_count`, `duration_ms`, `scanned_count`, `empty_reason`) | 검색 결과 0건 — 이 서비스에서 가장 흔한 이탈 원인 |
+| `search_error` (`error_kind`, `message`, `duration_ms`) | 검색 실패(네트워크·업스트림 오류, 위치 권한 거부) |
 | `product_detail_error` | 상세 재고 조회 실패 |
 | `error_modal_view` | 전역 오류 모달 노출 |
 | `app_error` | 화면이 통째로 깨짐 (`src/app/error.tsx`) |
 | `page_not_found` | 없는 주소로 진입 |
+
+검색 이벤트의 추가 값:
+
+- `duration_ms` — 요청을 보내고 결과·오류가 오기까지 걸린 시간. 캐시에서 바로
+  꺼낸 결과(뒤로 가기)에는 없다.
+- `empty_reason` — 상품 검색 0건일 때만. `no_match` 는 그런 상품이 아예 없다는
+  뜻(검색어 문제 — 오타, 대소문자, 품번 등), `not_in_store` 는 상품은 있는데 이
+  매장에 재고가 없다는 뜻이다. 근거는 `scanned_count`(첫 페이지를 채우느라 훑어본
+  카탈로그 상품 수)로, `/api/products` 스트림의 마지막 진행률에서 받는다.
+- `error_kind` — 사람이 읽는 `message` 대신 묶어 보는 짧은 값.
+
+| `error_kind` | 뜻 |
+| --- | --- |
+| `upstream_error` 등 | API 가 돌려준 오류 코드 (`src/lib/apiError.ts`) |
+| `http_<status>` | 코드 없이 실패한 HTTP 응답 |
+| `stream_error` | 상품 검색 스트림이 오류 줄을 보냄 |
+| `stream_incomplete` | 상품 검색 스트림이 결과 없이 끊김 — 서버 함수 실행 시간 한도 의심 |
+| `network` | 응답을 받기 전에 `fetch` 실패 |
+| `location_denied` / `location_unavailable` / `location_timeout` / `location_unsupported` / `location_error` | 현재 위치 검색 실패 |
+| `aborted`, `unknown` | 취소, 그 밖 |
 
 ## 4. 기존 클릭 이벤트
 
@@ -161,29 +209,56 @@ GA4 는 이탈 지점을 직접 알려주지 않으므로, 나가기 직전 상�
 (`is_restored`, `hidden_count`, `link_domain`, `percent_scrolled` 등)도 필요해질
 때 같은 방법으로 추가하면 된다. 할당량은 측정기준 18/50, 측정항목 8/50.
 
-권장 보고서:
+### 추가로 등록할 것 (2026-10-18 계측분)
 
-1. **유입별 성과** — 탐색 → 자유 형식. 행 `entry_channel`, 값 `journey_id`
-   (고유 수)와 `product_located` 이벤트 수. 채널별로 목적 달성률이 갈린다.
-2. **퍼널** — 탐색 → 유입경로 탐색 분석(또는 유입경로 분석). `funnel_step` 을
-   `step_name` 순서대로 9단계로 놓으면 단계별 이탈률이 그대로 나온다.
-3. **이탈 지점** — 자유 형식. 행 `reached_step` × `exit_path`, 값 `page_exit`
-   이벤트 수. `exit_intent` 를 열로 두면 "그냥 닫음 vs 외부로 나감" 이 갈린다.
-4. **빈 결과의 영향** — `search_result` 에서 `is_empty = true` 세그먼트를 만들고
-   그 세션의 `page_exit` 를 보면 "못 찾아서 나간" 비율이 나온다.
+| 종류 | 이름(제안) | 파라미터 |
+| --- | --- | --- |
+| 측정기준 | 검색 오류 유형 | `error_kind` |
+| 측정기준 | 빈 결과 원인 | `empty_reason` |
+| 측정기준 | 목적 달성 경로 | `found_via` |
+| 측정기준 | 이탈 시 대기 검색 | `pending_search` |
+| 측정항목(밀리초) | 검색 소요 시간 | `duration_ms` |
+| 측정항목(초) | 이탈 시 대기 시간 | `pending_search_seconds` |
+| 측정항목 | 훑어본 상품 수 | `scanned_count` |
 
-`전환`으로 표시할 만한 이벤트: `product_located`(목적 달성),
-`branch_directions_click`(매장 방문 의사), `pwa_installed`.
+주요 이벤트(관리 → 데이터 표시 → 이벤트에서 별표)로 표시할 이벤트:
+`product_found`(목적 달성), `branch_directions_click`(매장 방문 의사),
+`pwa_installed`. `product_located` 는 이벤트 이름이 아니라 `funnel_step` 의
+`step_name` 값이라 주요 이벤트로 고를 수 없다. 2026-10-18 기준 주요 이벤트는
+기본값 `purchase` 하나뿐이었다.
 
-### 확인 필요: 향상된 측정의 페이지 변경 추적
+### 탐색 대시보드 — "다이소 파인더 대시보드"
 
-데이터 스트림 → 향상된 측정 → 페이지 조회 → 고급 설정에 있는
-**"브라우저 방문 기록 이벤트를 토대로 한 페이지 변경사항"** 이 켜져 있다.
-이 앱은 `page_view` 를 직접 보내고(`src/lib/journey.ts`), 검색 조건도
-`history.pushState` 로 URL 에 넣기 때문에 이 설정이 켜져 있으면
+탐색 → `다이소 파인더 대시보드`(자유 형식, 기간 지난 28일). 탭 하나가 질문 하나다.
+
+| 탭 | 행 × 열 · 값 · 필터 | 보는 것 |
+| --- | --- | --- |
+| 1. 퍼널 단계 | `step_name` · 이벤트 수/총 사용자/세션수 | 단계별 도달 인원 |
+| 2. 유입 채널 × 퍼널 | `entry_channel` × `step_name` · 총 사용자 | 채널별 전환 차이 |
+| 3. 이탈 지점 | `reached_step` × `exit_intent` · 이벤트 수 · `page_exit` | 어디서 나갔나 |
+| 4. 검색어·빈 결과 | `search_type`, `keyword` × `is_empty` · 이벤트 수/총 사용자 · `search_result` | 결과 0건 검색어 |
+| 5. 검색 오류 | `search_type`, `keyword` · 이벤트 수/총 사용자 · `search_error` | 실패한 검색 |
+| 6. 매장별 퍼널 | `branch_code` × `step_name` · 총 사용자 | 수요가 몰리는 매장 |
+| 7. PWA·재방문 | `display_mode`, `visitor_type` × `step_name` · 총 사용자 | 설치·재방문 효과 |
+
+탐색은 맞춤 측정기준을 20개까지만 가져올 수 있어서 `entry_source`,
+`entry_referrer_host` 는 빼 두었다. 위 "추가로 등록할 것" 을 등록하면
+탭 5 의 행을 `error_kind` 로, 탭 4 에 `empty_reason` 을 열로 넣는다.
+
+### 향상된 측정의 페이지 변경 추적 — 꺼져 있음
+
+데이터 스트림 → 향상된 측정 → 페이지 조회 → 고급 설정의
+**"브라우저 방문 기록 이벤트를 토대로 한 페이지 변경사항"** 은 2026-10-18 에
+꺼져 있음을 확인했다. 이 앱은 `page_view` 를 직접 보내고(`src/lib/journey.ts`),
+검색 조건도 `history.pushState` 로 URL 에 넣기 때문에 이 설정을 켜면
 ① SPA 이동마다 `page_view` 가 두 번 기록되고 ② 검색할 때마다 페이지뷰가
-하나씩 더 붙는다. 수동 페이지뷰를 쓰는 SPA 의 표준 구성은 이 체크박스를
-끄는 것이다.
+하나씩 더 붙는다. 켜지 않는다.
+
+같은 화면의 나머지 향상된 측정(스크롤, 이탈 클릭, 사이트 검색, 양식 상호작용)은
+켜져 있어 직접 보내는 이벤트와 겹친다: `scroll` ↔ `scroll_depth`,
+`click` ↔ `outbound_click`, `view_search_results` ↔ `search_result`,
+`form_start` ↔ `branch_search`/`product_search`. 보고서에서는 직접 보내는
+쪽을 쓴다.
 
 ## 6. 계측을 추가할 때
 

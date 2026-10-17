@@ -116,6 +116,12 @@ export function classifyChannel({
   utmSource,
   utmMedium,
 }: ChannelInput): string {
+  // ChatGPT 는 답변 속 링크에 `utm_source=chatgpt.com` 만 붙이고 리퍼러는
+  // 보내지 않는다. UTM 규칙을 먼저 태우면 두 번째로 큰 유입원이 통째로
+  // `campaign` 에 묻히므로, 어시스턴트 호스트를 가리키는 source 는 먼저 가른다.
+  const source = utmSource?.trim().toLowerCase().replace(/^www\./, "");
+  if (source && matchesHost(source, ASSISTANT_HOSTS)) return "ai_assistant";
+
   const medium = utmMedium?.trim();
   if (medium) return medium;
   if (utmSource?.trim()) return "campaign";
@@ -153,6 +159,16 @@ export interface JourneyState {
 // 사파리 시크릿 모드처럼 sessionStorage 를 못 쓰는 환경에서도 한 페이지
 // 안에서는 여정이 이어지도록 메모리에 같은 값을 들고 있는다.
 let fallbackState: JourneyState | null = null;
+
+export type SearchType = "branch" | "product";
+
+/**
+ * 응답을 기다리는 중인 검색. 상품 검색은 매장 재고를 훑느라 수 초씩
+ * 걸리는데, 그 사이에 나가 버린 방문자는 결과도 오류도 남기지 않아서
+ * 따로 들고 있다가 `page_exit` 에 싣는다.
+ */
+let pendingSearch: { type: SearchType; path: string; startedAt: number } | null =
+  null;
 
 function readState(): JourneyState | null {
   try {
@@ -407,40 +423,128 @@ export function trackPageExit(input: {
     exit_intent: input.intent,
     hidden_count: input.hiddenCount,
     ...journeySummary(readState(), Date.now()),
+    ...pendingSearchSummary(input.path),
     // 문서가 닫히는 중에도 전송되도록 비콘을 쓴다.
     transport_type: "beacon",
   });
 }
 
 /**
+ * 검색 요청을 실제로 보낸 시점. 캐시에서 바로 꺼낸 결과는 부르지 않으므로
+ * `duration_ms` 가 비어 있으면 다시 보기(뒤로 가기 등)다.
+ */
+export function markSearchStarted(searchType: SearchType) {
+  if (typeof window === "undefined") return;
+  pendingSearch = {
+    type: searchType,
+    path: window.location.pathname,
+    startedAt: Date.now(),
+  };
+}
+
+/** 기다리던 검색이 끝났다. 걸린 시간을 돌려주고 대기 상태를 지운다. */
+function settleSearch(searchType: SearchType): number | undefined {
+  if (pendingSearch?.type !== searchType) return undefined;
+  const elapsed = Date.now() - pendingSearch.startedAt;
+  pendingSearch = null;
+  return elapsed;
+}
+
+/**
+ * 나가는 순간 검색을 기다리고 있었는지. 상품 검색 단계(`product_search`)
+ * 에서 끝난 이탈이 "결과가 늦어서 포기" 인지 가르는 값이다. 다른 화면으로
+ * 옮겨 간 뒤 남은 대기 상태는 그 화면의 이탈로 치지 않는다.
+ */
+function pendingSearchSummary(path: string) {
+  if (!pendingSearch || pendingSearch.path !== path) {
+    return { pending_search: "none" };
+  }
+  return {
+    pending_search: pendingSearch.type,
+    pending_search_seconds: Math.round(
+      (Date.now() - pendingSearch.startedAt) / 1000,
+    ),
+  };
+}
+
+/**
+ * 검색 실패를 원인별로 묶을 짧은 값. 메시지는 사람이 읽는 문장이라
+ * GA4 측정기준으로 쓰기 어렵기 때문에 따로 둔다.
+ *
+ * - 던지는 쪽이 `code` 를 붙였으면 그대로 쓴다(API 오류 코드,
+ *   `location_denied`, `stream_incomplete` 등).
+ * - `fetch` 가 응답을 받기 전에 실패하면 `TypeError` 라 `network`.
+ */
+export function searchErrorKind(error: unknown): string {
+  if (error && typeof error === "object") {
+    const { code, name } = error as { code?: unknown; name?: unknown };
+    if (typeof code === "string" && code) return code.slice(0, 40);
+    if (name === "AbortError") return "aborted";
+    if (name === "TypeError") return "network";
+  }
+  return "unknown";
+}
+
+/**
  * 검색 결과를 받아본 시점. `result_count` 가 0 인 지점이 이 서비스에서
  * 가장 흔한 이탈 원인이라 별도 이벤트로 남긴다.
+ *
+ * 상품 검색이 0건일 때 `scanned_count` 가 있으면 `empty_reason` 도 붙인다.
+ * `no_match` 는 그런 상품이 아예 없다는 뜻이고(검색어 문제),
+ * `not_in_store` 는 상품은 있는데 이 매장에 재고가 없다는 뜻이다.
  */
 export function trackSearchResult(
-  searchType: "branch" | "product",
+  searchType: SearchType,
   params: {
     result_count: number;
     keyword?: string;
     search_mode?: string;
     branch_code?: string;
-    duration_ms?: number;
+    scanned_count?: number;
   },
 ) {
+  const isEmpty = params.result_count === 0;
+  const scanned = params.scanned_count;
   trackEvent("search_result", {
     search_type: searchType,
-    is_empty: params.result_count === 0,
+    is_empty: isEmpty,
     ...params,
+    duration_ms: settleSearch(searchType),
+    ...(isEmpty && scanned !== undefined
+      ? { empty_reason: scanned > 0 ? "not_in_store" : "no_match" }
+      : {}),
   });
 }
 
 /** 검색이 실패한 시점. 빈 결과와 함께 이탈 원인을 가르는 축이다. */
 export function trackSearchError(
-  searchType: "branch" | "product",
-  params: { message?: string; keyword?: string; branch_code?: string },
+  searchType: SearchType,
+  error: unknown,
+  params: { keyword?: string; branch_code?: string },
 ) {
+  const message = error instanceof Error ? error.message : String(error ?? "");
   trackEvent("search_error", {
     search_type: searchType,
     ...params,
-    message: params.message?.slice(0, 100),
+    error_kind: searchErrorKind(error),
+    message: message.slice(0, 100),
+    duration_ms: settleSearch(searchType),
   });
+}
+
+/**
+ * 원하는 상품의 매장 내 위치를 본 순간. 이 서비스의 목적 달성이라
+ * GA4 에서 주요 이벤트로 표시하는 이벤트다.
+ *
+ * 상품 검색 결과 목록이 이미 층·구역을 보여주므로 목록이 도착한 것만으로도
+ * 위치를 본 셈이다(`found_via: list`). 상세 화면의 `product_located` 단계만
+ * 목적 달성으로 세면 대부분의 성공이 빠진다(`found_via: detail`).
+ * `funnel_step` 은 단계 이름이 파라미터라 주요 이벤트로 표시할 수 없어서
+ * 이벤트 이름을 따로 둔다.
+ */
+export function trackProductFound(
+  foundVia: "list" | "detail",
+  params: Record<string, unknown>,
+) {
+  trackEvent("product_found", { found_via: foundVia, ...params });
 }

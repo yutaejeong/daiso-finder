@@ -12,7 +12,9 @@ import { useRecentBranches } from "@/hooks/useRecentBranches";
 import { useUrlSearchParams } from "@/hooks/useUrlSearchParams";
 import { trackEvent } from "@/lib/gtag";
 import {
+  markSearchStarted,
   trackJourneyStep,
+  trackProductFound,
   trackSearchError,
   trackSearchResult,
 } from "@/lib/journey";
@@ -42,6 +44,8 @@ export function BranchClient({ code, initialBranch }: Props) {
   const [params, setParams] = useUrlSearchParams();
   const keyword = useMemo(() => parseSearchKeyword(params), [params]);
   const [progress, setProgress] = useState<ProductSearchProgress | null>(null);
+  // 첫 페이지를 채우느라 훑어본 상품 수. 0건 결과의 원인을 가르는 데 쓴다.
+  const scannedRef = useRef<number | undefined>(undefined);
   const { addRecentBranch } = useRecentBranches();
 
   // 뒤로/앞으로 가기로 검색어가 바뀌면 입력창도 함께 되돌린다.
@@ -118,11 +122,19 @@ export function BranchClient({ code, initialBranch }: Props) {
         page: pageParam,
         scanned: 0,
       });
+      // 다음 페이지 불러오기는 같은 검색이라 걸린 시간·훑은 수를 새로 재지 않는다.
+      if (pageParam === 1) {
+        markSearchStarted("product");
+        scannedRef.current = undefined;
+      }
 
       try {
         return await fetchProductsWithProgress(params, {
           signal,
-          onProgress: setProgress,
+          onProgress: (next) => {
+            if (pageParam === 1) scannedRef.current = next.scanned;
+            setProgress(next);
+          },
         });
       } finally {
         setProgress(null);
@@ -162,12 +174,15 @@ export function BranchClient({ code, initialBranch }: Props) {
     if (reportedSearchRef.current === searchKey) return;
     reportedSearchRef.current = searchKey;
 
+    // 캐시에서 꺼낸 결과면 이번에 훑은 수가 없다. 이전 검색 값이 섞이지 않게 비운다.
+    const scanned = scannedRef.current;
+    scannedRef.current = undefined;
+    // 스트림 검색은 시작하자마자 진행률을 한 번 보내므로, 훑은 수가 없으면
+    // 상세를 보고 돌아와 캐시된 결과를 다시 본 경우다.
+    const isRestored = scanned === undefined;
+
     if (isError) {
-      trackSearchError("product", {
-        message: error?.message,
-        keyword,
-        branch_code: code,
-      });
+      trackSearchError("product", error, { keyword, branch_code: code });
       return;
     }
 
@@ -176,12 +191,23 @@ export function BranchClient({ code, initialBranch }: Props) {
       result_count: resultCount,
       keyword,
       branch_code: code,
+      scanned_count: scanned,
     });
     trackJourneyStep("product_results", {
       result_count: resultCount,
       keyword,
       branch_code: code,
+      is_restored: isRestored,
     });
+    // 결과 카드마다 층·구역이 보이므로 목록이 뜬 것만으로 위치를 찾은 셈이다.
+    if (resultCount > 0) {
+      trackProductFound("list", {
+        result_count: resultCount,
+        keyword,
+        branch_code: code,
+        is_restored: isRestored,
+      });
+    }
   }, [code, keyword, isFetching, isError, error, data]);
 
   return (
