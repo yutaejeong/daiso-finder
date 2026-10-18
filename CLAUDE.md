@@ -116,6 +116,12 @@ GA4 tracks the whole visit as a journey: acquisition → funnel → exit. See
   them in `trackEvent()`, because GA4 drops custom params passed to `gtag('set')`.
 - `src/hooks/useJourneyTracking.ts` wires page views, engaged time, scroll depth,
   outbound clicks, and the `page_exit` event to browser events.
+- Goal completion is the `product_found` event (`trackProductFound()`), not the
+  `product_located` step: the product result list already shows floor/zone, and GA4
+  key events can only be picked by event name. Searches call `markSearchStarted()`
+  before fetching so results/errors carry `duration_ms` and `page_exit` can report a
+  search the visitor gave up on; thrown search errors carry a `code` that becomes
+  `error_kind`.
 - Fire funnel steps with `trackJourneyStep()` only — it also updates the state that
   the exit event reports as `reached_step`. Adding a step means appending to
   `JOURNEY_STEPS` (inserting in the middle renumbers past data) and updating

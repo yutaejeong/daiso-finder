@@ -18,7 +18,7 @@ import { ImageWithFallback } from "@/components/ImageWithFallback";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { trackEvent } from "@/lib/gtag";
-import { trackJourneyStep } from "@/lib/journey";
+import { trackJourneyStep, trackProductFound } from "@/lib/journey";
 import { sendViewBeacon } from "@/lib/viewBeacon";
 
 interface Props {
@@ -101,14 +101,23 @@ export function ProductClient({ code, productId, branch, product }: Props) {
       return;
     }
 
+    const hasLocation = stairNo !== null && zoneNo !== null;
+    const isOutOfStock = (stock ?? 0) <= 0;
     trackJourneyStep("product_located", {
       branch_code: code,
       product_id: productId,
-      has_location: stairNo !== null && zoneNo !== null,
-      is_out_of_stock: (stock ?? 0) <= 0,
+      has_location: hasLocation,
+      is_out_of_stock: isOutOfStock,
       stock: stock ?? 0,
       other_branch_count: otherBranches.length,
     });
+    // 위치를 못 받았거나 품절이면 단계는 밟았어도 목적은 이루지 못한 것이다.
+    if (hasLocation && !isOutOfStock) {
+      trackProductFound("detail", {
+        branch_code: code,
+        product_id: productId,
+      });
+    }
   }, [
     code,
     productId,

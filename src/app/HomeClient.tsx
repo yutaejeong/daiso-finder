@@ -13,6 +13,7 @@ import { useRecentBranches } from "@/hooks/useRecentBranches";
 import { useUrlSearchParams } from "@/hooks/useUrlSearchParams";
 import { trackEvent } from "@/lib/gtag";
 import {
+  markSearchStarted,
   trackJourneyStep,
   trackSearchError,
   trackSearchResult,
@@ -67,15 +68,21 @@ export function HomeClient() {
         url.searchParams.set("currentPage", pageParam.toString());
         url.searchParams.set("pageSize", "10");
         url.searchParams.set("pageIndex", "0");
+        // 무한 스크롤의 다음 페이지는 같은 검색이라 걸린 시간을 재지 않는다.
+        if (pageParam === 1) markSearchStarted("branch");
         const response = await fetch(url, {
           // 검색어 수집에서 웹 UI 검색과 API 직접 호출을 구분하기 위한 표식.
           headers: { [SEARCH_SOURCE_HEADER]: "web" },
         });
         if (!response.ok) {
           const body = await response.json().catch(() => null);
-          throw new Error(body?.error || "매장 검색 중 오류가 발생했습니다.", {
-            cause: body?.detail,
-          });
+          throw Object.assign(
+            new Error(body?.error || "매장 검색 중 오류가 발생했습니다.", {
+              cause: body?.detail,
+            }),
+            // 검색 오류 이벤트의 error_kind 로 쓰인다(src/lib/apiError.ts 의 코드).
+            { code: body?.code ?? `http_${response.status}` },
+          );
         }
         const data: SimplifiedBranchResponse = await response.json();
         return data;
@@ -116,7 +123,7 @@ export function HomeClient() {
 
     const keyword = mode.type === "keyword" ? mode.keyword : "(location)";
     if (isError) {
-      trackSearchError("branch", { message: error?.message, keyword });
+      trackSearchError("branch", error, { keyword });
       return;
     }
 
@@ -135,7 +142,10 @@ export function HomeClient() {
 
   const getCurrentPosition = async () => {
     if (!navigator.geolocation) {
-      throw new Error("이 브라우저는 위치 정보를 지원하지 않습니다.");
+      throw Object.assign(
+        new Error("이 브라우저는 위치 정보를 지원하지 않습니다."),
+        { code: "location_unsupported" },
+      );
     }
 
     return new Promise<GeolocationPosition>((resolve, reject) => {
@@ -143,25 +153,30 @@ export function HomeClient() {
         resolve,
         (error: GeolocationPositionError) => {
           let errorMessage = "위치 정보를 가져오는데 실패했습니다.";
+          // 검색 오류 이벤트의 error_kind. 권한 거부와 GPS 문제는 대응이 다르다.
+          let code = "location_error";
 
           switch (error.code) {
             case error.PERMISSION_DENIED:
               errorMessage =
                 "위치 정보 접근 권한이 거부되었습니다. 브라우저 설정에서 위치 정보 권한을 허용해주세요.";
+              code = "location_denied";
               break;
             case error.POSITION_UNAVAILABLE:
               errorMessage =
                 "위치 정보를 사용할 수 없습니다. GPS가 켜져있는지 확인하거나, 잠시 후 다시 시도해주세요.";
+              code = "location_unavailable";
               break;
             case error.TIMEOUT:
               errorMessage =
                 "위치 정보 요청 시간이 초과되었습니다. 다시 시도해주세요.";
+              code = "location_timeout";
               break;
             default:
               errorMessage = `위치 정보 오류: ${error.message || "알 수 없는 오류가 발생했습니다."}`;
           }
 
-          reject(new Error(errorMessage));
+          reject(Object.assign(new Error(errorMessage), { code }));
         },
         {
           enableHighAccuracy: true,
@@ -197,10 +212,7 @@ export function HomeClient() {
             ? error.message
             : "위치 정보를 가져오는데 실패했습니다. 다시 시도해주세요.";
         // 위치 권한 거부는 첫 화면에서 바로 이탈로 이어지는 흔한 원인이다.
-        trackSearchError("branch", {
-          message: errorMessage,
-          keyword: "(location)",
-        });
+        trackSearchError("branch", error, { keyword: "(location)" });
         alert(errorMessage);
       }
     } else {
