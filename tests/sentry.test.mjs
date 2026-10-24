@@ -214,6 +214,14 @@ test("환경 이름은 설정값을 먼저 쓴다", () => {
   assert.ok(getSentryEnvironment().length > 0);
 });
 
+test("브라우저 확장 프로그램이 내는 sendMessage 거부는 무시 목록에 있다", () => {
+  const { ignoreErrors } = baseSentryOptions();
+  const message = "Invalid call to runtime.sendMessage(). Tab not found.";
+
+  // Sentry 는 문자열 항목을 메시지에 대한 부분 일치로 비교한다.
+  assert.ok(ignoreErrors.some((entry) => message.includes(entry)));
+});
+
 test("공통 옵션은 PII 를 끄고 마스킹 훅을 달고 나간다", () => {
   process.env.NEXT_PUBLIC_SENTRY_DSN = DSN;
   const options = baseSentryOptions();

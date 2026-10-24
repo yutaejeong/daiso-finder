@@ -51,6 +51,10 @@ const IGNORED_ERRORS = [
   // 화면을 벗어나며 진행 중이던 요청이 끊긴 경우.
   "AbortError",
   "The user aborted a request.",
+  // 사용자 Safari 확장 프로그램이 페이지에 끼워 넣은 스크립트가 닫힌 탭으로
+  // `runtime.sendMessage()` 를 보내다 나는 거부된 프로미스. 스택이 없어서
+  // `allowUrls` 로는 걸러지지 않고, 우리 코드는 확장 API 를 쓰지 않는다.
+  "Invalid call to runtime.sendMessage(). Tab not found.",
 ];
 
 /**

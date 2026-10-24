@@ -104,6 +104,11 @@ API 라우트는 오류를 전부 잡아서 JSON 으로 바꾸기 때문에 자�
 `Maximum call stack size exceeded` 가 이슈 여섯 개로 갈라져 쌓였었다. 스택이 없는
 오류(`Failed to fetch` 등)는 이 필터에 걸리지 않고 그대로 올라온다.
 
+스택이 없는 확장 프로그램 오류 가운데 메시지가 고정된 것은 `IGNORED_ERRORS`
+(`ignoreErrors`)에 문자열로 넣어 뺀다. `Invalid call to runtime.sendMessage(). Tab not
+found.`(DAISO-FINDER-P)는 iOS Safari 확장이 닫힌 탭에 메시지를 보내다 나는 거부된
+프로미스로, 우리 코드는 확장 API 를 부르지 않는다.
+
 React Query 의 쿼리 실패도 올리지 않는다. 대부분 상류 오류라 화면의 오류 모달로
 충분하다. 필요해지면 `src/app/provider.tsx` 의 `QueryCache.onError` 에서 올리면
 되지만, 무료 할당량을 금방 먹는다는 점을 감안한다.
