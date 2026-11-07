@@ -7,7 +7,9 @@ import {
   SimplifiedProduct,
 } from "@/app/api/products/types";
 import { BranchLocationDialog } from "@/components/BranchLocationDialog";
+import { PopularProducts } from "@/components/PopularProducts";
 import { Search } from "@/components/Search";
+import { usePopularProducts } from "@/hooks/usePopular";
 import { useRecentBranches } from "@/hooks/useRecentBranches";
 import { useUrlSearchParams } from "@/hooks/useUrlSearchParams";
 import { trackEvent } from "@/lib/gtag";
@@ -162,6 +164,9 @@ export function BranchClient({ code, initialBranch }: Props) {
   };
 
   const products = data?.pages.flatMap((page) => page.products) || [];
+  // 검색 전 화면에서만 이 매장에서 많이 찾는 상품을 보여준다.
+  const popularProducts = usePopularProducts(code, !keyword).data?.items ?? [];
+  const showPopular = !keyword && popularProducts.length > 0;
 
   // 상품 검색 결과가 도착한 시점. 재고가 없어 0건으로 끝나는 경우가 잦고,
   // 그 자리가 이 서비스에서 가장 깊은 이탈 지점이라 따로 남긴다.
@@ -186,7 +191,8 @@ export function BranchClient({ code, initialBranch }: Props) {
       return;
     }
 
-    const resultCount = data?.pages.flatMap((page) => page.products).length ?? 0;
+    const resultCount =
+      data?.pages.flatMap((page) => page.products).length ?? 0;
     trackSearchResult("product", {
       result_count: resultCount,
       keyword,
@@ -289,7 +295,7 @@ export function BranchClient({ code, initialBranch }: Props) {
             ? `${branch?.name ?? "매장"}에서 ${Math.min(progress.found, progress.target)}/${progress.target}개 확인`
             : undefined
         }
-        hasResults={products.length > 0}
+        hasResults={products.length > 0 || showPopular}
         keyword={keyword}
         searchButtonLabel="상품 검색"
         toolName="search_store_products"
@@ -299,6 +305,9 @@ export function BranchClient({ code, initialBranch }: Props) {
         onRetry={keyword ? () => refetch() : undefined}
         scrollRestorationKey={keyword ? `products:${code}:${keyword}` : null}
       >
+        {showPopular && (
+          <PopularProducts branchCode={code} products={popularProducts} />
+        )}
         {products.map((product: SimplifiedProduct, index: number) => (
           <Link
             key={product.id}

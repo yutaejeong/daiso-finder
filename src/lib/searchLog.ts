@@ -77,7 +77,7 @@ const WEBHOOK_TIMEOUT_MS = 5000;
 const MAX_KEYWORD_LENGTH = 200;
 
 /** 매장 코드·상품 번호로 받아들이는 형태. 다이소 코드는 숫자뿐이지만 여유를 둔다. */
-const CODE_PATTERN = /^[0-9A-Za-z_-]{1,32}$/;
+export const CODE_PATTERN = /^[0-9A-Za-z_-]{1,32}$/;
 
 /** Vercel 런타임 로그에서 이 기록만 골라낼 때 쓰는 표식 */
 export const CONSOLE_LOG_NAME = "daiso_finder_activity";

@@ -143,6 +143,17 @@ are the raw data for future popular-store/popular-product rankings. See
 - Views come only from the web UI: `src/lib/viewBeacon.ts` sends `POST /api/views` with
   `sendBeacon`, once per screen per tab session. Do not count `/api/branches/[code]` or
   `/api/products/[id]` responses instead — React Query refetches on window focus.
+- Popular stores/products: the Apps Script (`docs/apps-script/Code.gs`, run under test by
+  `tests/appsScript.test.mjs`) ranks the last 30 days of view rows hourly into a `popular`
+  tab; `src/lib/popular.ts` reads it with `POST {action:"popular"}` and
+  `/api/popular/{branches,products}` feed the home screen and the branch screen. Rank by
+  store code / product number only and re-resolve names from Daiso — the sheet's `상품명`
+  is client-supplied, so never render it. These routes are web-UI only (like `/api/views`),
+  deliberately not in OpenAPI, `/api`, MCP or the sandbox.
+- The same script archives rows older than 90 days into monthly spreadsheets
+  (`archiveOldRows`) so the `searches` tab stays small; Sheets caps a file at 10M cells,
+  counted over the whole grid. Changing the script means pasting it into the Apps Script
+  editor and redeploying a new version — merging the repo does not update it.
 - The runtime-log line is on when `VERCEL` is set, or forced with `SEARCH_LOG_CONSOLE=1|0`.
   It is independent of the webhook, so it still records when the sheet is off.
 - The web UI sends `x-search-source: web` (`SEARCH_SOURCE_HEADER`) so the sheet can tell
