@@ -1,8 +1,10 @@
 # 검색어·조회 수집 (구글 스프레드시트 + Vercel 로그)
 
 사용자가 입력한 검색어와 매장·상품 상세 조회를 구글 스프레드시트에 한 줄씩
-쌓는다. 같은 행은 Vercel 런타임 로그에도 JSON 한 줄로 남는다. 조회 행은 나중에
-인기 매장·인기 상품을 뽑는 원천이다(아직 화면에 보여주지는 않는다).
+쌓는다. 같은 행은 Vercel 런타임 로그에도 JSON 한 줄로 남는다. 조회 행은 첫 화면의
+"요즘 많이 찾는 매장"과 매장 화면의 "이 매장에서 많이 찾는 상품"을 뽑는 원천이다
+(아래 "인기 매장·인기 상품"). 시트가 끝없이 커지지 않도록 오래된 행은 월별 보관
+파일로 옮긴다(아래 "시트가 너무 커지면").
 
 | 종류           | 어디서                         | 언제                         |
 | -------------- | ------------------------------ | ---------------------------- |
@@ -75,103 +77,22 @@ Script 웹앱이 대신 하므로 앱 쪽에는 추가 의존성이 없다.
 ### 2. Apps Script 붙이기
 
 스프레드시트에서 **확장 프로그램 → Apps Script** 를 연다. 기본으로 열리는
-`Code.gs` 내용을 아래로 통째로 바꾼다.
+`Code.gs` 내용을 저장소의 [`docs/apps-script/Code.gs`](apps-script/Code.gs) 로
+통째로 바꾼다. 스크립트가 하는 일은 셋이다.
 
-```js
-/** 검색어가 쌓일 시트 이름 */
-const SHEET_NAME = "searches";
+| 함수             | 언제                       | 하는 일                                                                           |
+| ---------------- | -------------------------- | --------------------------------------------------------------------------------- |
+| `doPost`         | 앱 서버가 부를 때          | 검색·조회 행을 `searches` 시트에 쌓는다. `action: "popular"` 이면 집계를 돌려준다 |
+| `refreshPopular` | 매시간(시간 트리거)        | 최근 30일 조회를 세어 `popular` 시트에 적는다                                     |
+| `archiveOldRows` | 매일 새벽 4시(시간 트리거) | 60일이 지난 행을 월별 보관 파일로 옮기고 `searches` 에서 지운다                   |
 
-/**
- * 아무나 이 웹앱 주소로 쓰레기 값을 넣지 못하게 막는 공유 비밀값.
- * 아래 값을 길고 임의적인 문자열로 바꾼 뒤, 앱의
- * SEARCH_LOG_WEBHOOK_TOKEN 환경변수에 똑같이 넣는다.
- */
-const TOKEN = "여기에-임의의-긴-문자열";
+`TOKEN` 값을 길고 임의적인 문자열로 바꾼 뒤 저장한다. 그다음 편집기 위쪽 함수
+선택에서 **`setup`** 을 골라 **한 번 실행**한다. `searches` 시트와 머리글을 만들고,
+안 쓰는 열을 지우고, 위 두 시간 트리거를 등록한다(이미 있으면 다시 만들지 않는다).
+첫 실행에서는 "트리거 관리"·"드라이브 파일 만들기" 권한 승인 화면이 뜬다.
 
-const HEADERS = [
-  "시각",
-  "검색 종류",
-  "검색어",
-  "매장 코드",
-  "결과 수",
-  "유입 경로",
-  "상태",
-  "상품 번호",
-  "상품명",
-];
-
-function doPost(e) {
-  var payload;
-  try {
-    payload = JSON.parse(e.postData.contents);
-  } catch (error) {
-    return json({ ok: false, error: "invalid_json" });
-  }
-
-  if (TOKEN && payload.token !== TOKEN) {
-    return json({ ok: false, error: "forbidden" });
-  }
-
-  var rows = payload.rows || [];
-  if (!rows.length) {
-    return json({ ok: true, appended: 0 });
-  }
-
-  // 동시에 들어온 검색이 같은 줄을 덮어쓰지 않도록 잠근다.
-  var lock = LockService.getScriptLock();
-  lock.waitLock(20000);
-  try {
-    var sheet = getSheet();
-    var values = rows.map(function (row) {
-      return [
-        row.timestamp ? new Date(row.timestamp) : new Date(),
-        row.type || "",
-        row.keyword || "",
-        row.branchCode || "",
-        row.resultCount === 0 || row.resultCount ? row.resultCount : "",
-        row.source || "",
-        row.status || "",
-        row.productId || "",
-        row.productName || "",
-      ];
-    });
-    sheet
-      .getRange(sheet.getLastRow() + 1, 1, values.length, HEADERS.length)
-      .setValues(values);
-    return json({ ok: true, appended: values.length });
-  } finally {
-    lock.releaseLock();
-  }
-}
-
-function getSheet() {
-  var book = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = book.getSheetByName(SHEET_NAME);
-  if (!sheet) {
-    sheet = book.insertSheet(SHEET_NAME);
-  }
-  if (sheet.getLastRow() === 0) {
-    sheet.appendRow(HEADERS);
-    sheet.setFrozenRows(1);
-    sheet.getRange("A:A").setNumberFormat("yyyy-MM-dd HH:mm:ss");
-    // 상품 번호는 숫자로 바뀌면 앞자리 0 이 사라지므로 글자로 둔다.
-    sheet.getRange("H:H").setNumberFormat("@");
-  } else if (sheet.getLastColumn() < HEADERS.length) {
-    // 예전(7열) 스크립트로 만든 시트라면 새 열의 머리글을 덧붙인다.
-    sheet.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);
-    sheet.getRange("H:H").setNumberFormat("@");
-  }
-  return sheet;
-}
-
-function json(body) {
-  return ContentService.createTextOutput(JSON.stringify(body)).setMimeType(
-    ContentService.MimeType.JSON,
-  );
-}
-```
-
-`TOKEN` 값을 길고 임의적인 문자열로 바꾼 뒤 저장한다.
+이 스크립트는 `tests/appsScript.test.mjs` 가 가짜 `SpreadsheetApp` 위에서 그대로
+실행해 검증한다. 고치면 테스트를 돌리고, 편집기에도 다시 붙여넣는다.
 
 ### 3. 웹앱으로 배포
 
@@ -211,18 +132,92 @@ curl "http://localhost:3000/api/branches/search?keyword=%EA%B0%95%EB%82%A8"
 `forbidden` 이면 토큰이 다른 것이고, 응답 자체가 없으면 배포 설정의 액세스
 권한을 다시 본다.
 
-## 이미 운영 중인 시트에 조회 기록 붙이기
+## 이미 운영 중인 시트에 새 스크립트 붙이기
 
-예전 7열 스크립트를 쓰고 있었다면, 앱을 배포하기 **전에** 위 스크립트로
+예전 스크립트(7열 또는 9열)를 쓰고 있었다면, 앱을 배포하기 **전에** 위 스크립트로
 `Code.gs` 를 바꾸고 새 버전으로 다시 배포한다(아래 "스크립트를 고칠 때"). 예전
-스크립트는 모르는 필드를 버리기 때문에, 순서가 바뀌면 그사이 들어온 조회 행은
-`상품 번호`·`상품명` 이 빈 채로 쌓인다. 첫 행이 들어올 때 머리글 두 칸이 자동으로
-붙는다. 웹훅 주소와 토큰은 그대로다.
+스크립트는 모르는 필드를 버리고 `action: "popular"` 요청도 모르기 때문에, 앱을 먼저
+배포하면 인기 순위가 비어 있는 채로 남는다(화면은 정상, 목록만 안 보인다).
+
+바꾼 뒤 `setup` 을 한 번 실행한다. 이미 쌓인 행은 건드리지 않는다. `popular`
+시트는 첫 `refreshPopular` 실행(최대 1시간 뒤, 급하면 편집기에서 직접 실행)에
+생긴다. 웹훅 주소와 토큰은 그대로다.
 
 ## 스크립트를 고칠 때
 
 Apps Script 를 수정한 뒤에는 **배포 → 배포 관리 → 수정(연필) → 버전: 새 버전**
 으로 다시 배포해야 `exec` 주소에 반영된다. 저장만 해서는 바뀌지 않는다.
+
+## 인기 매장·인기 상품
+
+조회 행(`branch_view`, `product_view`)이 화면에 쓰이는 곳이다.
+
+```
+조회 비콘 → searches 시트 ──(매시간 refreshPopular)──▶ popular 시트
+                                                        │ doPost(action: "popular")
+화면 ◀── /api/popular/{branches,products} ◀── src/lib/popular.ts
+```
+
+- **첫 화면**: 검색 전에 "요즘 많이 찾는 매장" (`/api/popular/branches`).
+- **매장 화면**: 검색 전에 "이 매장에서 많이 찾는 상품"
+  (`/api/popular/products?branchCode=…`). 상품 조회는 매장마다 적어서(2026-11-09 실측:
+  상품 조회가 있던 546개 매장 중 2회 이상 본 상품이 있는 곳은 76곳) 순위가 하나도 없는
+  매장은 **전체 인기 상품**(제목 "요즘 많이 찾는 상품", 응답의 `scope: "overall"`)으로
+  채우고, 그 상품들은 지금 보는 매장의 상품 화면으로 연결한다. `branchCode` 를 빼면 전체
+  인기 상품이고 각 상품은 가장 많이 본 매장과 함께 나간다.
+- 최근 30일(`POPULAR_WINDOW_DAYS`)의 조회를 센다. 같은 탭 세션의 같은 화면은 한 번이므로
+  "열어 본 세션 수" 순위다. 조회 수가 2 미만(`MIN_POPULAR_VIEWS`)이면 올리지 않는다.
+- 집계는 매장 코드·상품 번호만 쓴다. 상품명은 누구나 `POST /api/views` 로 보낼 수 있는
+  값이라 **시트의 `상품명` 은 순위에 쓰지 않고**, 상품 번호로 다이소에서 이름·가격·이미지를
+  다시 조회해 보여준다. 다이소에서 조회되지 않는 매장·상품은 목록에서 빠진다.
+- 집계가 없거나 웹훅이 꺼져 있거나 실패하면 빈 목록(`updatedAt: null`)이고 화면에는
+  아무것도 안 보일 뿐 오류는 없다. 앱 서버는 결과를 10분, CDN 은 10분(+ 1시간 재검증)
+  둔다. 캐시를 피해 웹앱을 연타하지 못하도록 인스턴스당 분당 60회까지만 웹앱을 부른다.
+- `/api/popular/*` 는 `/api/views` 처럼 웹 UI 전용이라 OpenAPI·`/api` 목록·MCP 에는 넣지
+  않았다. 에이전트에게 열려면 그때 sandbox 와 함께 문서화한다.
+- 순위를 바꿀 수 있다는 점: 조회 비콘은 인증이 없어서, 일부러 같은 화면을 반복해서 보내면
+  순위를 흔들 수 있다. 문턱과 서버 쪽 이름 재조회로 *내용*은 막지만 *순서*는 못 막는다.
+  문제가 되면 `/api/views` 에 IP 별 속도 제한을 거는 것이 다음 단계다(IP 를 저장하지
+  않고 메모리에서만 센다).
+
+## 시트가 너무 커지면
+
+구글 스프레드시트에는 **파일 하나당 셀 1,000만 개** 한도가 있고, 이 한도는 값이 든 셀이
+아니라 **눈금(grid) 전체**로 센다. 그리고 한도보다 먼저 느려진다.
+
+2026-11-09 실측: `searches` 는 52,753행(2026-09-12 시작)이고, 눈금은 **Z열(26열)·52,754행**이다.
+조회 기록이 붙은 2026-10-18 이후 하루 약 1,240행(최근 2주 하루 700~1,700행)이 쌓인다.
+종류별로는 `product` 32,879 · `branch` 11,959 · `branch_view` 6,397 · `product_view` 1,518 행이다.
+
+| 가정                             | 한도(셀 1,000만) 도달까지            |
+| -------------------------------- | ------------------------------------ |
+| 지금 그대로(26열, 하루 1,240행)  | 약 270일 (2027년 8월)                |
+| 26열, 하루 3,000행               | 약 110일                             |
+| `setup()` 으로 9열, 하루 1,240행 | 약 850일 (한도보다 속도가 먼저 문제) |
+
+`insertSheet` 가 만든 시트는 열이 26개라, 9열만 써도 **셀은 26열 기준으로 센다**.
+그래서 `setup()` 이 안 쓰는 열을 지워 한도를 3배 가까이 늘린다.
+
+한도보다 먼저 겪는 문제들:
+
+- **느려짐**: 시트 UI·`getValues` 는 10만 행을 넘으면 눈에 띄게 느려진다. Drive 커넥터로
+  읽으면 앞 250행만 보이는 것도 같은 이유로, 최근 행은 시트를 직접 열어야 보인다.
+- **집계 시간**: Apps Script 한 번 실행은 최대 6분이다. `refreshPopular` 는 시트 끝에서
+  `MAX_SCAN_ROWS`(10만) 행만 읽어 시간 안에 끝나게 했다.
+- **쓰기 경합**: 검색·조회 한 건마다 웹앱을 한 번 부르고, 잠금(`waitLock`)으로 한 줄씩
+  쓴다. 웹앱 동시 실행 한도는 30개라, 순간 트래픽이 몰리면 일부 행이 `검색어 기록 실패`
+  로 빠질 수 있다(검색 응답에는 영향 없음, Vercel 런타임 로그에는 남는다).
+
+그래서 `archiveOldRows` 가 **`searches` 에는 최근 60일(`RETAIN_DAYS`)만** 두고, 그보다
+오래된 행은 **월별 보관 파일**(`다이소 파인더 검색어 로그 2026-09` 처럼, 내 드라이브 최상위)
+로 옮긴다. 원본을 버리는 게 아니라 옮기는 것이고, 보관 파일 쓰기가 실패하면 아무것도
+지우지 않고 다음 날 다시 시도한다(중간에 끊기면 보관 파일에 같은 행이 두 번 들어갈 수는
+있다). 월별로 나누므로 보관 파일은 각각 한도와 거리가 멀다. 정상 운영 중 `searches` 는
+60일치(지금 속도로 약 7.5만 행)에서 더 늘지 않는다. 60일은 인기 순위 집계 기간(30일)의
+두 배이고, 시트가 10만 행을 넘지 않는 선이다.
+
+보관 파일은 사람이 가끔 열어 보는 용도다. 오래된 검색어를 자주 분석하게 되면 BigQuery 로
+내보내는 쪽이 낫다.
 
 ## Vercel 같은 서버리스 환경
 

@@ -8,7 +8,9 @@ import { ImageWithFallback } from "@/components/ImageWithFallback";
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { SimplifiedBranchResponse } from "@/app/api/branches/types";
+import { PopularBranches } from "@/components/PopularBranches";
 import { Search } from "@/components/Search";
+import { usePopularBranches } from "@/hooks/usePopular";
 import { useRecentBranches } from "@/hooks/useRecentBranches";
 import { useUrlSearchParams } from "@/hooks/useUrlSearchParams";
 import { trackEvent } from "@/lib/gtag";
@@ -92,6 +94,9 @@ export function HomeClient() {
     () => data?.pages.flatMap((page) => page) ?? [],
     [data],
   );
+  // 검색 전 첫 화면에서만 요즘 많이 찾는 매장을 보여준다.
+  const popularBranches = usePopularBranches(mode === null).data?.items ?? [];
+  const showPopular = mode === null && popularBranches.length > 0;
   // Search 의 안내 문구는 "검색을 한 적이 있는지" 만 알면 된다.
   const searchLabel = mode
     ? mode.type === "keyword"
@@ -274,7 +279,7 @@ export function HomeClient() {
         onSearchInputChange={(value) => setSearchInput(value)}
         onSubmit={handleSearch}
         isFetching={isFetching}
-        hasResults={branches.length > 0}
+        hasResults={branches.length > 0 || showPopular}
         keyword={searchLabel}
         withLocation
         searchButtonLabel="매장 검색"
@@ -384,6 +389,7 @@ export function HomeClient() {
           ) : undefined
         }
       >
+        {showPopular && <PopularBranches branches={popularBranches} />}
         {branches?.map((branch, index) => (
           <Link
             href={`/branch/${branch.code}`}

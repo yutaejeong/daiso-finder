@@ -156,7 +156,9 @@ GA4 는 이탈 지점을 직접 알려주지 않으므로, 나가기 직전 상�
 
 퍼널 계층과 별개로 세부 클릭 이벤트는 그대로 둔다(`branch_search`,
 `branch_click`, `branches_load_more`, `recent_branch_click`,
-`recent_branch_remove`, `product_search`, `product_detail_view`,
+`recent_branch_remove`, `popular_branch_click`, `popular_product_click`
+(첫 화면·매장 화면의 인기 목록에서 누른 것, `result_position` / `result_count` 포함),
+`product_search`, `product_detail_view`,
 `product_load_more`, `other_branch_click`, `branch_address_click`,
 `branch_address_copy`, `branch_directions_click`, `pwa_*`).
 `branch_click` 과 `product_detail_view` 에는 `result_position` / `result_count`
