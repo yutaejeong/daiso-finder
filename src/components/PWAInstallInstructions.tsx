@@ -18,7 +18,11 @@ interface PWAInstallInstructionsProps {
   onClose: () => void;
 }
 
-const LIGHT_THEME_COLOR = "#FFFFFF";
+/**
+ * 모달이 뜨면 페이지 바탕(#f6f6f8)이 뒷배경(.modal-backdrop)에 가려 어두워진다.
+ * Safari 의 상단 바도 같은 정도로 어둡게 맞춰야 바와 화면이 따로 놀지 않는다.
+ */
+const DIMMED_THEME_COLOR = "#8f929a";
 
 export function PWAInstallInstructions({
   title,
@@ -37,7 +41,7 @@ export function PWAInstallInstructions({
   useEffect(() => {
     const override = document.createElement("meta");
     override.name = "theme-color";
-    override.content = LIGHT_THEME_COLOR;
+    override.content = DIMMED_THEME_COLOR;
     document.head.appendChild(override);
     return () => {
       override.remove();
@@ -71,7 +75,7 @@ export function PWAInstallInstructions({
           <div className="modal-body">
             <p
               id={descriptionId}
-              className={css({ marginBottom: "16px", color: "#4a4a4a" })}
+              className={css({ marginBottom: "16px", color: "var(--ink-2)" })}
             >
               {description}
             </p>
@@ -105,7 +109,7 @@ export function PWAInstallInstructions({
                         width: "28px",
                         height: "28px",
                         borderRadius: "50%",
-                        backgroundColor: "#c4002f",
+                        backgroundColor: "var(--brand)",
                         color: "white",
                         fontWeight: 600,
                         fontSize: "14px",
@@ -117,9 +121,11 @@ export function PWAInstallInstructions({
                       aria-hidden="true"
                       width={22}
                       height={22}
-                      className={css({ color: "#c4002f", flexShrink: 0 })}
+                      className={css({ color: "var(--brand)", flexShrink: 0 })}
                     />
-                    <span className={css({ fontSize: "14px", lineHeight: 1.5 })}>
+                    <span
+                      className={css({ fontSize: "14px", lineHeight: 1.5 })}
+                    >
                       {step.text}
                     </span>
                   </li>
@@ -138,11 +144,7 @@ export function PWAInstallInstructions({
           </div>
         </div>
       </div>
-      <div
-        className="modal-backdrop show"
-        onClick={onClose}
-        style={{ backgroundColor: "transparent", opacity: 1 }}
-      />
+      <div className="modal-backdrop show" onClick={onClose} />
     </div>
   );
 }

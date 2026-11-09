@@ -48,7 +48,12 @@ const ANDROID_STEPS: PWAInstallStep[] = [
 
 const INSTRUCTIONS_COPY: Record<
   InstructionsKind,
-  { title: string; description: string; steps: PWAInstallStep[]; viewEvent: string }
+  {
+    title: string;
+    description: string;
+    steps: PWAInstallStep[];
+    viewEvent: string;
+  }
 > = {
   ios: {
     title: "홈 화면에 추가하기",
@@ -102,7 +107,8 @@ export function PWAInstallBanner() {
           left: 0,
           right: 0,
           bottom: 0,
-          padding: "12px 16px calc(12px + env(safe-area-inset-bottom, 0px))",
+          padding:
+            "12px max(16px, env(safe-area-inset-right, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px))",
           zIndex: 1050,
           pointerEvents: "none",
         })}
@@ -112,8 +118,7 @@ export function PWAInstallBanner() {
             pointerEvents: "auto",
             maxWidth: "480px",
             margin: "0 auto",
-            boxShadow: "0 8px 24px rgba(0, 0, 0, 0.18)",
-            border: "1px solid #e5e5e5",
+            boxShadow: "var(--shadow-2)",
           })}`}
         >
           <div
@@ -121,7 +126,7 @@ export function PWAInstallBanner() {
               display: "flex",
               alignItems: "center",
               gap: "12px",
-              padding: "12px 14px !important",
+              padding: "12px 14px",
             })}`}
           >
             <ImageWithFallback
@@ -129,14 +134,15 @@ export function PWAInstallBanner() {
               alt="다이소 파인더"
               width={40}
               height={40}
-              className={css({ flexShrink: 0, borderRadius: "8px" })}
+              className={css({ flexShrink: 0, borderRadius: "10px" })}
             />
             <div className={css({ flex: 1, minWidth: 0 })}>
               <div
                 className={css({
-                  fontWeight: 600,
+                  fontWeight: 700,
                   fontSize: "14px",
                   marginBottom: "2px",
+                  wordBreak: "keep-all",
                 })}
               >
                 앱으로 더 빠르게 찾기
@@ -144,8 +150,11 @@ export function PWAInstallBanner() {
               <div
                 className={css({
                   fontSize: "12px",
-                  color: "#6c757d",
+                  color: "var(--muted)",
                   lineHeight: 1.4,
+                  wordBreak: "keep-all",
+                  // 아주 좁은 화면에서는 설명을 접어 제목과 버튼에 자리를 준다.
+                  "@media (max-width: 359px)": { display: "none" },
                 })}
               >
                 홈 화면에 추가하고 매장과 상품을 바로 검색하세요
@@ -156,9 +165,9 @@ export function PWAInstallBanner() {
               onClick={handleInstall}
               className={`btn btn-red ${css({
                 flexShrink: 0,
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "4px",
+                minHeight: "40px",
+                padding: "0 14px",
+                fontSize: "0.875rem",
               })}`}
             >
               <IconDownload aria-hidden="true" width={16} height={16} />

@@ -24,21 +24,27 @@ export function PopularBranches({ branches }: Props) {
           display: "flex",
           alignItems: "center",
           gap: "6px",
-          margin: "4px 0 8px",
-          fontSize: "0.9375rem",
+          margin: "4px 0 10px",
+          fontSize: "0.875rem",
           fontWeight: 700,
-          color: "#4a4a4a",
+          color: "var(--ink-2)",
         })}
       >
         <IconFlame
           aria-hidden="true"
           width={18}
           height={18}
-          className={css({ color: "#c4002f" })}
+          className={css({ color: "var(--brand)" })}
         />
         요즘 많이 찾는 매장
       </h2>
-      <div className={css({ display: "flex", flexDirection: "column" })}>
+      <div
+        className={css({
+          display: "flex",
+          flexDirection: "column",
+          gap: "10px",
+        })}
+      >
         {branches.map((branch, index) => (
           <Link
             href={`/branch/${branch.code}`}

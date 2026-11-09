@@ -123,6 +123,6 @@ npx daiso-finder-cli products 11199 수세미 --sandbox
 
 - 패키지 매니저는 **pnpm** 만 사용 (npm/yarn 금지)
 - 새 라이브러리 도입 전 `package.json` 확인 후 기존 의존성 우선 활용
-- UI 는 [Tabler UI](https://docs.tabler.io/ui) 컴포넌트/유틸리티를 우선 사용
+- UI 는 `src/app/globals.css` 의 디자인 토큰·공용 클래스를 우선 사용하고, 아이콘은 `@tabler/icons-react`
 - Next.js 설정은 `next.config.js` 에 JSDoc 타입과 함께 작성
 - 원격 이미지는 `cdn.daisomall.co.kr` 만 허용

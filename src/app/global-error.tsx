@@ -32,14 +32,16 @@ export default function GlobalError({
 
   return (
     <html lang="ko">
-      <body className={css({ padding: "24px !important", height: "100dvh" })}>
+      <body>
         <main
           role="alert"
           className={css({
             width: "100%",
             maxWidth: "480px",
-            minHeight: "100%",
+            minHeight: "100dvh",
             margin: "0 auto",
+            padding:
+              "max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left))",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
