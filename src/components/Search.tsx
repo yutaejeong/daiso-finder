@@ -9,7 +9,7 @@ import {
 } from "@tabler/icons-react";
 import clsx from "clsx";
 import { ReactNode, useId } from "react";
-import { ScrollArea } from "@/components/ScrollArea";
+import { ScrollArea, getStickyScrollOffset } from "@/components/ScrollArea";
 import { useScrollRestoration } from "@/hooks/useScrollRestoration";
 
 interface SearchProps {
@@ -40,6 +40,12 @@ interface SearchProps {
    * 뒤로가기로 돌아왔을 때 보고 있던 위치가 복원된다.
    */
   scrollRestorationKey?: string | null;
+  /**
+   * 주면 검색 입력 영역(라벨·폼·진행률)이 스크롤 영역 안으로 들어가 위쪽에 고정(sticky)
+   * 된다. 이 내용은 그 위에 놓이고 스크롤하면 올라가 사라진다. 매장 화면처럼 위쪽
+   * 안내가 길어 결과 영역이 낮아지는 화면에서 쓴다.
+   */
+  scrollHeader?: ReactNode;
 }
 
 export function Search({
@@ -64,9 +70,17 @@ export function Search({
   progressPercent,
   progressLabel,
   scrollRestorationKey = null,
+  scrollHeader,
 }: SearchProps) {
   const inputId = useId();
-  const resultsRef = useScrollRestoration<HTMLDivElement>(scrollRestorationKey);
+  const stickyForm = scrollHeader !== undefined;
+  // 검색 중에는 입력창과 버튼을 막아 같은 검색을 겹쳐 보내거나 도중에 바꾸지 못하게 한다.
+  const isSearching = Boolean(isFetching);
+  const resultsRef = useScrollRestoration<HTMLDivElement>(
+    scrollRestorationKey,
+    // 새 검색은 입력 영역이 맨 위에 붙는 위치까지 올려 결과가 최대한 보이게 한다.
+    stickyForm ? getStickyScrollOffset : undefined,
+  );
   const hasError = Boolean(errorMessage);
   const clampedPercent =
     typeof progressPercent === "number"
@@ -95,16 +109,20 @@ export function Search({
       } satisfies Record<string, string>)
     : undefined;
 
-  return (
+  const controls = (
     <>
       <label
         htmlFor={inputId}
-        className={css({
-          marginBottom: "8px",
-          color: "var(--ink-2)",
-          fontSize: "0.875rem",
-          fontWeight: 700,
-        })}
+        className={
+          stickyForm
+            ? "sr-only"
+            : css({
+                marginBottom: "8px",
+                color: "var(--ink-2)",
+                fontSize: "0.875rem",
+                fontWeight: 700,
+              })
+        }
       >
         {title}
       </label>
@@ -124,6 +142,7 @@ export function Search({
           autoCorrect="off"
           spellCheck={false}
           className="form-control"
+          disabled={isSearching}
           placeholder={placeholder}
           value={searchInput}
           onChange={(e) => onSearchInputChange(e.target.value)}
@@ -134,6 +153,7 @@ export function Search({
           type="submit"
           name="action"
           value="keyword"
+          disabled={isSearching}
           aria-label={searchButtonLabel}
         >
           <IconSearch aria-hidden="true" width={20} height={20} stroke={2.25} />
@@ -144,6 +164,7 @@ export function Search({
             name="action"
             value="location"
             type="submit"
+            disabled={isSearching}
             aria-label={locationButtonLabel}
           >
             <IconCurrentLocation
@@ -208,10 +229,24 @@ export function Search({
           </span>
         </div>
       )}
+    </>
+  );
+
+  return (
+    <>
+      {!stickyForm && controls}
       <ScrollArea
         viewportRef={resultsRef}
         viewportClassName={css({ gap: "10px" })}
       >
+        {stickyForm && (
+          <>
+            <div data-scroll-header>{scrollHeader}</div>
+            <div data-scroll-sticky className="sticky-controls">
+              {controls}
+            </div>
+          </>
+        )}
         {!hasError && children}
         {hasError ? (
           <div

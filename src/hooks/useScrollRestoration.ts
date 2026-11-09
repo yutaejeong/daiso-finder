@@ -31,9 +31,11 @@ function write(key: string, value: number) {
  * 위치가 유지되도록 세션 스토리지에 저장해 두고 다시 적용한다.
  *
  * @param key 검색 조건을 나타내는 키. 조건이 없으면 `null`.
+ * @param getResetTop 저장된 위치가 없는(새 검색) 때 올라갈 위치. 기본은 맨 위(0).
  */
 export function useScrollRestoration<T extends HTMLElement>(
   key: string | null,
+  getResetTop?: (element: T) => number,
 ) {
   const elementRef = useRef<T | null>(null);
   const appliedKeyRef = useRef<string | null>(null);
@@ -61,7 +63,12 @@ export function useScrollRestoration<T extends HTMLElement>(
     const saved = read(key);
     if (saved === null || saved <= 0) {
       // 새 검색이면 이전 결과를 보던 위치가 남아 있지 않도록 맨 위로 올린다.
-      element.scrollTop = 0;
+      const target = getResetTop?.(element) ?? 0;
+      if (target > 0 && element.scrollHeight - element.clientHeight < target) {
+        // 결과가 아직 없어 그 위치까지 스크롤할 수 없다. 결과가 그려지면 다시 시도한다.
+        return;
+      }
+      element.scrollTop = target;
       appliedKeyRef.current = key;
       return;
     }
