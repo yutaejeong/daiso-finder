@@ -258,6 +258,8 @@ for the setup and what is deliberately left unreported.
   and pins the search form (`.sticky-controls`, `position: sticky`) so results get the whole
   screen height; a new search scrolls to the pinned position (`getStickyScrollOffset`).
   The input and buttons are `disabled` while `isFetching`.
+- The header logo is always `SiteLogo` (`.site-logo`, 32px tall); app screens pass `spaced` for the
+  16px gap below it. Never inline `/logo.svg` with its own size again — it drifted per page.
 - `ImageViewerDialog` (native `<dialog>`) is the click-to-enlarge image used on the product
   detail page.
 

@@ -1,12 +1,12 @@
 import { css } from "@styled-system/css";
 import { IconArrowLeft, IconMapSearch } from "@tabler/icons-react";
 import { AppShell } from "@/components/AppShell";
+import { SiteLogo } from "@/components/SiteLogo";
 import {
   statusCardClass,
   statusIconClass,
   statusTitleClass,
 } from "@/components/statusStyles";
-import { ImageWithFallback } from "@/components/ImageWithFallback";
 import { JourneyEvent } from "@/components/JourneyEvent";
 import Link from "next/link";
 
@@ -23,26 +23,7 @@ export default function NotFound() {
       >
         {/* 없는 주소로 들어온 것 자체가 유입-이탈 분석의 신호다. */}
         <JourneyEvent name="page_not_found" />
-        <Link
-          href="/"
-          aria-label="다이소 파인더 홈으로 이동"
-          className={css({ alignSelf: "flex-start", marginBottom: "16px" })}
-        >
-          <ImageWithFallback
-            src="/logo.svg"
-            alt="다이소 파인더"
-            width={150}
-            height={59}
-            priority
-            draggable={false}
-            style={{ WebkitUserDrag: "none" } as React.CSSProperties}
-            className={css({
-              userSelect: "none",
-              width: "auto",
-              height: "36px",
-            })}
-          />
-        </Link>
+        <SiteLogo spaced />
         <section className={statusCardClass}>
           <span className={statusIconClass}>
             <IconMapSearch aria-hidden="true" width={34} height={34} />

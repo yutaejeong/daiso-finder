@@ -4,12 +4,12 @@ import { css } from "@styled-system/css";
 import * as Sentry from "@sentry/nextjs";
 import { IconRefresh, IconAlertTriangle } from "@tabler/icons-react";
 import { AppShell } from "@/components/AppShell";
+import { SiteLogo } from "@/components/SiteLogo";
 import {
   statusCardClass,
   statusIconClass,
   statusTitleClass,
 } from "@/components/statusStyles";
-import { ImageWithFallback } from "@/components/ImageWithFallback";
 import { trackEvent } from "@/lib/gtag";
 import Link from "next/link";
 import { useEffect } from "react";
@@ -46,26 +46,7 @@ export default function Error({
           minHeight: 0,
         })}
       >
-        <Link
-          href="/"
-          aria-label="다이소 파인더 홈으로 이동"
-          className={css({ alignSelf: "flex-start", marginBottom: "16px" })}
-        >
-          <ImageWithFallback
-            src="/logo.svg"
-            alt="다이소 파인더"
-            width={150}
-            height={59}
-            priority
-            draggable={false}
-            style={{ WebkitUserDrag: "none" } as React.CSSProperties}
-            className={css({
-              userSelect: "none",
-              width: "auto",
-              height: "36px",
-            })}
-          />
-        </Link>
+        <SiteLogo spaced />
         <section role="alert" className={statusCardClass}>
           <span className={statusIconClass}>
             <IconAlertTriangle aria-hidden="true" width={34} height={34} />

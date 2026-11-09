@@ -4,11 +4,11 @@ import { css } from "@styled-system/css";
 import { InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
 import { IconHistory, IconX } from "@tabler/icons-react";
 import clsx from "clsx";
-import { ImageWithFallback } from "@/components/ImageWithFallback";
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { SimplifiedBranchResponse } from "@/app/api/branches/types";
 import { PopularBranches } from "@/components/PopularBranches";
+import { SiteLogo } from "@/components/SiteLogo";
 import { Search } from "@/components/Search";
 import { usePopularBranches } from "@/hooks/usePopular";
 import { useRecentBranches } from "@/hooks/useRecentBranches";
@@ -260,30 +260,7 @@ export function HomeClient() {
           minHeight: 0,
         })}
       >
-        <Link
-          href="/"
-          aria-label="다이소 파인더 홈으로 이동"
-          className={css({
-            alignSelf: "flex-start",
-            marginBottom: "20px",
-            lg: { marginBottom: "28px" },
-          })}
-        >
-          <ImageWithFallback
-            src="/logo.svg"
-            alt="다이소 파인더"
-            width={150}
-            height={59}
-            priority
-            draggable={false}
-            style={{ WebkitUserDrag: "none" } as React.CSSProperties}
-            className={css({
-              userSelect: "none",
-              width: "auto",
-              height: "36px",
-            })}
-          />
-        </Link>
+        <SiteLogo spaced />
         <h1
           className={css({
             marginBottom: "20px",
