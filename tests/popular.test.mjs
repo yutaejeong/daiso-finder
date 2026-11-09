@@ -121,6 +121,7 @@ test("popular products use Daiso's name, not what the sheet recorded", async () 
   });
 
   // GONE 은 다이소에서 조회되지 않아 빠지고, 문턱 미만(D)도 빠진다.
+  assert.equal(list.scope, "branch");
   assert.deepEqual(list.items, [
     {
       id: "A",
@@ -141,10 +142,42 @@ test("popular products use Daiso's name, not what the sheet recorded", async () 
   ]);
 });
 
+test("a store without a ranking of its own gets the overall ranking, linked to that store", async () => {
+  const list = await buildPopularProducts(snapshot(), 10, "55555", {
+    fetchProduct,
+  });
+
+  assert.equal(list.scope, "overall");
+  assert.deepEqual(
+    list.items.map((item) => [item.id, item.branchCode]),
+    [
+      ["A", "55555"],
+      ["B", "55555"],
+    ],
+  );
+});
+
+test("a store whose ranked products all fail to resolve also falls back", async () => {
+  const list = await buildPopularProducts(
+    snapshot({
+      branchProducts: [{ branchCode: "11199", productId: "GONE", views: 9 }],
+    }),
+    10,
+    "11199",
+    { fetchProduct },
+  );
+  assert.equal(list.scope, "overall");
+  assert.deepEqual(
+    list.items.map((item) => item.id),
+    ["A", "B"],
+  );
+});
+
 test("overall popular products link to the store that viewed them most", async () => {
   const list = await buildPopularProducts(snapshot(), 10, undefined, {
     fetchProduct,
   });
+  assert.equal(list.scope, "overall");
   assert.deepEqual(
     list.items.map((item) => [item.id, item.branchCode]),
     [
@@ -177,7 +210,7 @@ test("without a snapshot the lists are empty rather than failing", async () => {
   assert.deepEqual(await buildPopularBranches(null, 5, { fetchBranch }), empty);
   assert.deepEqual(
     await buildPopularProducts(null, 5, "11199", { fetchProduct }),
-    empty,
+    { ...empty, scope: "branch" },
   );
 });
 

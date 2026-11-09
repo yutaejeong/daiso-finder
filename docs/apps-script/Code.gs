@@ -26,7 +26,7 @@ var POPULAR_SHEET_NAME = "popular";
 var TOKEN = "여기에-임의의-긴-문자열";
 
 /** `searches` 에 남겨 두는 기간(일). 이보다 오래된 행은 보관 파일로 옮긴다. */
-var RETAIN_DAYS = 90;
+var RETAIN_DAYS = 60;
 
 /** 인기 순위를 세는 기간(일) */
 var POPULAR_WINDOW_DAYS = 30;

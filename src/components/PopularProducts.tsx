@@ -5,15 +5,16 @@ import { IconFlame, IconPhotoX } from "@tabler/icons-react";
 import Link from "next/link";
 import { ImageWithFallback } from "@/components/ImageWithFallback";
 import { trackEvent } from "@/lib/gtag";
-import type { PopularProduct } from "@/lib/popular";
+import type { PopularProduct, PopularProductList } from "@/lib/popular";
 
 interface Props {
   branchCode: string;
   products: PopularProduct[];
+  scope: PopularProductList["scope"];
 }
 
 /** 매장 화면에서 검색 전에 보여주는, 이 매장에서 많이 찾는 상품 목록 */
-export function PopularProducts({ branchCode, products }: Props) {
+export function PopularProducts({ branchCode, products, scope }: Props) {
   if (products.length === 0) {
     return null;
   }
@@ -38,7 +39,9 @@ export function PopularProducts({ branchCode, products }: Props) {
           height={18}
           className={css({ color: "#c4002f" })}
         />
-        이 매장에서 많이 찾는 상품
+        {scope === "branch"
+          ? "이 매장에서 많이 찾는 상품"
+          : "요즘 많이 찾는 상품"}
       </h2>
       <div
         className={css({
@@ -58,6 +61,7 @@ export function PopularProducts({ branchCode, products }: Props) {
                 product_name: product.name,
                 result_position: index + 1,
                 result_count: products.length,
+                popular_scope: scope,
               })
             }
             className={css({

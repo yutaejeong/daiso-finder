@@ -150,7 +150,7 @@ are the raw data for future popular-store/popular-product rankings. See
   store code / product number only and re-resolve names from Daiso — the sheet's `상품명`
   is client-supplied, so never render it. These routes are web-UI only (like `/api/views`),
   deliberately not in OpenAPI, `/api`, MCP or the sandbox.
-- The same script archives rows older than 90 days into monthly spreadsheets
+- The same script archives rows older than 60 days into monthly spreadsheets
   (`archiveOldRows`) so the `searches` tab stays small; Sheets caps a file at 10M cells,
   counted over the whole grid. Changing the script means pasting it into the Apps Script
   editor and redeploying a new version — merging the repo does not update it.

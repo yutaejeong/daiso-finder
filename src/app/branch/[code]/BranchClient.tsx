@@ -165,7 +165,8 @@ export function BranchClient({ code, initialBranch }: Props) {
 
   const products = data?.pages.flatMap((page) => page.products) || [];
   // 검색 전 화면에서만 이 매장에서 많이 찾는 상품을 보여준다.
-  const popularProducts = usePopularProducts(code, !keyword).data?.items ?? [];
+  const popular = usePopularProducts(code, !keyword).data;
+  const popularProducts = popular?.items ?? [];
   const showPopular = !keyword && popularProducts.length > 0;
 
   // 상품 검색 결과가 도착한 시점. 재고가 없어 0건으로 끝나는 경우가 잦고,
@@ -306,7 +307,11 @@ export function BranchClient({ code, initialBranch }: Props) {
         scrollRestorationKey={keyword ? `products:${code}:${keyword}` : null}
       >
         {showPopular && (
-          <PopularProducts branchCode={code} products={popularProducts} />
+          <PopularProducts
+            branchCode={code}
+            products={popularProducts}
+            scope={popular?.scope ?? "overall"}
+          />
         )}
         {products.map((product: SimplifiedProduct, index: number) => (
           <Link

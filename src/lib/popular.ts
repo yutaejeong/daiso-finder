@@ -298,44 +298,81 @@ export async function buildPopularBranches(
 }
 
 /**
- * 인기 상품. `branchCode` 가 있으면 그 매장에서 많이 본 상품, 없으면 전체에서
- * 많이 본 상품(각 상품은 가장 많이 본 매장과 함께)이다. 이름·가격·이미지는
- * 상품 번호로 다이소에서 다시 조회한다.
+ * 인기 상품 목록. `scope` 는 어떤 순위로 채웠는지 알려 준다. 화면의 제목이 달라진다.
+ * - `branch`: 요청한 매장에서 많이 본 상품
+ * - `overall`: 전체에서 많이 본 상품
+ */
+export interface PopularProductList extends PopularList<PopularProduct> {
+  scope: "branch" | "overall";
+}
+
+/**
+ * 인기 상품. `branchCode` 가 있으면 그 매장에서 많이 본 상품이고, 순위가 하나도
+ * 없는 매장(조회가 적은 대부분의 매장)은 전체에서 많이 본 상품으로 채운다. 그
+ * 상품들은 요청한 매장의 상품 화면으로 연결된다 — 상품 화면은 어느 매장에서든
+ * 재고를 보여 주기 때문이다. `branchCode` 가 없으면 전체 순위이고 각 상품은 가장
+ * 많이 본 매장과 함께 나간다. 이름·가격·이미지는 상품 번호로 다이소에서 다시
+ * 조회한다.
  */
 export async function buildPopularProducts(
   snapshot: PopularSnapshot | null,
   limit: number,
   branchCode?: string,
   lookups?: Pick<PopularLookups, "fetchProduct">,
-): Promise<PopularList<PopularProduct>> {
+): Promise<PopularProductList> {
   if (!snapshot) {
-    return { windowDays: null, updatedAt: null, items: [] };
+    return {
+      windowDays: null,
+      updatedAt: null,
+      items: [],
+      scope: branchCode ? "branch" : "overall",
+    };
   }
 
   const { fetchProduct } = lookups ?? (await defaultLookups());
-  const source = branchCode ? snapshot.branchProducts : snapshot.products;
-  const candidates = topEntries(
-    source.filter((entry) => entry.productId),
-    limit + 5,
-  );
-  const items = await resolveAll(candidates, async (entry) => {
-    const product = await fetchProduct(entry.productId as string);
-    return product
-      ? {
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          image: product.image,
-          views: entry.views,
-          branchCode: branchCode ?? entry.branchCode,
-        }
-      : null;
-  });
+
+  const resolve = (entries: PopularEntry[], linkBranchCode?: string) =>
+    resolveAll(
+      topEntries(
+        entries.filter((entry) => entry.productId),
+        limit + 5,
+      ),
+      async (entry) => {
+        const product = await fetchProduct(entry.productId as string);
+        return product
+          ? {
+              id: product.id,
+              name: product.name,
+              price: product.price,
+              image: product.image,
+              views: entry.views,
+              branchCode: linkBranchCode ?? entry.branchCode,
+            }
+          : null;
+      },
+    );
+
+  let scope: PopularProductList["scope"] = branchCode ? "branch" : "overall";
+  let items = branchCode
+    ? await resolve(
+        // 웹앱이 매장별로 걸러 주지만, 다른 매장의 순위가 섞여 오는 일은 여기서도 막는다.
+        snapshot.branchProducts.filter(
+          (entry) => entry.branchCode === branchCode,
+        ),
+        branchCode,
+      )
+    : await resolve(snapshot.products);
+
+  if (branchCode && items.length === 0) {
+    scope = "overall";
+    items = await resolve(snapshot.products, branchCode);
+  }
 
   return {
     windowDays: snapshot.windowDays,
     updatedAt: snapshot.generatedAt,
     items: items.slice(0, limit),
+    scope,
   };
 }
 
@@ -345,13 +382,13 @@ const resolvedCache = new Map<string, { at: number; value: unknown }>();
  * 이름 조회까지 끝낸 결과를 잠깐 재사용한다. 요청마다 다이소 API 를 열 번씩
  * 부르지 않기 위해서다. 성공(집계가 있는)한 결과만 담는다.
  */
-export async function cachedResolved<T>(
+export async function cachedResolved<L extends PopularList<unknown>>(
   key: string,
-  build: () => Promise<PopularList<T>>,
-): Promise<PopularList<T>> {
+  build: () => Promise<L>,
+): Promise<L> {
   const cached = resolvedCache.get(key);
   if (cached && Date.now() - cached.at < CACHE_TTL_MS) {
-    return cached.value as PopularList<T>;
+    return cached.value as L;
   }
   const value = await build();
   if (value.updatedAt !== null) {

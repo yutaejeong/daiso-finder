@@ -1,7 +1,11 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import type { PopularBranch, PopularList, PopularProduct } from "@/lib/popular";
+import type {
+  PopularBranch,
+  PopularList,
+  PopularProductList,
+} from "@/lib/popular";
 
 /**
  * 인기 순위는 매시간 갱신되고 화면의 부가 정보다. 탭 복귀나 재마운트마다 다시
@@ -15,7 +19,7 @@ const POPULAR_QUERY_OPTIONS = {
   meta: { suppressGlobalError: true },
 } as const;
 
-async function fetchList<T>(path: string): Promise<PopularList<T>> {
+async function fetchList<L>(path: string): Promise<L> {
   const response = await fetch(path);
   if (!response.ok) {
     throw new Error(`인기 순위를 불러오지 못했습니다. (${response.status})`);
@@ -33,13 +37,13 @@ export function usePopularBranches(enabled: boolean, limit = 8) {
   });
 }
 
-/** 한 매장에서 최근 많이 본 상품. */
+/** 한 매장에서 최근 많이 본 상품. 순위가 없는 매장은 전체 인기 상품이 온다. */
 export function usePopularProducts(
   branchCode: string,
   enabled: boolean,
   limit = 6,
 ) {
-  return useQuery<PopularList<PopularProduct>>({
+  return useQuery<PopularProductList>({
     queryKey: ["popular", "products", branchCode, limit],
     queryFn: () =>
       fetchList(
