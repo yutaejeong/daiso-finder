@@ -33,6 +33,12 @@
 
     --shadow-1: 0 1px 2px rgb(20 22 30 / 0.05), 0 1px 1px rgb(20 22 30 / 0.03);
     --shadow-2: 0 10px 30px rgb(20 22 30 / 0.1), 0 2px 8px rgb(20 22 30 / 0.06);
+    /*
+     * 스크롤 목록 안 카드의 호버 그림자. 목록은 overflow 로 잘리므로 번지는 범위가
+     * 목록 안쪽 여백(가로 --gutter, 위 8px)을 넘지 않게 작게 둔다.
+     */
+    --shadow-hover:
+      0 5px 14px rgb(20 22 30 / 0.1), 0 1px 3px rgb(20 22 30 / 0.06);
 
     --gutter: 16px;
     --app-width: 520px;
@@ -50,9 +56,10 @@
     --scroll-thumb: #c5c9d2;
     --scroll-thumb-hover: #a4a9b5;
 
-    --font-sans: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
-      Pretendard, "Noto Sans KR", "Malgun Gothic", "Segoe UI", system-ui,
-      sans-serif;
+    --font-sans:
+      "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
+      "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Segoe UI",
+      system-ui, sans-serif;
 
     color-scheme: light;
   }
@@ -410,6 +417,74 @@
     color: var(--muted);
   }
 
+  /*
+   * 스크롤 영역(ScrollArea). 내용이 더 있는 쪽 가장자리에만 안쪽 그림자가 생겨서
+   * "여기서 더 스크롤된다" 를 알려 준다. 그림자는 스크롤되는 영역 위에 얹은
+   * 별도 요소(pointer-events: none)라 카드 내용을 가리거나 가장자리를 잘라내지 않는다.
+   * 가로로는 --gutter 만큼 바깥으로 나가 화면 폭 끝까지 이어지고, 같은 크기의
+   * 안쪽 여백이 카드 그림자가 잘리지 않을 자리를 준다.
+   */
+  .scroll-area {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    margin-inline: calc(var(--gutter) * -1);
+  }
+
+  .scroll-area__viewport {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 10px var(--gutter) 28px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .scroll-area__shadow {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 22px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 180ms ease;
+    z-index: 1;
+  }
+
+  /* 선형이 아닌 여러 단계의 감쇠라 가장자리가 띠처럼 보이지 않고 번지듯 사라진다. */
+  .scroll-area__shadow--top {
+    top: 0;
+    background: linear-gradient(
+      to bottom,
+      rgb(20 22 30 / 0.16) 0%,
+      rgb(20 22 30 / 0.09) 30%,
+      rgb(20 22 30 / 0.035) 65%,
+      rgb(20 22 30 / 0) 100%
+    );
+  }
+
+  .scroll-area__shadow--bottom {
+    bottom: 0;
+    background: linear-gradient(
+      to top,
+      rgb(20 22 30 / 0.16) 0%,
+      rgb(20 22 30 / 0.09) 30%,
+      rgb(20 22 30 / 0.035) 65%,
+      rgb(20 22 30 / 0) 100%
+    );
+  }
+
+  .scroll-area[data-top="true"] > .scroll-area__shadow--top,
+  .scroll-area[data-bottom="true"] > .scroll-area__shadow--bottom {
+    opacity: 1;
+  }
+
   /* ------------------------------------------------------------------ */
   /* 폼                                                                   */
   /* ------------------------------------------------------------------ */
@@ -584,7 +659,7 @@
   @media (hover: hover) {
     a.card:hover {
       border-color: var(--line-strong);
-      box-shadow: var(--shadow-2);
+      box-shadow: var(--shadow-hover);
       text-decoration: none;
     }
   }

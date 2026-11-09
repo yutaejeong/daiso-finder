@@ -9,6 +9,7 @@ import {
 } from "@tabler/icons-react";
 import clsx from "clsx";
 import { ReactNode, useId } from "react";
+import { ScrollArea } from "@/components/ScrollArea";
 import { useScrollRestoration } from "@/hooks/useScrollRestoration";
 
 interface SearchProps {
@@ -207,29 +208,9 @@ export function Search({
           </span>
         </div>
       )}
-      <div
-        ref={resultsRef}
-        className={css({
-          display: "flex",
-          flexDirection: "column",
-          gap: "10px",
-          flex: 1,
-          minHeight: 0,
-          overflowY: "auto",
-          overflowX: "hidden",
-          // 목록 끝에서 더 스크롤해도 뒤의 페이지로 이어지거나 튕기지 않게 한다.
-          overscrollBehavior: "contain",
-          WebkitOverflowScrolling: "touch",
-          // 카드 그림자가 스크롤 영역 가장자리에서 잘리지 않도록 안쪽 여백을 두고
-          // 같은 만큼 바깥으로 당겨 폭을 맞춘다.
-          margin: "0 -6px",
-          padding: "4px 6px 20px",
-          // 위아래 가장자리를 부드럽게 지워 스크롤 영역이 잘려 보이지 않게 한다.
-          WebkitMaskImage:
-            "linear-gradient(to bottom, transparent 0, #000 6px, #000 calc(100% - 20px), transparent 100%)",
-          maskImage:
-            "linear-gradient(to bottom, transparent 0, #000 6px, #000 calc(100% - 20px), transparent 100%)",
-        })}
+      <ScrollArea
+        viewportRef={resultsRef}
+        viewportClassName={css({ gap: "10px" })}
       >
         {!hasError && children}
         {hasError ? (
@@ -288,7 +269,7 @@ export function Search({
             </div>
           )
         )}
-      </div>
+      </ScrollArea>
     </>
   );
 }

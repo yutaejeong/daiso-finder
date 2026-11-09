@@ -1,4 +1,7 @@
 import type { Metadata, Viewport } from "next";
+// 한글은 글자가 많아 통째로 받으면 2MB 가 넘는다. 이 CSS 는 유니코드 구간별로 쪼갠
+// 서브셋(@font-face + unicode-range)이라 화면에 나온 글자의 조각만 내려받는다.
+import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
 import "./globals.css";
 import { GoogleAnalytics } from "./GoogleAnalytics";
 import Provider from "./provider";

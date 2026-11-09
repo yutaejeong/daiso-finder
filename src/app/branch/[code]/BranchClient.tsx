@@ -383,7 +383,7 @@ export function BranchClient({ code, initialBranch }: Props) {
                 "@media (hover: hover)": {
                   "&:hover": {
                     borderColor: "var(--line-strong)",
-                    boxShadow: "var(--shadow-2)",
+                    boxShadow: "var(--shadow-hover)",
                   },
                 },
               })}

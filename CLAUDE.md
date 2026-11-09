@@ -245,8 +245,17 @@ for the setup and what is deliberately left unreported.
   reference tokens as `var(--ink)` etc. instead of hard-coded hex values
 - Generated styles live in `styled-system/` (gitignored, regenerated via `pnpm prepare`)
 - Brand colour: **#c4002f** (`--brand`, the accessible red). Light theme only.
-- Font: the system Korean stack (Apple SD Gothic Neo / Malgun Gothic …). `PretendardVariable.woff2`
-  in `src/app/` is not loaded — it is 2 MB, so wiring it up needs a subset first.
+- Font: **Pretendard Variable**, loaded from the `pretendard` npm package's
+  `pretendardvariable-dynamic-subset.css` (imported in `layout.tsx`). It is split by
+  unicode-range, so a page only downloads the glyph chunks it uses; the 2 MB full
+  `src/app/PretendardVariable.woff2` is not loaded. System Korean fonts are the fallback.
+- Scrolling lists use `ScrollArea` (`.scroll-area`): inner top/bottom shadows appear only on
+  the edge that has more content, drawn as overlays so they never clip cards. Its viewport
+  keeps `--gutter` of padding on each side so card hover shadows (`--shadow-hover`, sized to
+  fit that padding) are not cut off by the scroll container's `overflow`. Keep new card
+  hover shadows within that budget, or use the larger `--shadow-2` only outside scrollers.
+- `ImageViewerDialog` (native `<dialog>`) is the click-to-enlarge image used on the product
+  detail page.
 
 ### Path Aliases
 

@@ -6,6 +6,8 @@ import {
   SimplifiedProductInfo,
 } from "@/app/api/products/types";
 import { AppShell } from "@/components/AppShell";
+import { ImageViewerDialog } from "@/components/ImageViewerDialog";
+import { ScrollArea } from "@/components/ScrollArea";
 import { css } from "@styled-system/css";
 import {
   IconArrowLeft,
@@ -210,21 +212,7 @@ export function ProductClient({ code, productId, branch, product }: Props) {
           </span>
         </Link>
 
-        <div
-          className={css({
-            flex: 1,
-            minHeight: 0,
-            overflowY: "auto",
-            overflowX: "hidden",
-            overscrollBehavior: "contain",
-            WebkitOverflowScrolling: "touch",
-            display: "flex",
-            flexDirection: "column",
-            gap: "14px",
-            margin: "0 -6px",
-            padding: "4px 6px 24px",
-          })}
-        >
+        <ScrollArea viewportClassName={css({ gap: "14px" })}>
           {/* 상품 헤더 */}
           <article
             className={css({
@@ -238,18 +226,17 @@ export function ProductClient({ code, productId, branch, product }: Props) {
             })}
           >
             {image ? (
-              <ImageWithFallback
+              <ImageViewerDialog
                 src={image}
                 alt={name ?? "상품 이미지"}
-                width={96}
-                height={128}
-                className={css({
-                  borderRadius: "var(--radius-sm)",
-                  objectFit: "cover",
-                  flexShrink: 0,
-                  aspectRatio: "3 / 4",
-                  backgroundColor: "var(--surface-2)",
-                })}
+                thumbnailWidth={96}
+                thumbnailHeight={128}
+                onOpen={() =>
+                  trackEvent("product_image_zoom", {
+                    branch_code: code,
+                    product_id: productId,
+                  })
+                }
               />
             ) : (
               <div
@@ -650,7 +637,7 @@ export function ProductClient({ code, productId, branch, product }: Props) {
               </ul>
             )}
           </section>
-        </div>
+        </ScrollArea>
       </main>
     </AppShell>
   );
