@@ -233,96 +233,104 @@ export function BranchClient({ code, initialBranch }: Props) {
           minHeight: 0,
         })}
       >
-        <Link
-          href="/"
-          aria-label="다이소 파인더 홈으로 이동"
-          className={css({ alignSelf: "flex-start", marginBottom: "16px" })}
-        >
-          <ImageWithFallback
-            src="/logo.svg"
-            alt="다이소 파인더"
-            width={150}
-            height={59}
-            priority
-            draggable={false}
-            style={{ WebkitUserDrag: "none" } as React.CSSProperties}
-            className={css({
-              userSelect: "none",
-              width: "auto",
-              height: "32px",
-            })}
-          />
-        </Link>
-        <h1
-          className={css({
-            marginBottom: "14px",
-            display: "flex",
-            flexWrap: "wrap",
-            columnGap: "0.25em",
-            fontSize: "1.5rem",
-            wordBreak: "keep-all",
-          })}
-        >
-          <span>
-            <mark>{branch?.name}</mark>의
-          </span>
-          <span>상품을 찾아드려요.</span>
-        </h1>
-        <address
-          className={css({
-            width: "100%",
-            display: "flex",
-            flexDirection: "column",
-            gap: "10px",
-            backgroundColor: "var(--surface)",
-            borderRadius: "var(--radius-lg)",
-            border: "1px solid var(--line)",
-            boxShadow: "var(--shadow-1)",
-            padding: "14px 16px",
-            marginBottom: "18px",
-            fontStyle: "normal",
-          })}
-        >
-          <div className={css({ display: "flex", gap: "10px" })}>
-            <IconMapPin
-              aria-hidden="true"
-              width={18}
-              height={18}
-              className={css({
-                flexShrink: 0,
-                marginTop: "2px",
-                color: "var(--brand)",
-              })}
-            />
-            <div className={css({ minWidth: 0 })}>
-              <strong className="sr-only">주소</strong>
-              {branch && <BranchLocationDialog branch={branch} />}
-            </div>
-          </div>
-          <div
-            className={css({
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              color: "var(--ink-2)",
-            })}
-          >
-            <IconClock
-              aria-hidden="true"
-              width={18}
-              height={18}
-              className={css({ flexShrink: 0, color: "var(--brand)" })}
-            />
-            <strong className="sr-only">영업시간</strong>
-            <span className={css({ fontVariantNumeric: "tabular-nums" })}>
-              <time dateTime={branch?.openTime}>{branch?.openTime}</time>
-              <span className={css({ margin: "0 6px" })}>~</span>
-              <time dateTime={branch?.closeTime}>{branch?.closeTime}</time>
-            </span>
-          </div>
-        </address>
-
         <Search
+          scrollHeader={
+            <>
+              <Link
+                href="/"
+                aria-label="다이소 파인더 홈으로 이동"
+                className={css({
+                  alignSelf: "flex-start",
+                  marginBottom: "16px",
+                })}
+              >
+                <ImageWithFallback
+                  src="/logo.svg"
+                  alt="다이소 파인더"
+                  width={150}
+                  height={59}
+                  priority
+                  draggable={false}
+                  style={{ WebkitUserDrag: "none" } as React.CSSProperties}
+                  className={css({
+                    userSelect: "none",
+                    width: "auto",
+                    height: "32px",
+                  })}
+                />
+              </Link>
+              <h1
+                className={css({
+                  marginBottom: "14px",
+                  display: "flex",
+                  flexWrap: "wrap",
+                  columnGap: "0.25em",
+                  fontSize: "1.5rem",
+                  wordBreak: "keep-all",
+                })}
+              >
+                <span>
+                  <mark>{branch?.name}</mark>의
+                </span>
+                <span>상품을 찾아드려요.</span>
+              </h1>
+              <address
+                className={css({
+                  width: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "10px",
+                  backgroundColor: "var(--surface)",
+                  borderRadius: "var(--radius-lg)",
+                  border: "1px solid var(--line)",
+                  boxShadow: "var(--shadow-1)",
+                  padding: "14px 16px",
+                  marginBottom: "18px",
+                  fontStyle: "normal",
+                })}
+              >
+                <div className={css({ display: "flex", gap: "10px" })}>
+                  <IconMapPin
+                    aria-hidden="true"
+                    width={18}
+                    height={18}
+                    className={css({
+                      flexShrink: 0,
+                      marginTop: "2px",
+                      color: "var(--brand)",
+                    })}
+                  />
+                  <div className={css({ minWidth: 0 })}>
+                    <strong className="sr-only">주소</strong>
+                    {branch && <BranchLocationDialog branch={branch} />}
+                  </div>
+                </div>
+                <div
+                  className={css({
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    color: "var(--ink-2)",
+                  })}
+                >
+                  <IconClock
+                    aria-hidden="true"
+                    width={18}
+                    height={18}
+                    className={css({ flexShrink: 0, color: "var(--brand)" })}
+                  />
+                  <strong className="sr-only">영업시간</strong>
+                  <span className={css({ fontVariantNumeric: "tabular-nums" })}>
+                    <time dateTime={branch?.openTime}>{branch?.openTime}</time>
+                    <span className={css({ margin: "0 6px" })}>~</span>
+                    <time dateTime={branch?.closeTime}>
+                      {branch?.closeTime}
+                    </time>
+                  </span>
+                </div>
+              </address>
+            </>
+          }
           title="상품을 검색해보세요"
           placeholder="상품명을 입력해주세요"
           searchInput={searchInput}

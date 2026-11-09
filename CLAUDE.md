@@ -254,6 +254,10 @@ for the setup and what is deliberately left unreported.
   keeps `--gutter` of padding on each side so card hover shadows (`--shadow-hover`, sized to
   fit that padding) are not cut off by the scroll container's `overflow`. Keep new card
   hover shadows within that budget, or use the larger `--shadow-2` only outside scrollers.
+- `Search` with `scrollHeader` (branch page) moves the logo/title/address into the scroll area
+  and pins the search form (`.sticky-controls`, `position: sticky`) so results get the whole
+  screen height; a new search scrolls to the pinned position (`getStickyScrollOffset`).
+  The input and buttons are `disabled` while `isFetching`.
 - `ImageViewerDialog` (native `<dialog>`) is the click-to-enlarge image used on the product
   detail page.
 

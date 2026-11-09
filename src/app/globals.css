@@ -446,6 +446,20 @@
     -webkit-overflow-scrolling: touch;
   }
 
+  /*
+   * 스크롤 영역 안에서 위에 붙는 입력 영역(검색창). 뒤로 지나가는 카드가 비치지 않게
+   * 바탕색으로 채우고, 좌우로는 스크롤 영역의 안쪽 여백까지 번지게 한다.
+   */
+  .sticky-controls {
+    position: sticky;
+    /* 스크롤 영역의 위쪽 안쪽 여백(10px)만큼 올려 붙여, 여백 틈으로 카드가 비치지 않게 한다. */
+    top: -10px;
+    z-index: 1;
+    margin-inline: calc(var(--gutter) * -1);
+    padding: 18px var(--gutter) 6px;
+    background-color: var(--bg);
+  }
+
   .scroll-area__shadow {
     position: absolute;
     left: 0;
@@ -459,7 +473,8 @@
 
   /* 선형이 아닌 여러 단계의 감쇠라 가장자리가 띠처럼 보이지 않고 번지듯 사라진다. */
   .scroll-area__shadow--top {
-    top: 0;
+    /* 위에 붙는 입력 영역이 있으면 ScrollArea 가 그 아래 가장자리로 옮긴다. */
+    top: var(--scroll-shadow-top, 0);
     background: linear-gradient(
       to bottom,
       rgb(20 22 30 / 0.16) 0%,
@@ -524,6 +539,16 @@
   .form-control:focus {
     border-color: var(--brand);
     box-shadow: 0 0 0 4px var(--brand-ring);
+  }
+
+  /* 검색 중에는 입력창을 막는다. 눌러도 반응이 없다는 것이 보이도록 흐리게 한다. */
+  .form-control:disabled {
+    color: var(--muted);
+    background-color: var(--surface-2);
+    box-shadow: none;
+    cursor: not-allowed;
+    -webkit-text-fill-color: var(--muted);
+    opacity: 1;
   }
 
   .form-control:-webkit-autofill {

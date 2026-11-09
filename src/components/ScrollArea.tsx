@@ -12,17 +12,33 @@ interface ScrollAreaProps {
 }
 
 /**
+ * 스크롤 영역 안에 `[data-scroll-header]`(위 안내)와 `[data-scroll-sticky]`(위에
+ * 붙는 입력 영역)가 있을 때, 입력 영역이 맨 위에 붙는 스크롤 위치(px)를 돌려준다.
+ * 새 검색 때 안내를 지나쳐 결과가 바로 보이게 하는 데 쓴다.
+ */
+export function getStickyScrollOffset(viewport: HTMLElement): number {
+  const header = viewport.querySelector<HTMLElement>("[data-scroll-header]");
+  if (!header) return 0;
+  const gap = Number.parseFloat(getComputedStyle(viewport).rowGap) || 0;
+  return header.offsetTop + header.offsetHeight + gap - viewport.clientTop;
+}
+
+/**
  * 세로 스크롤 영역. 위·아래로 더 스크롤할 내용이 있을 때만 해당 가장자리에
  * 안쪽 그림자를 보여 준다(스타일은 globals.css 의 `.scroll-area`).
  *
  * 그림자 유무는 스크롤 위치·영역 크기·내용 변화에 따라 다시 계산한다.
  */
+// 붙었다고 보는 허용 오차(px). 스크롤 영역 안쪽 여백만큼 아래에 붙을 수 있다.
+const STUCK_TOLERANCE = 12;
+
 export function ScrollArea({
   children,
   viewportClassName,
   viewportRef,
 }: ScrollAreaProps) {
   const elementRef = useRef<HTMLDivElement | null>(null);
+  const areaRef = useRef<HTMLDivElement | null>(null);
   const [edges, setEdges] = useState({ top: false, bottom: false });
 
   const setRefs = useCallback(
@@ -41,7 +57,19 @@ export function ScrollArea({
     const update = () => {
       frame = 0;
       // 소수점 스크롤(고해상도 화면)과 바운스 구간을 고려해 1px 여유를 둔다.
-      const top = element.scrollTop > 1;
+      let top = element.scrollTop > 1;
+      const sticky = element.querySelector<HTMLElement>("[data-scroll-sticky]");
+      const area = areaRef.current;
+      if (sticky && area) {
+        // 위에 붙는 입력 영역이 있으면, 그것이 실제로 붙은 뒤에만 그 아래쪽에 그림자를 둔다.
+        const viewportRect = element.getBoundingClientRect();
+        const stickyRect = sticky.getBoundingClientRect();
+        top = top && stickyRect.top - viewportRect.top <= STUCK_TOLERANCE;
+        area.style.setProperty(
+          "--scroll-shadow-top",
+          `${Math.max(0, stickyRect.bottom - viewportRect.top)}px`,
+        );
+      }
       const bottom =
         element.scrollTop + element.clientHeight < element.scrollHeight - 1;
       setEdges((prev) =>
@@ -80,6 +108,7 @@ export function ScrollArea({
 
   return (
     <div
+      ref={areaRef}
       className="scroll-area"
       data-top={edges.top}
       data-bottom={edges.bottom}
