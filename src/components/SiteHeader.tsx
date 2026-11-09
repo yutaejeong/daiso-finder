@@ -1,9 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { SITE_NAME } from "@/lib/site";
+import { SiteLogo } from "@/components/SiteLogo";
 
 const navLinks = [
   { href: "/about", label: "소개" },
@@ -21,16 +20,7 @@ export function SiteHeader() {
   return (
     <header className="site-header">
       <div className="site-header__inner">
-        <Link href="/" aria-label={`${SITE_NAME} 홈으로 이동`}>
-          <Image
-            src="/logo.svg"
-            alt={SITE_NAME}
-            width={150}
-            height={59}
-            priority
-            style={{ width: "auto", height: "32px" }}
-          />
-        </Link>
+        <SiteLogo />
         <nav className="site-header__nav" aria-label="주요 메뉴">
           {navLinks.map((link) => (
             <Link

@@ -20,7 +20,12 @@ export function getStickyScrollOffset(viewport: HTMLElement): number {
   const header = viewport.querySelector<HTMLElement>("[data-scroll-header]");
   if (!header) return 0;
   const gap = Number.parseFloat(getComputedStyle(viewport).rowGap) || 0;
-  return header.offsetTop + header.offsetHeight + gap - viewport.clientTop;
+  // 입력 영역이 본래 놓이는 자리(안내 바로 아래)가 스크롤 영역 맨 위에 오게 하는 위치.
+  // 입력 영역 자신은 붙은 상태에 따라 움직이므로 위쪽 안내를 기준으로 잡는다.
+  const headerBottom =
+    header.getBoundingClientRect().bottom -
+    viewport.getBoundingClientRect().top;
+  return Math.max(0, viewport.scrollTop + headerBottom + gap);
 }
 
 /**

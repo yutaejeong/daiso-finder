@@ -6,6 +6,7 @@ import {
   SimplifiedProductInfo,
 } from "@/app/api/products/types";
 import { AppShell } from "@/components/AppShell";
+import { SiteLogo } from "@/components/SiteLogo";
 import { ImageViewerDialog } from "@/components/ImageViewerDialog";
 import { ScrollArea } from "@/components/ScrollArea";
 import { css } from "@styled-system/css";
@@ -17,7 +18,6 @@ import {
   IconStairs,
 } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
-import { ImageWithFallback } from "@/components/ImageWithFallback";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { trackEvent } from "@/lib/gtag";
@@ -145,26 +145,7 @@ export function ProductClient({ code, productId, branch, product }: Props) {
           minHeight: 0,
         })}
       >
-        <Link
-          href="/"
-          aria-label="다이소 파인더 홈으로 이동"
-          className={css({ alignSelf: "flex-start", marginBottom: "12px" })}
-        >
-          <ImageWithFallback
-            src="/logo.svg"
-            alt="다이소 파인더"
-            width={150}
-            height={59}
-            priority
-            draggable={false}
-            style={{ WebkitUserDrag: "none" } as React.CSSProperties}
-            className={css({
-              userSelect: "none",
-              width: "auto",
-              height: "32px",
-            })}
-          />
-        </Link>
+        <SiteLogo spaced />
 
         <Link
           href={`/branch/${code}`}

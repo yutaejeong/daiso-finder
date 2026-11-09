@@ -7,6 +7,7 @@ import {
   SimplifiedProduct,
 } from "@/app/api/products/types";
 import { AppShell } from "@/components/AppShell";
+import { SiteLogo } from "@/components/SiteLogo";
 import { BranchLocationDialog } from "@/components/BranchLocationDialog";
 import { PopularProducts } from "@/components/PopularProducts";
 import { Search } from "@/components/Search";
@@ -236,29 +237,7 @@ export function BranchClient({ code, initialBranch }: Props) {
         <Search
           scrollHeader={
             <>
-              <Link
-                href="/"
-                aria-label="다이소 파인더 홈으로 이동"
-                className={css({
-                  alignSelf: "flex-start",
-                  marginBottom: "16px",
-                })}
-              >
-                <ImageWithFallback
-                  src="/logo.svg"
-                  alt="다이소 파인더"
-                  width={150}
-                  height={59}
-                  priority
-                  draggable={false}
-                  style={{ WebkitUserDrag: "none" } as React.CSSProperties}
-                  className={css({
-                    userSelect: "none",
-                    width: "auto",
-                    height: "32px",
-                  })}
-                />
-              </Link>
+              <SiteLogo spaced />
               <h1
                 className={css({
                   marginBottom: "14px",

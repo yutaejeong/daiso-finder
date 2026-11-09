@@ -337,6 +337,33 @@
     padding: 0 max(var(--gutter), var(--sar)) 0 max(var(--gutter), var(--sal));
   }
 
+  /* 모든 화면의 로고. 높이를 여기서 한 번만 정한다(SiteLogo). */
+  .site-logo {
+    display: inline-flex;
+    align-self: flex-start;
+    flex: none;
+    line-height: 0;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+
+  .site-logo img {
+    display: block;
+    width: auto;
+    height: 32px;
+    -webkit-user-drag: none;
+  }
+
+  .site-logo--spaced {
+    margin-bottom: 16px;
+  }
+
+  /* 헤더 막대 안에서는 세로 가운데에 맞춘다. */
+  .site-header__inner .site-logo {
+    align-self: center;
+  }
+
   .site-header__nav {
     display: flex;
     align-items: center;
@@ -458,6 +485,14 @@
     margin-inline: calc(var(--gutter) * -1);
     padding: 18px var(--gutter) 6px;
     background-color: var(--bg);
+  }
+
+  /*
+   * 스크롤 영역 안으로 들어간 위쪽 안내(scrollHeader)는 영역의 위쪽 안쪽 여백(10px)을
+   * 상쇄해, 앱 화면 어디서나 로고가 같은 위치(상단 16px)에 오게 한다.
+   */
+  .scroll-area__viewport > [data-scroll-header] {
+    margin-top: -10px;
   }
 
   .scroll-area__shadow {
