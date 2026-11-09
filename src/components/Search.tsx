@@ -117,6 +117,7 @@ export function Search({
           stickyForm
             ? "sr-only"
             : css({
+                flexShrink: 0,
                 marginBottom: "8px",
                 color: "var(--ink-2)",
                 fontSize: "0.875rem",
@@ -129,7 +130,10 @@ export function Search({
       {beforeForm}
       <form
         {...webMcpFormAttributes}
-        className={clsx("input-group", css({ marginBottom: "14px" }))}
+        className={clsx(
+          "input-group",
+          css({ flexShrink: 0, marginBottom: "14px" }),
+        )}
         onSubmit={onSubmit}
         role="search"
       >
@@ -179,6 +183,7 @@ export function Search({
       {showProgress && (
         <div
           className={css({
+            flexShrink: 0,
             marginBottom: "14px",
             display: "flex",
             flexDirection: "column",

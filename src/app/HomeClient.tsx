@@ -303,6 +303,11 @@ export function HomeClient() {
                     alignItems: "center",
                     gap: "8px",
                     overflowX: "auto",
+                    // overflow-x 가 auto 면 overflow-y 도 auto 로 계산돼 flex 아이템의
+                    // 최소 높이가 0 이 된다. 화면이 낮으면 이 줄이 눌려서 세로로 스크롤되고
+                    // 칩이 위아래로 잘리므로, 줄어들지 않게 하고 세로 스크롤은 막는다.
+                    overflowY: "hidden",
+                    flexShrink: 0,
                     // 칩 그림자가 잘리지 않도록 안쪽 여백을 두고 바깥으로 당긴다.
                     margin: "0 -6px 12px",
                     padding: "4px 6px",
