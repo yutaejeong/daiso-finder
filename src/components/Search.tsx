@@ -3,7 +3,7 @@
 import { css } from "@styled-system/css";
 import {
   IconAlertCircle,
-  IconLocation,
+  IconCurrentLocation,
   IconRefresh,
   IconSearch,
 } from "@tabler/icons-react";
@@ -98,20 +98,19 @@ export function Search({
     <>
       <label
         htmlFor={inputId}
-        className={clsx(
-          "text-muted",
-          css({
-            fontSize: "1.1rem",
-            marginBottom: "8px",
-          }),
-        )}
+        className={css({
+          marginBottom: "8px",
+          color: "var(--ink-2)",
+          fontSize: "0.875rem",
+          fontWeight: 700,
+        })}
       >
         {title}
       </label>
       {beforeForm}
       <form
         {...webMcpFormAttributes}
-        className={clsx("input-group", css({ marginBottom: "12px" }))}
+        className={clsx("input-group", css({ marginBottom: "14px" }))}
         onSubmit={onSubmit}
         role="search"
       >
@@ -119,6 +118,10 @@ export function Search({
           id={inputId}
           name="keyword"
           type="text"
+          enterKeyHint="search"
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
           className="form-control"
           placeholder={placeholder}
           value={searchInput}
@@ -126,30 +129,35 @@ export function Search({
           {...webMcpInputAttributes}
         />
         <button
-          className="btn btn-red"
+          className="btn btn-red btn-icon"
           type="submit"
           name="action"
           value="keyword"
           aria-label={searchButtonLabel}
         >
-          <IconSearch aria-hidden="true" width={20} height={20} />
+          <IconSearch aria-hidden="true" width={20} height={20} stroke={2.25} />
         </button>
         {withLocation && (
           <button
-            className="btn btn-red"
+            className="btn btn-soft btn-icon"
             name="action"
             value="location"
             type="submit"
             aria-label={locationButtonLabel}
           >
-            <IconLocation aria-hidden="true" width={20} height={20} />
+            <IconCurrentLocation
+              aria-hidden="true"
+              width={20}
+              height={20}
+              stroke={2.25}
+            />
           </button>
         )}
       </form>
       {showProgress && (
         <div
           className={css({
-            marginBottom: "12px",
+            marginBottom: "14px",
             display: "flex",
             flexDirection: "column",
             gap: "6px",
@@ -166,7 +174,7 @@ export function Search({
               width: "100%",
               height: "6px",
               borderRadius: "999px",
-              backgroundColor: "#e5e5e5",
+              backgroundColor: "var(--line)",
               overflow: "hidden",
             })}
           >
@@ -174,7 +182,7 @@ export function Search({
               className={css({
                 height: "100%",
                 borderRadius: "999px",
-                backgroundColor: "#c4002f",
+                backgroundColor: "var(--brand)",
                 transition: "width 0.25s ease-out",
               })}
               style={{ width: `${clampedPercent}%` }}
@@ -204,14 +212,23 @@ export function Search({
         className={css({
           display: "flex",
           flexDirection: "column",
-          gap: "4px",
+          gap: "10px",
+          flex: 1,
+          minHeight: 0,
           overflowY: "auto",
           overflowX: "hidden",
-          flex: 1,
-          padding: "8px",
-          border: "1px solid #ccc",
-          backgroundColor: "#f8f8f8",
-          borderRadius: "4px",
+          // 목록 끝에서 더 스크롤해도 뒤의 페이지로 이어지거나 튕기지 않게 한다.
+          overscrollBehavior: "contain",
+          WebkitOverflowScrolling: "touch",
+          // 카드 그림자가 스크롤 영역 가장자리에서 잘리지 않도록 안쪽 여백을 두고
+          // 같은 만큼 바깥으로 당겨 폭을 맞춘다.
+          margin: "0 -6px",
+          padding: "4px 6px 20px",
+          // 위아래 가장자리를 부드럽게 지워 스크롤 영역이 잘려 보이지 않게 한다.
+          WebkitMaskImage:
+            "linear-gradient(to bottom, transparent 0, #000 6px, #000 calc(100% - 20px), transparent 100%)",
+          maskImage:
+            "linear-gradient(to bottom, transparent 0, #000 6px, #000 calc(100% - 20px), transparent 100%)",
         })}
       >
         {!hasError && children}
@@ -222,17 +239,17 @@ export function Search({
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              gap: "10px",
+              gap: "12px",
               textAlign: "center",
-              padding: "28px 16px",
-              color: "#4a4a4a",
+              padding: "32px 16px",
+              color: "var(--ink-2)",
             })}
           >
             <IconAlertCircle
               aria-hidden="true"
-              width={34}
-              height={34}
-              className={css({ color: "#ED1C24" })}
+              width={36}
+              height={36}
+              className={css({ color: "var(--brand)" })}
             />
             <p className={css({ margin: 0, lineHeight: 1.5 })}>
               {errorMessage}
@@ -251,10 +268,23 @@ export function Search({
               aria-live="polite"
               className={clsx(
                 "text-muted",
-                css({ textAlign: "center", marginTop: "16px" }),
+                css({
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "10px",
+                  textAlign: "center",
+                  padding: "40px 16px",
+                }),
               )}
             >
-              {statusMessage}
+              <IconSearch
+                aria-hidden="true"
+                width={28}
+                height={28}
+                className={css({ color: "var(--line-strong)" })}
+              />
+              <span>{statusMessage}</span>
             </div>
           )
         )}

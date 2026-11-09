@@ -6,6 +6,7 @@ import {
   ProductSearchProgress,
   SimplifiedProduct,
 } from "@/app/api/products/types";
+import { AppShell } from "@/components/AppShell";
 import { BranchLocationDialog } from "@/components/BranchLocationDialog";
 import { PopularProducts } from "@/components/PopularProducts";
 import { Search } from "@/components/Search";
@@ -25,7 +26,12 @@ import { PRODUCT_SEARCH_CACHE } from "@/lib/queryCache";
 import { parseSearchKeyword, searchKeywordToParams } from "@/lib/searchParams";
 import { sendViewBeacon } from "@/lib/viewBeacon";
 import { css } from "@styled-system/css";
-import { IconMapPin, IconPhotoX, IconStairs } from "@tabler/icons-react";
+import {
+  IconClock,
+  IconMapPin,
+  IconPhotoX,
+  IconStairs,
+} from "@tabler/icons-react";
 import {
   InfiniteData,
   useInfiniteQuery,
@@ -218,339 +224,379 @@ export function BranchClient({ code, initialBranch }: Props) {
   }, [code, keyword, isFetching, isError, error, data]);
 
   return (
-    <main
-      className={css({
-        width: "100%",
-        maxWidth: "480px",
-        margin: "0 auto",
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-      })}
-    >
-      <Link href="/" aria-label="다이소 파인더 홈으로 이동">
-        <ImageWithFallback
-          src="/logo.svg"
-          alt="다이소 파인더"
-          width={200}
-          height={80}
-          priority
-          draggable={false}
-          style={{ WebkitUserDrag: "none" } as React.CSSProperties}
-          className={css({
-            userSelect: "none",
-            marginBottom: "24px",
-            width: "150px",
-            height: "60px",
-            lg: { width: "200px", height: "80px" },
-          })}
-        />
-      </Link>
-      <h1
+    <AppShell>
+      <main
         className={css({
-          marginBottom: "8px",
           display: "flex",
-          flexWrap: "wrap",
-          columnGap: "0.25em",
-          wordBreak: "keep-all",
+          flexDirection: "column",
+          flex: 1,
+          minHeight: 0,
         })}
       >
-        <span>
-          <mark>{branch?.name}</mark>의
-        </span>
-        <span>상품을 찾아드려요.</span>
-      </h1>
-      <address
-        className={css({
-          width: "100%",
-          backgroundColor: "#f0f0f0",
-          borderRadius: "8px",
-          border: "1px solid #e0e0e0",
-          padding: "16px",
-          marginBottom: "16px",
-          fontStyle: "normal",
-        })}
-      >
-        <div>
-          <strong className={css({ marginRight: "4px" })}>주소</strong>
-          {branch && <BranchLocationDialog branch={branch} />}
-        </div>
-        <div>
-          <strong className={css({ marginRight: "4px" })}>영업시간</strong>
-          <time dateTime={branch?.openTime}>{branch?.openTime}</time>
-          <span className={css({ margin: "0 4px" })}>~</span>
-          <time dateTime={branch?.closeTime}>{branch?.closeTime}</time>
-        </div>
-      </address>
-
-      <Search
-        title="상품을 검색해보세요"
-        placeholder="상품명을 입력해주세요"
-        searchInput={searchInput}
-        onSearchInputChange={setSearchInput}
-        onSubmit={handleSearch}
-        isFetching={isFetching}
-        progressPercent={progress?.percent}
-        progressLabel={
-          progress
-            ? `${branch?.name ?? "매장"}에서 ${Math.min(progress.found, progress.target)}/${progress.target}개 확인`
-            : undefined
-        }
-        hasResults={products.length > 0 || showPopular}
-        keyword={keyword}
-        searchButtonLabel="상품 검색"
-        toolName="search_store_products"
-        toolDescription={`Search product stock, price, floor, and zone in ${branch?.name ?? "the current Daiso store"}.`}
-        toolParamDescription="Product name to search in the current store"
-        errorMessage={isError ? error.message : undefined}
-        onRetry={keyword ? () => refetch() : undefined}
-        scrollRestorationKey={keyword ? `products:${code}:${keyword}` : null}
-      >
-        {showPopular && (
-          <PopularProducts
-            branchCode={code}
-            products={popularProducts}
-            scope={popular?.scope ?? "overall"}
-          />
-        )}
-        {products.map((product: SimplifiedProduct, index: number) => (
-          <Link
-            key={product.id}
-            href={`/branch/${code}/product/${product.id}`}
-            onClick={() =>
-              trackEvent("product_detail_view", {
-                branch_code: code,
-                product_id: product.id,
-                product_name: product.name,
-                result_position: index + 1,
-                result_count: products.length,
-                keyword,
-              })
-            }
+        <Link
+          href="/"
+          aria-label="다이소 파인더 홈으로 이동"
+          className={css({ alignSelf: "flex-start", marginBottom: "16px" })}
+        >
+          <ImageWithFallback
+            src="/logo.svg"
+            alt="다이소 파인더"
+            width={150}
+            height={59}
+            priority
+            draggable={false}
+            style={{ WebkitUserDrag: "none" } as React.CSSProperties}
             className={css({
-              padding: "14px",
-              backgroundColor: "white",
-              borderRadius: "8px",
-              border: "1px solid #e5e5e5",
-              boxShadow: "0 1px 2px rgba(0, 0, 0, 0.04)",
+              userSelect: "none",
+              width: "auto",
+              height: "32px",
+            })}
+          />
+        </Link>
+        <h1
+          className={css({
+            marginBottom: "14px",
+            display: "flex",
+            flexWrap: "wrap",
+            columnGap: "0.25em",
+            fontSize: "1.5rem",
+            wordBreak: "keep-all",
+          })}
+        >
+          <span>
+            <mark>{branch?.name}</mark>의
+          </span>
+          <span>상품을 찾아드려요.</span>
+        </h1>
+        <address
+          className={css({
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            gap: "10px",
+            backgroundColor: "var(--surface)",
+            borderRadius: "var(--radius-lg)",
+            border: "1px solid var(--line)",
+            boxShadow: "var(--shadow-1)",
+            padding: "14px 16px",
+            marginBottom: "18px",
+            fontStyle: "normal",
+          })}
+        >
+          <div className={css({ display: "flex", gap: "10px" })}>
+            <IconMapPin
+              aria-hidden="true"
+              width={18}
+              height={18}
+              className={css({
+                flexShrink: 0,
+                marginTop: "2px",
+                color: "var(--brand)",
+              })}
+            />
+            <div className={css({ minWidth: 0 })}>
+              <strong className="sr-only">주소</strong>
+              {branch && <BranchLocationDialog branch={branch} />}
+            </div>
+          </div>
+          <div
+            className={css({
               display: "flex",
-              flexDirection: "column",
-              gap: "12px",
-              textDecoration: "none",
-              color: "inherit",
-              transition: "border-color 0.15s, box-shadow 0.15s",
-              _hover: {
-                borderColor: "#c4002f",
-                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
-              },
+              alignItems: "center",
+              gap: "10px",
+              color: "var(--ink-2)",
             })}
           >
-            <h2
+            <IconClock
+              aria-hidden="true"
+              width={18}
+              height={18}
+              className={css({ flexShrink: 0, color: "var(--brand)" })}
+            />
+            <strong className="sr-only">영업시간</strong>
+            <span className={css({ fontVariantNumeric: "tabular-nums" })}>
+              <time dateTime={branch?.openTime}>{branch?.openTime}</time>
+              <span className={css({ margin: "0 6px" })}>~</span>
+              <time dateTime={branch?.closeTime}>{branch?.closeTime}</time>
+            </span>
+          </div>
+        </address>
+
+        <Search
+          title="상품을 검색해보세요"
+          placeholder="상품명을 입력해주세요"
+          searchInput={searchInput}
+          onSearchInputChange={setSearchInput}
+          onSubmit={handleSearch}
+          isFetching={isFetching}
+          progressPercent={progress?.percent}
+          progressLabel={
+            progress
+              ? `${branch?.name ?? "매장"}에서 ${Math.min(progress.found, progress.target)}/${progress.target}개 확인`
+              : undefined
+          }
+          hasResults={products.length > 0 || showPopular}
+          keyword={keyword}
+          searchButtonLabel="상품 검색"
+          toolName="search_store_products"
+          toolDescription={`Search product stock, price, floor, and zone in ${branch?.name ?? "the current Daiso store"}.`}
+          toolParamDescription="Product name to search in the current store"
+          errorMessage={isError ? error.message : undefined}
+          onRetry={keyword ? () => refetch() : undefined}
+          scrollRestorationKey={keyword ? `products:${code}:${keyword}` : null}
+        >
+          {showPopular && (
+            <PopularProducts
+              branchCode={code}
+              products={popularProducts}
+              scope={popular?.scope ?? "overall"}
+            />
+          )}
+          {products.map((product: SimplifiedProduct, index: number) => (
+            <Link
+              key={product.id}
+              href={`/branch/${code}/product/${product.id}`}
+              onClick={() =>
+                trackEvent("product_detail_view", {
+                  branch_code: code,
+                  product_id: product.id,
+                  product_name: product.name,
+                  result_position: index + 1,
+                  result_count: products.length,
+                  keyword,
+                })
+              }
               className={css({
-                fontSize: "0.95rem",
-                fontWeight: "bold",
-                wordBreak: "keep-all",
-                lineHeight: 1.4,
-                color: "#1a1a1a",
-                margin: 0,
-              })}
-            >
-              {product.name}
-            </h2>
-            <div
-              className={css({
+                padding: "14px",
+                backgroundColor: "var(--surface)",
+                borderRadius: "var(--radius-lg)",
+                border: "1px solid var(--line)",
+                boxShadow: "var(--shadow-1)",
                 display: "flex",
+                flexDirection: "column",
                 gap: "12px",
-                alignItems: "stretch",
+                textDecoration: "none",
+                color: "inherit",
+                transition:
+                  "border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease",
+                _active: { transform: "scale(0.985)" },
+                "@media (hover: hover)": {
+                  "&:hover": {
+                    borderColor: "var(--line-strong)",
+                    boxShadow: "var(--shadow-2)",
+                  },
+                },
               })}
             >
-              {product.image ? (
-                <ImageWithFallback
-                  src={product.image}
-                  alt={product.name}
-                  width={84}
-                  height={112}
-                  className={css({
-                    borderRadius: "6px",
-                    objectFit: "cover",
-                    flexShrink: 0,
-                    aspectRatio: "3 / 4",
-                    backgroundColor: "#f5f5f5",
-                  })}
-                />
-              ) : (
-                <div
-                  aria-hidden="true"
-                  className={css({
-                    width: "84px",
-                    aspectRatio: "3 / 4",
-                    backgroundColor: "#f5f5f5",
-                    borderRadius: "6px",
-                    flexShrink: 0,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: "#999",
-                  })}
-                >
-                  <IconPhotoX width={36} height={36} />
-                </div>
-              )}
-              <div
+              <h2
                 className={css({
-                  flex: 1,
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "space-between",
-                  gap: "4px",
-                  minWidth: 0,
+                  fontSize: "0.95rem",
+                  fontWeight: "bold",
+                  wordBreak: "keep-all",
+                  lineHeight: 1.4,
+                  color: "var(--ink)",
+                  margin: 0,
                 })}
               >
+                {product.name}
+              </h2>
+              <div
+                className={css({
+                  display: "flex",
+                  gap: "12px",
+                  alignItems: "stretch",
+                })}
+              >
+                {product.image ? (
+                  <ImageWithFallback
+                    src={product.image}
+                    alt={product.name}
+                    width={84}
+                    height={112}
+                    className={css({
+                      borderRadius: "var(--radius-sm)",
+                      objectFit: "cover",
+                      flexShrink: 0,
+                      aspectRatio: "3 / 4",
+                      backgroundColor: "var(--surface-2)",
+                    })}
+                  />
+                ) : (
+                  <div
+                    aria-hidden="true"
+                    className={css({
+                      width: "84px",
+                      aspectRatio: "3 / 4",
+                      backgroundColor: "var(--surface-2)",
+                      borderRadius: "var(--radius-sm)",
+                      flexShrink: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "var(--muted)",
+                    })}
+                  >
+                    <IconPhotoX width={36} height={36} />
+                  </div>
+                )}
                 <div
                   className={css({
+                    flex: 1,
                     display: "flex",
                     flexDirection: "column",
-                    gap: "2px",
+                    justifyContent: "space-between",
+                    gap: "4px",
+                    minWidth: 0,
                   })}
                 >
-                  <p
+                  <div
                     className={css({
-                      color: "#1a1a1a",
-                      fontSize: "1.125rem",
-                      fontWeight: "bold",
-                      margin: 0,
-                      fontVariantNumeric: "tabular-nums",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "2px",
                     })}
                   >
-                    {product.price.toLocaleString()}원
-                  </p>
-                  <p
-                    className={css({
-                      color: "#888",
-                      fontSize: "0.8125rem",
-                      margin: 0,
-                    })}
-                  >
-                    재고 {product.stock}개 이하
-                  </p>
-                </div>
-                <div
-                  className={css({
-                    display: "flex",
-                    flexWrap: "wrap",
-                    alignItems: "center",
-                    justifyContent: "flex-end",
-                    columnGap: "12px",
-                    rowGap: "4px",
-                    alignSelf: "flex-end",
-                  })}
-                  aria-label={`진열 위치: ${product.stairNo < 0 ? `지하${-product.stairNo}층` : `${product.stairNo}층`} ${product.zoneNo}구역`}
-                >
-                  <span
-                    className={css({
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "4px",
-                    })}
-                  >
-                    <IconStairs
-                      width={16}
-                      height={16}
-                      stroke={2.25}
-                      color="#666"
-                      aria-hidden="true"
-                    />
-                    <span
+                    <p
                       className={css({
-                        fontSize: "0.75rem",
-                        fontWeight: 500,
-                        color: "#666",
-                        marginRight: "3px",
-                      })}
-                      aria-hidden="true"
-                    >
-                      층
-                    </span>
-                    <span
-                      className={css({
-                        fontWeight: "black",
-                        fontSize: "1.25rem",
-                        color: "#c4002f",
-                        lineHeight: 1,
-                        fontVariantNumeric: "tabular-nums",
-                      })}
-                    >
-                      {product.stairNo < 0
-                        ? `B${-product.stairNo}`
-                        : `${product.stairNo}F`}
-                    </span>
-                  </span>
-                  <span
-                    className={css({
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "4px",
-                    })}
-                  >
-                    <IconMapPin
-                      width={16}
-                      height={16}
-                      stroke={2.25}
-                      color="#666"
-                      aria-hidden="true"
-                    />
-                    <span
-                      className={css({
-                        fontSize: "0.75rem",
-                        fontWeight: 500,
-                        color: "#666",
-                        marginRight: "3px",
-                      })}
-                      aria-hidden="true"
-                    >
-                      구역
-                    </span>
-                    <span
-                      className={css({
-                        backgroundColor: "#c4002f",
-                        color: "white",
-                        padding: "3px 8px",
-                        borderRadius: "4px",
-                        fontSize: "1rem",
+                        color: "var(--ink)",
+                        fontSize: "1.125rem",
                         fontWeight: "bold",
-                        lineHeight: 1.2,
+                        margin: 0,
                         fontVariantNumeric: "tabular-nums",
                       })}
                     >
-                      {product.zoneNo}
+                      {product.price.toLocaleString()}원
+                    </p>
+                    <p
+                      className={css({
+                        color: "var(--muted)",
+                        fontSize: "0.8125rem",
+                        margin: 0,
+                      })}
+                    >
+                      재고 {product.stock}개 이하
+                    </p>
+                  </div>
+                  <div
+                    className={css({
+                      display: "flex",
+                      flexWrap: "wrap",
+                      alignItems: "center",
+                      justifyContent: "flex-end",
+                      columnGap: "12px",
+                      rowGap: "4px",
+                      alignSelf: "flex-end",
+                    })}
+                    aria-label={`진열 위치: ${product.stairNo < 0 ? `지하${-product.stairNo}층` : `${product.stairNo}층`} ${product.zoneNo}구역`}
+                  >
+                    <span
+                      className={css({
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                      })}
+                    >
+                      <IconStairs
+                        width={16}
+                        height={16}
+                        stroke={2.25}
+                        color="var(--muted)"
+                        aria-hidden="true"
+                      />
+                      <span
+                        className={css({
+                          fontSize: "0.75rem",
+                          fontWeight: 500,
+                          color: "var(--muted)",
+                          marginRight: "3px",
+                        })}
+                        aria-hidden="true"
+                      >
+                        층
+                      </span>
+                      <span
+                        className={css({
+                          fontWeight: "black",
+                          fontSize: "1.25rem",
+                          color: "var(--brand)",
+                          lineHeight: 1,
+                          fontVariantNumeric: "tabular-nums",
+                        })}
+                      >
+                        {product.stairNo < 0
+                          ? `B${-product.stairNo}`
+                          : `${product.stairNo}F`}
+                      </span>
                     </span>
-                  </span>
+                    <span
+                      className={css({
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                      })}
+                    >
+                      <IconMapPin
+                        width={16}
+                        height={16}
+                        stroke={2.25}
+                        color="var(--muted)"
+                        aria-hidden="true"
+                      />
+                      <span
+                        className={css({
+                          fontSize: "0.75rem",
+                          fontWeight: 500,
+                          color: "var(--muted)",
+                          marginRight: "3px",
+                        })}
+                        aria-hidden="true"
+                      >
+                        구역
+                      </span>
+                      <span
+                        className={css({
+                          backgroundColor: "var(--brand)",
+                          color: "#fff",
+                          padding: "3px 9px",
+                          borderRadius: "8px",
+                          fontSize: "1rem",
+                          fontWeight: "bold",
+                          lineHeight: 1.2,
+                          fontVariantNumeric: "tabular-nums",
+                        })}
+                      >
+                        {product.zoneNo}
+                      </span>
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          </Link>
-        ))}
-        {hasNextPage && (
-          <button
-            onClick={() => {
-              fetchNextPage();
-              trackEvent("product_load_more", { branch_code: code });
-            }}
-            disabled={isFetchingNextPage}
-            className={css({
-              marginTop: "16px",
-              padding: "8px",
-              backgroundColor: "#f0f0f0",
-              border: "1px solid #e0e0e0",
-              borderRadius: "4px",
-              cursor: "pointer",
-              "&:disabled": { opacity: 0.5, cursor: "not-allowed" },
-            })}
-          >
-            {isFetchingNextPage ? "로딩 중..." : "더 보기"}
-          </button>
-        )}
-      </Search>
-    </main>
+            </Link>
+          ))}
+          {hasNextPage && (
+            <button
+              onClick={() => {
+                fetchNextPage();
+                trackEvent("product_load_more", { branch_code: code });
+              }}
+              disabled={isFetchingNextPage}
+              className={css({
+                minHeight: "44px",
+                marginTop: "6px",
+                color: "var(--ink-2)",
+                fontWeight: 700,
+                backgroundColor: "var(--surface)",
+                border: "1px solid var(--line-strong)",
+                borderRadius: "var(--radius)",
+                cursor: "pointer",
+                "&:disabled": { opacity: 0.5, cursor: "not-allowed" },
+              })}
+            >
+              {isFetchingNextPage ? "로딩 중..." : "더 보기"}
+            </button>
+          )}
+        </Search>
+      </main>
+    </AppShell>
   );
 }

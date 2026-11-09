@@ -1,4 +1,3 @@
-import { css } from "@styled-system/css";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { GoogleAnalytics } from "./GoogleAnalytics";
@@ -71,9 +70,16 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
-  themeColor: "#ED1C24",
+  // 노치·홈 인디케이터 뒤까지 페이지를 확장하고, 안전 영역은 CSS 의
+  // env(safe-area-inset-*) 로 직접 비운다(globals.css 의 --sat/--sab 등).
+  // 이 값이 없으면 Safari 가 안전 영역 밖을 검은 띠나 다른 색으로 남긴다.
+  viewportFit: "cover",
+  // 주소창·상태바 색. globals.css 의 --bg 와 같은 값이어야 Safari 의 상단·하단
+  // 바와 페이지 바탕이 한 장처럼 이어진다. 앱이 라이트 전용이라 하나만 둔다.
+  themeColor: "#f6f6f8",
+  colorScheme: "light",
+  // 핀치 확대를 막지 않는다. 입력창이 16px 이상이라 iOS 의 포커스 자동 확대는
+  // 일어나지 않으므로, 확대 금지는 접근성만 해치는 설정이었다.
 };
 
 export default function RootLayout({
@@ -83,7 +89,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
-      <body className={css({ padding: "24px !important", height: "100dvh" })}>
+      <body>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

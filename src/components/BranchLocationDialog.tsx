@@ -4,11 +4,7 @@ import { SimplifiedBranch } from "@/app/api/branches/types";
 import { trackEvent } from "@/lib/gtag";
 import { trackJourneyStep } from "@/lib/journey";
 import { css } from "@styled-system/css";
-import {
-  IconCopy,
-  IconMapPin,
-  IconRoute,
-} from "@tabler/icons-react";
+import { IconCopy, IconMapPin, IconRoute } from "@tabler/icons-react";
 import { useId, useRef, useState } from "react";
 
 interface Props {
@@ -114,13 +110,20 @@ export function BranchLocationDialog({ branch }: Props) {
           border: 0,
           cursor: "pointer",
           textAlign: "left",
+          wordBreak: "keep-all",
           textDecoration: "underline",
-          textUnderlineOffset: "2px",
-          _hover: { color: "#c4002f" },
+          textDecorationColor: "var(--line-strong)",
+          textUnderlineOffset: "4px",
+          "@media (hover: hover)": {
+            "&:hover": {
+              color: "var(--brand)",
+              textDecorationColor: "var(--brand)",
+            },
+          },
           _focusVisible: {
-            outline: "2px solid #c4002f",
+            outline: "2px solid var(--brand)",
             outlineOffset: "3px",
-            borderRadius: "2px",
+            borderRadius: "4px",
           },
         })}
       >
@@ -142,26 +145,26 @@ export function BranchLocationDialog({ branch }: Props) {
         className={css({
           width: "calc(100% - 32px)",
           maxWidth: "448px",
-          maxHeight: "calc(100dvh - 32px)",
+          maxHeight:
+            "calc(100dvh - 32px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))",
           margin: "auto",
           padding: 0,
-          color: "#1f2937",
-          backgroundColor: "white",
+          color: "var(--ink)",
+          backgroundColor: "var(--surface)",
           border: 0,
-          borderRadius: "12px",
-          boxShadow: "0 20px 50px rgba(0, 0, 0, 0.24)",
+          borderRadius: "var(--radius-lg)",
+          boxShadow: "var(--shadow-2)",
           overflow: "hidden",
-          "&::backdrop": {
-            backgroundColor: "rgba(17, 24, 39, 0.48)",
-            backdropFilter: "blur(2px)",
-          },
+          // 모달이 열려 있는 동안 뒤의 페이지가 같이 스크롤되지 않게 한다.
+          overscrollBehavior: "contain",
         })}
       >
         <div
           className={css({
             display: "flex",
             flexDirection: "column",
-            maxHeight: "calc(100dvh - 32px)",
+            maxHeight:
+              "calc(100dvh - 32px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))",
           })}
         >
           <div
@@ -171,7 +174,7 @@ export function BranchLocationDialog({ branch }: Props) {
               justifyContent: "space-between",
               gap: "16px",
               padding: "18px 18px 16px",
-              borderBottom: "1px solid #e5e7eb",
+              borderBottom: "1px solid var(--line)",
             })}
           >
             <div className={css({ minWidth: 0 })}>
@@ -181,7 +184,7 @@ export function BranchLocationDialog({ branch }: Props) {
                   margin: 0,
                   fontSize: "1.125rem",
                   lineHeight: 1.4,
-                  color: "#111827",
+                  color: "var(--ink)",
                   wordBreak: "keep-all",
                 })}
               >
@@ -191,7 +194,7 @@ export function BranchLocationDialog({ branch }: Props) {
                 id={descriptionId}
                 className={css({
                   margin: "4px 0 0",
-                  color: "#4b5563",
+                  color: "var(--muted)",
                   fontSize: "0.8125rem",
                   lineHeight: 1.45,
                   wordBreak: "keep-all",
@@ -214,7 +217,7 @@ export function BranchLocationDialog({ branch }: Props) {
               height: "240px",
               flexShrink: 0,
               overflow: "hidden",
-              backgroundColor: "#e5e7eb",
+              backgroundColor: "var(--line)",
             })}
           >
             {isOpen && (
@@ -240,7 +243,7 @@ export function BranchLocationDialog({ branch }: Props) {
                 gap: "6px",
                 maxWidth: "calc(100% - 24px)",
                 padding: "7px 10px",
-                color: "#111827",
+                color: "var(--ink)",
                 backgroundColor: "rgba(255, 255, 255, 0.94)",
                 borderRadius: "999px",
                 boxShadow: "0 2px 8px rgba(0, 0, 0, 0.14)",
@@ -249,7 +252,7 @@ export function BranchLocationDialog({ branch }: Props) {
                 pointerEvents: "none",
               })}
             >
-              <IconMapPin width={16} height={16} color="#c4002f" />
+              <IconMapPin width={16} height={16} color="var(--brand)" />
               <span
                 className={css({
                   overflow: "hidden",
@@ -282,11 +285,7 @@ export function BranchLocationDialog({ branch }: Props) {
                 // "성공적인 이탈" 이므로 단계로도 남긴다.
                 trackJourneyStep("directions", { branch_code: branch.code });
               }}
-              className={`btn btn-red ${css({
-                width: "100%",
-                minHeight: "46px",
-                fontWeight: 700,
-              })}`}
+              className={`btn btn-red ${css({ width: "100%", minHeight: "46px" })}`}
             >
               <IconRoute width={20} height={20} aria-hidden="true" />
               카카오맵 길찾기
@@ -294,33 +293,7 @@ export function BranchLocationDialog({ branch }: Props) {
             <button
               type="button"
               onClick={handleCopyAddress}
-              className={css({
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "0.35rem",
-                width: "100%",
-                minHeight: "46px",
-                padding: "0.4375rem 0.875rem",
-                color: "#1f2937",
-                backgroundColor: "white",
-                border: "1px solid #d1d5db",
-                borderRadius: "4px",
-                fontWeight: 700,
-                lineHeight: 1.4286,
-                cursor: "pointer",
-                userSelect: "none",
-                transition:
-                  "background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease",
-                _hover: {
-                  backgroundColor: "#f9fafb",
-                  borderColor: "#9ca3af",
-                },
-                _focusVisible: {
-                  outline: "none",
-                  boxShadow: "0 0 0 0.25rem rgba(196, 0, 47, 0.25)",
-                },
-              })}
+              className={`btn ${css({ width: "100%", minHeight: "46px" })}`}
             >
               <IconCopy width={20} height={20} aria-hidden="true" />
               주소 복사
@@ -331,7 +304,7 @@ export function BranchLocationDialog({ branch }: Props) {
               className={css({
                 minHeight: "20px",
                 margin: "-2px 0 -6px",
-                color: copyStatus === "failed" ? "#b42318" : "#166534",
+                color: copyStatus === "failed" ? "var(--danger)" : "var(--ok)",
                 fontSize: "0.8125rem",
                 lineHeight: "20px",
                 textAlign: "center",

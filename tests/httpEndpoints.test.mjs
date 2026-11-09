@@ -22,25 +22,48 @@ async function getJson(path, init) {
 }
 
 test(
-  "home page ships readable content without JavaScript",
+  "home page ships the search shell and site links without JavaScript",
   options,
   async () => {
     const response = await fetch(url("/"));
     assert.equal(response.status, 200);
 
     const html = await response.text();
+
+    // 홈은 검색 화면만 남기고, 설명 문구는 /about 으로 옮겼다.
+    assert.match(html, /<h1[^>]*>/);
+    assert.match(html, /role="search"/);
+    assert.match(html, /application\/ld\+json/);
+    assert.match(html, /"@type":"Organization"/);
+    // 푸터의 최소 링크. 소개·개발자 포털은 여기서 이어진다.
+    assert.match(html, /href="\/about"/);
+    assert.match(html, /href="\/developers"/);
+    assert.match(html, /href="\/privacy"/);
+    // 안전 영역(노치·홈 인디케이터)까지 페이지를 확장한다는 선언.
+    assert.match(html, /<meta name="viewport"[^>]*viewport-fit=cover/);
+  },
+);
+
+test(
+  "about page carries the service copy moved off the home page",
+  options,
+  async () => {
+    const html = await (await fetch(url("/about"))).text();
     const text = html
       .replace(/<script[\s\S]*?<\/script>/g, " ")
       .replace(/<style[\s\S]*?<\/style>/g, " ")
       .replace(/<[^>]+>/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
+      .replace(/\s+/g, " ");
 
-    assert.match(html, /<h1[^>]*>/);
-    assert.ok(text.length > 500, `only ${text.length} chars of text`);
-    assert.match(html, /application\/ld\+json/);
-    assert.match(html, /"@type":"Organization"/);
-    assert.match(html, /href="\/developers"/);
+    for (const phrase of [
+      "이렇게 사용하세요",
+      "많이 찾는 다이소 매장",
+      "데이터 출처와 정확도",
+      "AI 에이전트를 위한",
+    ]) {
+      assert.ok(text.includes(phrase), `/about is missing "${phrase}"`);
+    }
+    assert.match(html, /href="\/branch\/\d+"/);
   },
 );
 

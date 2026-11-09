@@ -2,6 +2,7 @@
 
 import { css } from "@styled-system/css";
 import { IconFlame, IconPhotoX } from "@tabler/icons-react";
+import clsx from "clsx";
 import Link from "next/link";
 import { ImageWithFallback } from "@/components/ImageWithFallback";
 import { trackEvent } from "@/lib/gtag";
@@ -27,17 +28,17 @@ export function PopularProducts({ branchCode, products, scope }: Props) {
           display: "flex",
           alignItems: "center",
           gap: "6px",
-          margin: "4px 0 8px",
-          fontSize: "0.9375rem",
+          margin: "4px 0 10px",
+          fontSize: "0.875rem",
           fontWeight: 700,
-          color: "#4a4a4a",
+          color: "var(--ink-2)",
         })}
       >
         <IconFlame
           aria-hidden="true"
           width={18}
           height={18}
-          className={css({ color: "#c4002f" })}
+          className={css({ color: "var(--brand)" })}
         />
         {scope === "branch"
           ? "이 매장에서 많이 찾는 상품"
@@ -47,7 +48,7 @@ export function PopularProducts({ branchCode, products, scope }: Props) {
         className={css({
           display: "flex",
           flexDirection: "column",
-          gap: "8px",
+          gap: "10px",
         })}
       >
         {products.map((product, index) => (
@@ -64,19 +65,16 @@ export function PopularProducts({ branchCode, products, scope }: Props) {
                 popular_scope: scope,
               })
             }
-            className={css({
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-              padding: "10px",
-              backgroundColor: "white",
-              borderRadius: "8px",
-              border: "1px solid #e5e5e5",
-              textDecoration: "none",
-              color: "inherit",
-              transition: "border-color 0.15s",
-              _hover: { borderColor: "#c4002f" },
-            })}
+            className={clsx(
+              "card",
+              css({
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                padding: "10px",
+                borderRadius: "var(--radius)",
+              }),
+            )}
           >
             {product.image ? (
               <ImageWithFallback
@@ -85,12 +83,12 @@ export function PopularProducts({ branchCode, products, scope }: Props) {
                 width={48}
                 height={64}
                 className={css({
-                  borderRadius: "4px",
+                  borderRadius: "8px",
                   objectFit: "cover",
                   flexShrink: 0,
                   width: "48px",
                   height: "64px",
-                  backgroundColor: "#f5f5f5",
+                  backgroundColor: "var(--surface-2)",
                 })}
               />
             ) : (
@@ -100,12 +98,12 @@ export function PopularProducts({ branchCode, products, scope }: Props) {
                   width: "48px",
                   height: "64px",
                   flexShrink: 0,
-                  backgroundColor: "#f5f5f5",
-                  borderRadius: "4px",
+                  backgroundColor: "var(--surface-2)",
+                  borderRadius: "8px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  color: "#999",
+                  color: "var(--muted)",
                 })}
               >
                 <IconPhotoX width={24} height={24} />
@@ -119,7 +117,7 @@ export function PopularProducts({ branchCode, products, scope }: Props) {
                   fontWeight: 700,
                   lineHeight: 1.4,
                   wordBreak: "keep-all",
-                  color: "#1a1a1a",
+                  color: "var(--ink)",
                 })}
               >
                 {product.name}
@@ -128,7 +126,7 @@ export function PopularProducts({ branchCode, products, scope }: Props) {
                 className={css({
                   margin: "2px 0 0",
                   fontSize: "0.875rem",
-                  color: "#666",
+                  color: "var(--muted)",
                   fontVariantNumeric: "tabular-nums",
                 })}
               >

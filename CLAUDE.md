@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Daiso Finder is a Next.js 14 PWA (App Router) that helps users find Daiso stores and search for product stock/location within stores. Written in TypeScript, styled with PandaCSS + Tabler UI.
+Daiso Finder is a Next.js 14 PWA (App Router) that helps users find Daiso stores and search for product stock/location within stores. Written in TypeScript, styled with PandaCSS on top of hand-written design tokens (`src/app/globals.css`); icons come from `@tabler/icons-react`.
 
 ## Commands
 
@@ -70,11 +70,40 @@ a test asserts they stay in sync.
 
 ### Pages that must stay server-rendered
 
-`/`, `/about`, `/contact`, `/privacy`, and `/developers` render their body text on the
-server so crawlers and agents see it without running JavaScript. The homepage keeps the
-interactive search in `src/app/HomeClient.tsx` and wraps it in a server component; the
-`body` is a fixed 100dvh shell, so long pages scroll inside their own container rather than
-changing the global layout.
+`/about`, `/contact`, `/privacy`, and `/developers` render their body text on the server so
+crawlers and agents see it without running JavaScript. The homepage is just the search UI
+(`src/app/HomeClient.tsx` inside `AppShell`): the service description, how-to, popular
+stores and API blurb that used to sit below the fold now live on `/about`, so keep
+descriptive copy there rather than growing the home screen again. The home HTML still
+carries the h1, the Organization/WebSite JSON-LD and the footer links.
+
+### Layout shells and browser behaviour
+
+Two shells, both styled by plain classes in `globals.css`:
+
+- **App screens** (`/`, `/branch/**`, 404/error) use `AppShell` (`.app-shell`): fixed to
+  `100dvh`, the document itself never scrolls, only the result list (`overscroll-behavior:
+  contain`) does. Padding is `max(gutter, env(safe-area-inset-*))`.
+- **Content pages** (`/about`, `/contact`, `/privacy`, `/developers`) use `ContentPage`
+  (`.page`): the *document* scrolls, with a sticky translucent `SiteHeader`. Do not put an
+  inner scroll container back in — Safari only collapses its toolbars and tints the
+  status bar from the page background when the document scrolls.
+
+Safari/iOS rules that are easy to regress:
+
+- `viewport-fit=cover` (layout.tsx) plus the `--sat/--sar/--sab/--sal` variables are what
+  keep content out of the notch and home indicator. Anything `position: fixed` must pad
+  itself with them too (see `PWAInstallBanner`, `.modal`).
+- `theme-color` in `layout.tsx` and `--bg` in `globals.css` must stay the same value, and
+  `<html>` carries the background, so overscroll and the toolbars blend into the page.
+  The PWA install modal temporarily overrides `theme-color` with the dimmed backdrop colour.
+- Pinch zoom is deliberately allowed; inputs stay at 16px so iOS does not auto-zoom.
+- To eyeball notch layouts in a desktop browser, inject
+  `:root{--sat:47px;--sab:34px}` and compare.
+
+Scrollbars are thin and transparent-track via `scrollbar-width`/`scrollbar-color`, with a
+`::-webkit-scrollbar` fallback inside `@supports not (scrollbar-width: thin)` for old
+WebKit (declaring both makes Chrome ignore the pseudo-elements anyway).
 
 ### CLI
 
@@ -83,10 +112,11 @@ It has no dependency on the Next.js app and is covered by `tests/cli.test.mjs`.
 
 ### Pages
 
-- `/` (home) — store selector with keyword search and geolocation-based search, infinite scroll pagination, plus server-rendered service copy below the fold
+- `/` (home) — store selector with keyword search and geolocation-based search, infinite scroll pagination, popular/recent stores, and a one-line footer
 - `/branch/[code]` — store detail page with product search showing price, stock count, floor/zone info
 - `/developers` — developer portal (quickstart, endpoints, error codes, MCP, CLI, sandbox)
-- `/about`, `/contact`, `/privacy` — trust anchor pages
+- `/about` — what the service is, how to use it, popular stores, data source, API pointer
+- `/contact`, `/privacy` — trust anchor pages
 
 ### Client State
 
@@ -203,11 +233,20 @@ for the setup and what is deliberately left unreported.
 
 ### Styling
 
-- **PandaCSS** for CSS-in-JS — use `css()` from `@styled-system/css`
-- **Tabler UI** for pre-built components and layout
+- **Design tokens** (`--bg`, `--ink`, `--brand`, `--radius*`, `--shadow-*`, safe-area vars)
+  and the shared classes (`.btn`, `.form-control`, `.card`, `.chip`, `.modal`, `.app-shell`,
+  `.page`, `.site-header`, `.site-footer`) live in `src/app/globals.css`. Tabler *CSS* is
+  not used (the old `@tabler/core` dependency was never imported and has been removed);
+  only `@tabler/icons-react` remains for icons.
+- Everything in `globals.css` sits inside `@layer base`, so PandaCSS utilities
+  (`utilities` layer) override it normally. Unlayered rules would beat every `css()`
+  call and force `!important`.
+- **PandaCSS** for component-level styles — use `css()` from `@styled-system/css` and
+  reference tokens as `var(--ink)` etc. instead of hard-coded hex values
 - Generated styles live in `styled-system/` (gitignored, regenerated via `pnpm prepare`)
-- Theme color: **#e60033**
-- Font: Pretendard (Korean)
+- Brand colour: **#c4002f** (`--brand`, the accessible red). Light theme only.
+- Font: the system Korean stack (Apple SD Gothic Neo / Malgun Gothic …). `PretendardVariable.woff2`
+  in `src/app/` is not loaded — it is 2 MB, so wiring it up needs a subset first.
 
 ### Path Aliases
 
@@ -218,7 +257,7 @@ for the setup and what is deliberately left unreported.
 
 - Package manager: **pnpm** (do not use npm/yarn)
 - Node version: 22.17.1 (see .nvmrc)
-- Prefer Tabler UI components and utilities before adding new UI libraries — see https://docs.tabler.io/ui
+- Reuse the tokens and shared classes in `globals.css` before adding new UI libraries
 - Check existing dependencies in package.json before installing new packages
 - Next.js config uses `next.config.js` (not .mjs/.ts) with JSDoc types
 - Remote images allowed from `cdn.daisomall.co.kr`

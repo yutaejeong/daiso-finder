@@ -252,168 +252,185 @@ export function HomeClient() {
 
   return (
     <>
-      <ImageWithFallback
-        src="/logo.svg"
-        alt="다이소 파인더"
-        width={200}
-        height={80}
-        priority
-        draggable={false}
-        style={{ WebkitUserDrag: "none" } as React.CSSProperties}
+      <main
         className={css({
-          userSelect: "none",
-          marginBottom: "24px",
-          width: "150px",
-          height: "60px",
-          lg: {
-            width: "200px",
-            height: "80px",
-          },
+          display: "flex",
+          flexDirection: "column",
+          flex: 1,
+          minHeight: 0,
         })}
-      />
-      <h1>당신이 있는 매장의 상품을 찾아드립니다</h1>
-      <Search
-        title="매장을 선택해주세요"
-        placeholder="주소 혹은 지점명을 입력하세요"
-        searchInput={searchInput}
-        onSearchInputChange={(value) => setSearchInput(value)}
-        onSubmit={handleSearch}
-        isFetching={isFetching}
-        hasResults={branches.length > 0 || showPopular}
-        keyword={searchLabel}
-        withLocation
-        searchButtonLabel="매장 검색"
-        locationButtonLabel="현재 위치로 주변 매장 검색"
-        toolName="search_daiso_stores"
-        toolDescription="Search Daiso stores by address or store name and show selectable results."
-        toolParamDescription="Address, neighborhood, or Daiso store name"
-        errorMessage={isError ? error.message : undefined}
-        onRetry={mode ? () => refetch() : undefined}
-        scrollRestorationKey={mode ? `branches:${params.toString()}` : null}
-        beforeForm={
-          recentBranches.length > 0 ? (
-            <nav
-              aria-label="최근 본 다이소 매장"
-              className={css({
-                display: "flex",
-                gap: "10px",
-                overflowX: "auto",
-                paddingBlock: 4,
-                paddingInline: 4,
-                marginBottom: "10px",
-                scrollbarWidth: "none",
-                WebkitMaskImage:
-                  "linear-gradient(90deg, transparent 0, black 14px, black calc(100% - 22px), transparent 100%)",
-                maskImage:
-                  "linear-gradient(90deg, transparent 0, black 14px, black calc(100% - 22px), transparent 100%)",
-                "&::-webkit-scrollbar": { display: "none" },
-              })}
-            >
-              <span
-                aria-hidden="true"
-                className={css({
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "4px",
-                  flexShrink: 0,
-                  color: "#666",
-                  fontSize: "0.8125rem",
-                  fontWeight: 500,
-                })}
-              >
-                <IconHistory width={15} height={15} />
-                최근
-              </span>
-              {recentBranches.map((branch) => (
-                <span
-                  key={branch.code}
-                  className={clsx(
-                    "badge bg-blue-lt",
-                    css({
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "4px",
-                      flexShrink: 0,
-                      minHeight: "32px",
-                      padding: "4px 4px 4px 11px",
-                      fontSize: "0.875rem",
-                      lineHeight: 1.2,
-                    }),
-                  )}
-                >
-                  <Link
-                    href={`/branch/${branch.code}`}
-                    onClick={() =>
-                      trackEvent("recent_branch_click", {
-                        branch_code: branch.code,
-                        branch_name: branch.name,
-                      })
-                    }
-                    className={css({
-                      color: "inherit",
-                      textDecoration: "none",
-                    })}
-                  >
-                    {branch.name}
-                  </Link>
-                  <button
-                    type="button"
-                    aria-label={`${branch.name} 최근 본 매장에서 제거`}
-                    onClick={() => {
-                      removeRecentBranch(branch.code);
-                      trackEvent("recent_branch_remove", {
-                        branch_code: branch.code,
-                      });
-                    }}
-                    className={css({
-                      display: "inline-flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      width: "28px",
-                      height: "28px",
-                      padding: 0,
-                      border: "none",
-                      borderRadius: "50%",
-                      backgroundColor: "transparent",
-                      color: "inherit",
-                      cursor: "pointer",
-                      opacity: 0.7,
-                      _hover: { opacity: 1 },
-                    })}
-                  >
-                    <IconX aria-hidden="true" width={14} height={14} />
-                  </button>
-                </span>
-              ))}
-            </nav>
-          ) : undefined
-        }
       >
-        {showPopular && <PopularBranches branches={popularBranches} />}
-        {branches?.map((branch, index) => (
-          <Link
-            href={`/branch/${branch.code}`}
-            className="card"
-            key={branch.code}
-            onClick={() =>
-              trackEvent("branch_click", {
-                branch_code: branch.code,
-                branch_name: branch.name,
-                // 결과 몇 번째를 고르는지 보면 목록이 쓸 만한지 알 수 있다.
-                result_position: index + 1,
-                result_count: branches.length,
-                search_mode: mode?.type ?? "(none)",
-              })
-            }
-          >
-            <div className="card-body">
-              <h5 className="card-title">{branch.name}</h5>
-              <p className="card-text">{branch.address}</p>
-            </div>
-          </Link>
-        ))}
-        <div ref={ref} className={css({ width: "100%", height: "10px" })} />
-      </Search>
+        <Link
+          href="/"
+          aria-label="다이소 파인더 홈으로 이동"
+          className={css({
+            alignSelf: "flex-start",
+            marginBottom: "20px",
+            lg: { marginBottom: "28px" },
+          })}
+        >
+          <ImageWithFallback
+            src="/logo.svg"
+            alt="다이소 파인더"
+            width={150}
+            height={59}
+            priority
+            draggable={false}
+            style={{ WebkitUserDrag: "none" } as React.CSSProperties}
+            className={css({
+              userSelect: "none",
+              width: "auto",
+              height: "36px",
+            })}
+          />
+        </Link>
+        <h1
+          className={css({
+            marginBottom: "20px",
+            fontSize: "1.625rem",
+            lineHeight: 1.3,
+            wordBreak: "keep-all",
+            lg: { fontSize: "1.875rem" },
+          })}
+        >
+          당신이 있는 매장의
+          <br />
+          상품을 찾아드립니다
+        </h1>
+        <Search
+          title="매장을 선택해주세요"
+          placeholder="주소 혹은 지점명을 입력하세요"
+          searchInput={searchInput}
+          onSearchInputChange={(value) => setSearchInput(value)}
+          onSubmit={handleSearch}
+          isFetching={isFetching}
+          hasResults={branches.length > 0 || showPopular}
+          keyword={searchLabel}
+          withLocation
+          searchButtonLabel="매장 검색"
+          locationButtonLabel="현재 위치로 주변 매장 검색"
+          toolName="search_daiso_stores"
+          toolDescription="Search Daiso stores by address or store name and show selectable results."
+          toolParamDescription="Address, neighborhood, or Daiso store name"
+          errorMessage={isError ? error.message : undefined}
+          onRetry={mode ? () => refetch() : undefined}
+          scrollRestorationKey={mode ? `branches:${params.toString()}` : null}
+          beforeForm={
+            recentBranches.length > 0 ? (
+              <nav
+                aria-label="최근 본 다이소 매장"
+                className={clsx(
+                  "scroll-hidden",
+                  css({
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    overflowX: "auto",
+                    // 칩 그림자가 잘리지 않도록 안쪽 여백을 두고 바깥으로 당긴다.
+                    margin: "0 -6px 12px",
+                    padding: "4px 6px",
+                    WebkitMaskImage:
+                      "linear-gradient(90deg, transparent 0, #000 10px, #000 calc(100% - 22px), transparent 100%)",
+                    maskImage:
+                      "linear-gradient(90deg, transparent 0, #000 10px, #000 calc(100% - 22px), transparent 100%)",
+                  }),
+                )}
+              >
+                <span
+                  aria-hidden="true"
+                  className={css({
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    flexShrink: 0,
+                    color: "var(--muted)",
+                    fontSize: "0.8125rem",
+                    fontWeight: 600,
+                  })}
+                >
+                  <IconHistory width={15} height={15} />
+                  최근
+                </span>
+                {recentBranches.map((branch) => (
+                  <span key={branch.code} className="chip">
+                    <Link
+                      href={`/branch/${branch.code}`}
+                      onClick={() =>
+                        trackEvent("recent_branch_click", {
+                          branch_code: branch.code,
+                          branch_name: branch.name,
+                        })
+                      }
+                      className={css({
+                        color: "inherit",
+                        textDecoration: "none",
+                      })}
+                    >
+                      {branch.name}
+                    </Link>
+                    <button
+                      type="button"
+                      aria-label={`${branch.name} 최근 본 매장에서 제거`}
+                      onClick={() => {
+                        removeRecentBranch(branch.code);
+                        trackEvent("recent_branch_remove", {
+                          branch_code: branch.code,
+                        });
+                      }}
+                      className={css({
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: "28px",
+                        height: "28px",
+                        padding: 0,
+                        border: "none",
+                        borderRadius: "50%",
+                        backgroundColor: "transparent",
+                        color: "var(--muted)",
+                        cursor: "pointer",
+                        "@media (hover: hover)": {
+                          "&:hover": {
+                            color: "var(--ink)",
+                            backgroundColor: "var(--surface-2)",
+                          },
+                        },
+                      })}
+                    >
+                      <IconX aria-hidden="true" width={14} height={14} />
+                    </button>
+                  </span>
+                ))}
+              </nav>
+            ) : undefined
+          }
+        >
+          {showPopular && <PopularBranches branches={popularBranches} />}
+          {branches?.map((branch, index) => (
+            <Link
+              href={`/branch/${branch.code}`}
+              className="card"
+              key={branch.code}
+              onClick={() =>
+                trackEvent("branch_click", {
+                  branch_code: branch.code,
+                  branch_name: branch.name,
+                  // 결과 몇 번째를 고르는지 보면 목록이 쓸 만한지 알 수 있다.
+                  result_position: index + 1,
+                  result_count: branches.length,
+                  search_mode: mode?.type ?? "(none)",
+                })
+              }
+            >
+              <div className="card-body">
+                <h2 className="card-title">{branch.name}</h2>
+                <p className="card-text">{branch.address}</p>
+              </div>
+            </Link>
+          ))}
+          <div ref={ref} className={css({ width: "100%", height: "10px" })} />
+        </Search>
+      </main>
     </>
   );
 }
