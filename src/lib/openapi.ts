@@ -124,7 +124,7 @@ export function buildOpenApiDocument(baseUrl: string): JsonObject {
           tags: ["stores"],
           summary: "Search Daiso stores by keyword or coordinates",
           description:
-            "Searches Daiso stores in South Korea. Provide `keyword` for an address or store-name search, or both `curLttd` and `curLitd` for a nearest-first search around a GPS position. Returns at most `pageSize` stores; a full page means more results may exist on the next `currentPage`.",
+            "Searches Daiso stores in South Korea. Provide `keyword` for an address or store-name search, or both `curLttd` and `curLitd` for a nearest-first search around a GPS position. Returns at most `pageSize` stores; a full page means more results may exist on the next `currentPage`. Store names are written without the brand and without spaces (for example `부산양정점`), so when the first page of a keyword search is empty the server retries a relaxed keyword (brand word removed, spaces removed, then single words) and returns the first non-empty result. The `X-Search-Relaxed-Keyword` and `X-Search-Relaxed-Step` response headers say what was actually searched; pass `relax=false` to turn this off.",
           parameters: [
             queryParam(
               "keyword",
@@ -167,11 +167,31 @@ export function buildOpenApiDocument(baseUrl: string): JsonObject {
               maximum: 10,
               default: 10,
             }),
+            queryParam(
+              "relax",
+              "Set to `false` to search the keyword exactly as given instead of retrying relaxed keywords when the first page is empty.",
+              { type: "boolean", default: true },
+            ),
           ],
           responses: {
             "200": {
               description:
                 "Matching stores, nearest first for coordinate searches.",
+              headers: {
+                "X-Search-Relaxed-Keyword": {
+                  description:
+                    "Present only when the keyword matched nothing and a relaxed keyword was searched instead. The keyword that produced these results, percent-encoded.",
+                  schema: { type: "string" },
+                },
+                "X-Search-Relaxed-Step": {
+                  description:
+                    "How the keyword was relaxed: `strip_brand` (brand word removed), `join_spaces` (spaces removed) or `token` (one word of the keyword).",
+                  schema: {
+                    type: "string",
+                    enum: ["strip_brand", "join_spaces", "token"],
+                  },
+                },
+              },
               content: {
                 "application/json": {
                   schema: {

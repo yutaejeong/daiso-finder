@@ -104,7 +104,7 @@ GA4 는 이탈 지점을 직접 알려주지 않으므로, 나가기 직전 상�
 
 | 이벤트 | 언제 | 핵심 파라미터 |
 | --- | --- | --- |
-| `page_exit` | 화면이 가려지거나(`hidden`) 문서가 닫힐 때(`pagehide`) | `exit_path`, `reached_step`, `max_step_index`, `engaged_seconds`, `max_scroll_percent`, `exit_intent`, `exit_reason`, `hidden_count`, `pending_search`, `pending_search_seconds` |
+| `page_exit` | 화면이 가려지거나(`hidden`) 문서가 닫힐 때(`pagehide`) | `exit_path`, `reached_step`, `max_step_index`, `engaged_seconds`, `max_scroll_percent`, `exit_intent`, `exit_reason`, `hidden_count`, `pending_search`, `pending_search_seconds`, `last_search_empty`, `empty_streak` |
 | `page_engagement` | 사이트 안에서 다른 페이지로 이동할 때 | `page_path`, `to_path`, `engaged_seconds`, `max_scroll_percent` |
 | `outbound_click` | 외부 도메인 링크 클릭 | `link_domain`, `link_url`, `link_text` |
 | `scroll_depth` | 25/50/75/90% 도달 | `percent_scrolled` |
@@ -125,7 +125,7 @@ GA4 는 이탈 지점을 직접 알려주지 않으므로, 나가기 직전 상�
 
 | 이벤트 | 의미 |
 | --- | --- |
-| `search_result` (`is_empty`, `result_count`, `duration_ms`, `scanned_count`, `empty_reason`) | 검색 결과 0건 — 이 서비스에서 가장 흔한 이탈 원인 |
+| `search_result` (`is_empty`, `result_count`, `duration_ms`, `scanned_count`, `empty_reason`, `query_kind`, `prev_keyword_relation`, `empty_streak`, `relaxed_step`) | 검색 결과 0건 — 이 서비스에서 가장 흔한 이탈 원인 |
 | `search_error` (`error_kind`, `message`, `duration_ms`) | 검색 실패(네트워크·업스트림 오류, 위치 권한 거부) |
 | `product_detail_error` | 상세 재고 조회 실패 |
 | `error_modal_view` | 전역 오류 모달 노출 |
@@ -136,10 +136,11 @@ GA4 는 이탈 지점을 직접 알려주지 않으므로, 나가기 직전 상�
 
 - `duration_ms` — 요청을 보내고 결과·오류가 오기까지 걸린 시간. 캐시에서 바로
   꺼낸 결과(뒤로 가기)에는 없다.
-- `empty_reason` — 상품 검색 0건일 때만. `no_match` 는 그런 상품이 아예 없다는
-  뜻(검색어 문제 — 오타, 대소문자, 품번 등), `not_in_store` 는 상품은 있는데 이
-  매장에 재고가 없다는 뜻이다. 근거는 `scanned_count`(첫 페이지를 채우느라 훑어본
+- `empty_reason` — 0건일 때만. 상품 검색은 `no_match`(그런 상품이 아예 없다는
+  뜻 — 오타, 합성어, 취급하지 않는 브랜드 등)와 `not_in_store`(상품은 있는데 이
+  매장에 재고가 없다)로 가른다. 근거는 `scanned_count`(첫 페이지를 채우느라 훑어본
   카탈로그 상품 수)로, `/api/products` 스트림의 마지막 진행률에서 받는다.
+  매장 검색은 검색어를 고쳐서 다시 찾은 뒤에도 비었을 때 `no_match`.
 - `error_kind` — 사람이 읽는 `message` 대신 묶어 보는 짧은 값.
 
 | `error_kind` | 뜻 |
@@ -152,17 +153,57 @@ GA4 는 이탈 지점을 직접 알려주지 않으므로, 나가기 직전 상�
 | `location_denied` / `location_unavailable` / `location_timeout` / `location_unsupported` / `location_error` | 현재 위치 검색 실패 |
 | `aborted`, `unknown` | 취소, 그 밖 |
 
+#### 0건 분석용 파라미터 (2026-11-11 추가)
+
+검색 로그 분석(`docs/reports/zero-result-analysis-2026-11-11.html`)에서 시트만으로는
+알 수 없던 것들 — 어떤 모양의 입력이 0건이 되나, 0건 뒤에 어떻게 고쳐 쓰나, 몇 번 연속
+0건을 겪나 — 을 GA4 에서 바로 보려고 `search_result` 에 싣는다. 계산은 모두
+`src/lib/searchQuery.ts` 의 순수 함수(`describeSearch`)가 하고, 직전 검색은 탭 세션
+(`sessionStorage`)에만 남는다. 방문자를 식별하는 값은 아니다.
+
+| 파라미터 | 값 | 쓰임 |
+| --- | --- | --- |
+| `query_kind` | `single_word` · `multi_word` · `long` · `brand`(‘다이소’ 포함) · `latin`(한글 없음) · `digits` · `product_number`(7자리) · `jamo` · `location` · `empty` | 입력 모양별 0건률. 분석에서 0건률이 갈린 경계(공백 97%, ‘다이소’ 100%, 영문 98%)를 그대로 썼다 |
+| `query_length` | 정수 | 상품 검색은 길수록 0건(1~2자 33% → 10자 이상 85%) |
+| `prev_keyword_relation` | `none` · `other_type`(매장↔상품) · `restored`(뒤로 가기) · `same` · `shorter` · `longer` · `prefix` · `different` | 직전 검색(30분 안)과의 관계. 0건 뒤에 줄이면(`shorter`) 56% 가 성공했다 |
+| `seconds_since_prev_search` | 초 | 이어진 시도 사이의 간격 |
+| `empty_streak` | 정수 | 이 검색까지 연속으로 0건이 이어진 횟수(매장·상품 구분 없이). 결과가 있으면 0 |
+| `relaxed_step` | `none` · `strip_brand` · `join_spaces` · `token` | 매장 검색어를 서버가 고쳐서 찾았는지(아래) |
+| `relaxed_keyword` | 문자열 | 실제로 검색해 결과가 나온 검색어 |
+
+- `is_empty` 는 **고친 뒤의 결과** 기준이다. 원래 검색어가 0건이었던 비율은
+  `is_empty = true` 이거나 `relaxed_step != none` 인 이벤트로 센다.
+- 캐시에서 꺼낸 결과(`duration_ms` 없음)는 `prev_keyword_relation = restored` 로 보내고
+  연속 횟수를 올리지 않는다.
+- 이벤트당 파라미터는 최대 23개(기본 7개 포함), `page_exit` 는 22개다. 25개 한도
+  안이므로 더 얹기 전에 세어 본다.
+
+`page_exit` 에는 `last_search_empty`(마지막 검색이 0건이었나)와 `empty_streak` 이
+붙는다. 세션의 마지막 `page_exit` 에서 `last_search_empty = true` 이면 0건을 보고
+나간 것이다.
+
+#### 매장 검색어 자동 완화
+
+점포명은 `부산양정점` 처럼 붙어 있고 `다이소` 가 없어서 말하듯 쓴 검색어가 0건이
+되기 쉽다. `/api/branches/search` 는 첫 페이지가 비면 `다이소` 제거 → 띄어쓰기 제거 →
+단어 하나(최대 2개) 순으로 다시 찾는다(`branchRelaxCandidates`, 추가 호출 최대 4회).
+화면은 "‘…’ 결과가 없어 “…” 검색 결과를 보여드려요" 를 띄우고, `branch_click` 에
+`relaxed_step` 을 실어 고쳐서 찾은 결과를 실제로 고르는지 본다. 목표는 매장 검색
+0건률 49% → 38% 이하다.
+
 ## 4. 기존 클릭 이벤트
 
 퍼널 계층과 별개로 세부 클릭 이벤트는 그대로 둔다(`branch_search`,
 `branch_click`, `branches_load_more`, `recent_branch_click`,
 `recent_branch_remove`, `popular_branch_click`, `popular_product_click`
 (첫 화면·매장 화면의 인기 목록에서 누른 것, `result_position` / `result_count` 포함),
-`product_search`, `product_detail_view`,
+`product_search`, `product_number_jump`(상품 검색창에 7자리 상품 번호를 넣어 상세로
+바로 이동, `branch_code` / `product_id`), `product_detail_view`,
 `product_load_more`, `other_branch_click`, `branch_address_click`,
 `branch_address_copy`, `branch_directions_click`, `pwa_*`).
 `branch_click` 과 `product_detail_view` 에는 `result_position` / `result_count`
-가 붙어서 결과 목록의 몇 번째를 고르는지 볼 수 있다.
+가 붙어서 결과 목록의 몇 번째를 고르는지 볼 수 있다. `branch_click` 에는
+`relaxed_step` 도 붙는다(위 "매장 검색어 자동 완화").
 
 ## 5. GA4 콘솔 등록 현황
 
@@ -222,6 +263,25 @@ GA4 는 이탈 지점을 직접 알려주지 않으므로, 나가기 직전 상�
 | 측정항목(밀리초) | 검색 소요 시간 | `duration_ms` |
 | 측정항목(초) | 이탈 시 대기 시간 | `pending_search_seconds` |
 | 측정항목 | 훑어본 상품 수 | `scanned_count` |
+
+### 추가로 등록할 것 (2026-11-11 계측분)
+
+0건 분석용 파라미터(위 "0건 분석용 파라미터")를 탐색에서 쓰려면 등록해야 한다.
+등록 전에 보낸 값은 소급되지 않는다.
+
+| 종류 | 이름(제안) | 파라미터 |
+| --- | --- | --- |
+| 측정기준 | 검색어 모양 | `query_kind` |
+| 측정기준 | 직전 검색과의 관계 | `prev_keyword_relation` |
+| 측정기준 | 검색어 완화 방식 | `relaxed_step` |
+| 측정기준 | 마지막 검색 0건 | `last_search_empty` |
+| 측정항목 | 검색어 길이 | `query_length` |
+| 측정항목 | 연속 0건 횟수 | `empty_streak` |
+| 측정항목(초) | 직전 검색과의 간격 | `seconds_since_prev_search` |
+
+탐색에 쓰는 예: `query_kind` × `is_empty`(0건률) · `prev_keyword_relation` ×
+`is_empty`(0건 뒤 고쳐 쓰기의 성공률) · `page_exit` 의 `last_search_empty`(0건을 보고 나간
+비율). 측정기준은 18 → 22/50, 측정항목은 8 → 11/50(10-18 분까지 등록하면 각각 +4, +3).
 
 주요 이벤트(관리 → 데이터 표시 → 이벤트에서 별표)로 표시할 이벤트:
 `product_found`(목적 달성), `branch_directions_click`(매장 방문 의사),
