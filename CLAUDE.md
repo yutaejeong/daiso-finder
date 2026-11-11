@@ -191,6 +191,28 @@ are the raw data for future popular-store/popular-product rankings. See
   `HEADERS` in the Apps Script too (append columns at the end so existing rows stay
   aligned), and the privacy page describes what is stored.
 
+### Search-query handling
+
+`src/lib/searchQuery.ts` holds the pure helpers shared by the API routes, the screens and the
+GA4 events (it imports no SDK, so tests load it directly). It came out of the zero-result analysis in
+`docs/reports/zero-result-analysis-2026-11-11.html`: about half of web searches returned nothing.
+
+- **Store keyword relaxation.** Store names are written like `부산양정점` (no brand word, no
+  spaces), so `/api/branches/search` retries a relaxed keyword when the *first page* of a keyword
+  search is empty: strip `다이소`, join spaces, then single words (`branchRelaxCandidates`, at most
+  4 extra upstream calls). It never relaxes later pages or location searches, and `relax=false`
+  turns it off. The body stays a bare store array; the keyword that actually matched travels in the
+  `X-Search-Relaxed-Keyword` (percent-encoded) / `X-Search-Relaxed-Step` response headers, which
+  `HomeClient` reads to show a notice and to keep paging with the relaxed keyword.
+- **Product numbers.** A 7-digit product number typed into the product search box
+  (`parseProductNumber`) goes straight to the product detail page instead of searching.
+- **GA4 context.** `trackSearchResult()` adds `query_kind`, `query_length`, `prev_keyword_relation`,
+  `empty_streak`, `relaxed_step` (`describeSearch`, with the previous search kept in
+  `sessionStorage`); `page_exit` adds `last_search_empty`. A GA4 event is capped at 25 parameters
+  and the defaults take 7, so count before adding more. Details: `docs/analytics.md`.
+- The sheet logs the keyword as typed and the result count the user actually received, so store-search
+  zero rates after relaxation shipped are not comparable with earlier rows.
+
 ### Error tracking
 
 Sentry (`@sentry/nextjs`) reports crashes from all three runtimes. See `docs/sentry.md`

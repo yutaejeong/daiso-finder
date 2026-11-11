@@ -7,6 +7,12 @@ import {
   upstreamErrorOrNull,
 } from "@/lib/apiError";
 import { logSearch, searchLogSource } from "@/lib/searchLog";
+import {
+  RELAXED_KEYWORD_HEADER,
+  RELAXED_STEP_HEADER,
+  RelaxedSearch,
+  branchRelaxCandidates,
+} from "@/lib/searchQuery";
 
 export const dynamic = "force-dynamic";
 
@@ -47,9 +53,36 @@ export async function GET(request: Request) {
     };
 
     const data = (await selStr(payload)) as unknown as BranchResponse;
-    const branches = data.data ?? [];
+    let branches = data.data ?? [];
+    let relaxed: RelaxedSearch | null = null;
+
+    // 점포명은 '부산양정점' 처럼 붙어 있고 '다이소' 도 없어서, 사람이 말하듯 쓴
+    // 검색어는 0건이 되기 쉽다. 첫 페이지가 비면 검색어를 고쳐서 다시 찾는다.
+    // 다음 페이지에서는 하지 않는다: 원래 검색어의 마지막 페이지가 비었다고
+    // 다른 검색어의 결과를 이어 붙이면 안 되기 때문이다.
+    if (
+      branches.length === 0 &&
+      isFirstPage &&
+      !hasLocation &&
+      searchParams.get("relax") !== "false"
+    ) {
+      for (const candidate of branchRelaxCandidates(keyword)) {
+        const retry = (await selStr({
+          ...payload,
+          keyword: candidate.keyword,
+        })) as unknown as BranchResponse;
+        const found = retry.data ?? [];
+        if (found.length > 0) {
+          branches = found;
+          relaxed = candidate;
+          break;
+        }
+      }
+    }
 
     if (isFirstPage) {
+      // 결과 수는 사용자가 실제로 받은 건수다. 고쳐서 찾았어도 그 건수를 남기고,
+      // 고쳤는지는 GA4(`relaxed_step`)가 따로 기록한다.
       logSearch({
         type: "branch",
         keyword,
@@ -73,6 +106,12 @@ export async function GET(request: Request) {
       {
         headers: {
           "Content-Type": "application/json",
+          // 본문은 매장 배열 그대로 두고, 고쳐서 찾았다는 사실만 헤더로 알린다.
+          // 헤더 값은 ASCII 만 되므로 검색어는 퍼센트 인코딩한다.
+          ...(relaxed && {
+            [RELAXED_KEYWORD_HEADER]: encodeURIComponent(relaxed.keyword),
+            [RELAXED_STEP_HEADER]: relaxed.step,
+          }),
         },
       },
     );

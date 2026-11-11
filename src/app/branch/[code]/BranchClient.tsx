@@ -25,6 +25,7 @@ import {
 import { fetchProductsWithProgress } from "@/lib/productSearchStream";
 import { PRODUCT_SEARCH_CACHE } from "@/lib/queryCache";
 import { parseSearchKeyword, searchKeywordToParams } from "@/lib/searchParams";
+import { parseProductNumber } from "@/lib/searchQuery";
 import { sendViewBeacon } from "@/lib/viewBeacon";
 import { css } from "@styled-system/css";
 import {
@@ -40,6 +41,7 @@ import {
 } from "@tanstack/react-query";
 import { ImageWithFallback } from "@/components/ImageWithFallback";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 interface Props {
@@ -56,6 +58,7 @@ export function BranchClient({ code, initialBranch }: Props) {
   // 첫 페이지를 채우느라 훑어본 상품 수. 0건 결과의 원인을 가르는 데 쓴다.
   const scannedRef = useRef<number | undefined>(undefined);
   const { addRecentBranch } = useRecentBranches();
+  const router = useRouter();
 
   // 뒤로/앞으로 가기로 검색어가 바뀌면 입력창도 함께 되돌린다.
   useEffect(() => {
@@ -167,6 +170,20 @@ export function BranchClient({ code, initialBranch }: Props) {
       keyword: searchInput,
       branch_code: code,
     });
+
+    // 상품 번호를 넣은 것은 그 상품을 찾겠다는 분명한 뜻이다. 검색어로 훑으면
+    // 73% 가 0건이었으므로(검색 로그 분석), 상세 화면으로 바로 보낸다. 상세는
+    // 이 매장의 재고·진열 위치와, 없을 때의 다른 매장까지 보여준다.
+    const productNumber = parseProductNumber(searchInput);
+    if (productNumber) {
+      trackEvent("product_number_jump", {
+        branch_code: code,
+        product_id: productNumber,
+      });
+      router.push(`/branch/${code}/product/${productNumber}`);
+      return;
+    }
+
     setParams(searchKeywordToParams(searchInput));
   };
 

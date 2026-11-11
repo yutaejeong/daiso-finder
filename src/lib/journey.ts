@@ -1,4 +1,9 @@
 import { setEventDefaults, trackEvent } from "@/lib/gtag";
+import {
+  type LastSearch,
+  type SearchKind,
+  describeSearch,
+} from "@/lib/searchQuery";
 
 /**
  * 방문자가 목적(원하는 상품의 매장 내 위치 확인)에 도달하기까지 거치는 단계.
@@ -119,7 +124,10 @@ export function classifyChannel({
   // ChatGPT 는 답변 속 링크에 `utm_source=chatgpt.com` 만 붙이고 리퍼러는
   // 보내지 않는다. UTM 규칙을 먼저 태우면 두 번째로 큰 유입원이 통째로
   // `campaign` 에 묻히므로, 어시스턴트 호스트를 가리키는 source 는 먼저 가른다.
-  const source = utmSource?.trim().toLowerCase().replace(/^www\./, "");
+  const source = utmSource
+    ?.trim()
+    .toLowerCase()
+    .replace(/^www\./, "");
   if (source && matchesHost(source, ASSISTANT_HOSTS)) return "ai_assistant";
 
   const medium = utmMedium?.trim();
@@ -160,15 +168,53 @@ export interface JourneyState {
 // 안에서는 여정이 이어지도록 메모리에 같은 값을 들고 있는다.
 let fallbackState: JourneyState | null = null;
 
-export type SearchType = "branch" | "product";
+export type SearchType = SearchKind;
 
 /**
  * 응답을 기다리는 중인 검색. 상품 검색은 매장 재고를 훑느라 수 초씩
  * 걸리는데, 그 사이에 나가 버린 방문자는 결과도 오류도 남기지 않아서
  * 따로 들고 있다가 `page_exit` 에 싣는다.
  */
-let pendingSearch: { type: SearchType; path: string; startedAt: number } | null =
-  null;
+let pendingSearch: {
+  type: SearchType;
+  path: string;
+  startedAt: number;
+} | null = null;
+
+// 마지막으로 결과를 받은 검색. 다음 검색이 "0건 뒤에 어떻게 고쳐 썼나" 를 이어 보고,
+// 방문자가 나갈 때 마지막 검색이 0건이었는지 싣는 데 쓴다. 방문자 식별자가 아니라
+// 탭 세션 안에서만 남는 값이다.
+const LAST_SEARCH_KEY = "daiso-finder:last-search";
+let fallbackLastSearch: LastSearch | null = null;
+
+function readLastSearch(): LastSearch | null {
+  try {
+    const raw = window.sessionStorage.getItem(LAST_SEARCH_KEY);
+    if (raw) return JSON.parse(raw) as LastSearch;
+  } catch {
+    // 저장소를 못 읽으면 메모리 값으로 넘어간다.
+  }
+  return fallbackLastSearch;
+}
+
+function writeLastSearch(search: LastSearch) {
+  fallbackLastSearch = search;
+  try {
+    window.sessionStorage.setItem(LAST_SEARCH_KEY, JSON.stringify(search));
+  } catch {
+    // 저장하지 못해도 메모리 값으로 계속 이어 본다.
+  }
+}
+
+/** 이탈 이벤트에 싣는 마지막 검색 요약. 검색한 적이 없으면 비어 있다. */
+function lastSearchSummary() {
+  const last = readLastSearch();
+  if (!last) return {};
+  return {
+    last_search_empty: last.empty,
+    empty_streak: last.streak,
+  };
+}
 
 function readState(): JourneyState | null {
   try {
@@ -424,6 +470,7 @@ export function trackPageExit(input: {
     hidden_count: input.hiddenCount,
     ...journeySummary(readState(), Date.now()),
     ...pendingSearchSummary(input.path),
+    ...lastSearchSummary(),
     // 문서가 닫히는 중에도 전송되도록 비콘을 쓴다.
     transport_type: "beacon",
   });
@@ -489,9 +536,18 @@ export function searchErrorKind(error: unknown): string {
  * 검색 결과를 받아본 시점. `result_count` 가 0 인 지점이 이 서비스에서
  * 가장 흔한 이탈 원인이라 별도 이벤트로 남긴다.
  *
- * 상품 검색이 0건일 때 `scanned_count` 가 있으면 `empty_reason` 도 붙인다.
- * `no_match` 는 그런 상품이 아예 없다는 뜻이고(검색어 문제),
- * `not_in_store` 는 상품은 있는데 이 매장에 재고가 없다는 뜻이다.
+ * 0건일 때 `empty_reason` 도 붙인다.
+ * - 상품 검색: `scanned_count` 가 있으면 `no_match`(그런 상품이 아예 없다는 뜻이고
+ *   검색어 문제)와 `not_in_store`(상품은 있는데 이 매장에 재고가 없다)로 가른다.
+ * - 매장 검색: 검색어를 고쳐도 못 찾았으니 `no_match`.
+ *
+ * 검색어와 맥락도 함께 싣는다(`describeSearch`): 검색어 모양(`query_kind`),
+ * 직전 검색과의 관계(`prev_keyword_relation`), 연속 0건 횟수(`empty_streak`).
+ * 매장 검색이 검색어를 고쳐서 찾았으면 `relaxed_step` 이 `none` 이 아니고,
+ * 이때 `is_empty` 는 고친 뒤의 결과 기준이다.
+ *
+ * 이벤트당 파라미터는 25개가 한도이고 기본 파라미터 7개가 따로 붙는다.
+ * 이 이벤트는 최대 23개다.
  */
 export function trackSearchResult(
   searchType: SearchType,
@@ -501,18 +557,47 @@ export function trackSearchResult(
     search_mode?: string;
     branch_code?: string;
     scanned_count?: number;
+    relaxed_step?: string;
+    relaxed_keyword?: string;
   },
 ) {
+  const { relaxed_step, relaxed_keyword, ...rest } = params;
   const isEmpty = params.result_count === 0;
   const scanned = params.scanned_count;
+  const duration = settleSearch(searchType);
+  const emptyReason = !isEmpty
+    ? undefined
+    : searchType === "branch"
+      ? "no_match"
+      : scanned === undefined
+        ? undefined
+        : scanned > 0
+          ? "not_in_store"
+          : "no_match";
+
+  let context = {};
+  if (typeof window !== "undefined") {
+    const { params: contextParams, next } = describeSearch(
+      readLastSearch(),
+      { type: searchType, keyword: params.keyword ?? "", empty: isEmpty },
+      // 캐시에서 바로 꺼낸 결과(뒤로 가기)는 요청을 보내지 않아 시간이 비어 있다.
+      { now: Date.now(), restored: duration === undefined },
+    );
+    if (next) writeLastSearch(next);
+    context = contextParams;
+  }
+
   trackEvent("search_result", {
     search_type: searchType,
     is_empty: isEmpty,
-    ...params,
-    duration_ms: settleSearch(searchType),
-    ...(isEmpty && scanned !== undefined
-      ? { empty_reason: scanned > 0 ? "not_in_store" : "no_match" }
+    ...rest,
+    duration_ms: duration,
+    ...(emptyReason ? { empty_reason: emptyReason } : {}),
+    relaxed_step: relaxed_step ?? "none",
+    ...(relaxed_keyword
+      ? { relaxed_keyword: relaxed_keyword.slice(0, 100) }
       : {}),
+    ...context,
   });
 }
 

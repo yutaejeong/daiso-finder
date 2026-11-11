@@ -2,11 +2,11 @@
 
 import { css } from "@styled-system/css";
 import { InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
-import { IconHistory, IconX } from "@tabler/icons-react";
+import { IconHistory, IconInfoCircle, IconX } from "@tabler/icons-react";
 import clsx from "clsx";
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { SimplifiedBranchResponse } from "@/app/api/branches/types";
+import { SimplifiedBranch } from "@/app/api/branches/types";
 import { PopularBranches } from "@/components/PopularBranches";
 import { SiteLogo } from "@/components/SiteLogo";
 import { Search } from "@/components/Search";
@@ -27,6 +27,36 @@ import {
 } from "@/lib/searchParams";
 import { BRANCH_SEARCH_CACHE } from "@/lib/queryCache";
 import { SEARCH_SOURCE_HEADER } from "@/lib/searchLog";
+import {
+  RELAXED_KEYWORD_HEADER,
+  RELAXED_STEP_HEADER,
+  RelaxedSearch,
+  isRelaxStep,
+} from "@/lib/searchQuery";
+
+/** 매장 검색 한 페이지. 첫 페이지는 검색어를 고쳐서 찾았는지도 함께 담는다. */
+interface BranchSearchPage {
+  branches: SimplifiedBranch[];
+  relaxed: RelaxedSearch | null;
+}
+
+// 서버가 검색어를 어떻게 고쳤는지 알려 주는 말(src/lib/searchQuery.ts 의 RelaxStep).
+const RELAX_NOTE = {
+  strip_brand: "‘다이소’ 제외",
+  join_spaces: "띄어쓰기 제외",
+  token: "검색어 일부",
+} as const;
+
+function readRelaxed(response: Response): RelaxedSearch | null {
+  const keyword = response.headers.get(RELAXED_KEYWORD_HEADER);
+  const step = response.headers.get(RELAXED_STEP_HEADER);
+  if (!keyword || !isRelaxStep(step)) return null;
+  try {
+    return { keyword: decodeURIComponent(keyword), step };
+  } catch {
+    return null;
+  }
+}
 
 export function HomeClient() {
   const [searchInput, setSearchInput] = useState("");
@@ -34,12 +64,16 @@ export function HomeClient() {
   const [params, setParams] = useUrlSearchParams();
   const mode = useMemo(() => parseBranchSearchMode(params), [params]);
   const ref = useRef<HTMLDivElement>(null);
+  // 첫 페이지가 검색어를 고쳐서 찾은 결과면, 다음 페이지도 고친 검색어로 불러야 이어진다.
+  const relaxedKeywordRef = useRef<{ mode: string; keyword: string } | null>(
+    null,
+  );
   const { recentBranches, removeRecentBranch } = useRecentBranches();
   const { data, error, fetchNextPage, isError, isFetching, refetch } =
     useInfiniteQuery<
-      SimplifiedBranchResponse,
+      BranchSearchPage,
       Error,
-      InfiniteData<SimplifiedBranchResponse>,
+      InfiniteData<BranchSearchPage>,
       ["branches", BranchSearchMode | null],
       number
     >({
@@ -53,11 +87,11 @@ export function HomeClient() {
       meta: { suppressGlobalError: true },
       initialPageParam: 1,
       getNextPageParam: (lastPage, _pages, lastPageParam) =>
-        lastPage.length < 10 ? undefined : lastPageParam + 1,
+        lastPage.branches.length < 10 ? undefined : lastPageParam + 1,
       queryFn: async ({ pageParam = 1, queryKey: [, searchMode] }) => {
         if (!searchMode) {
           // enabled 가 막아주므로 실제로는 도달하지 않는다.
-          return [];
+          return { branches: [], relaxed: null };
         }
 
         const url = new URL("/api/branches/search", window.location.origin);
@@ -65,7 +99,15 @@ export function HomeClient() {
           url.searchParams.set("curLttd", searchMode.lat.toFixed(14));
           url.searchParams.set("curLitd", searchMode.lng.toFixed(14));
         } else {
-          url.searchParams.set("keyword", searchMode.keyword);
+          const modeKey = JSON.stringify(searchMode);
+          const continued =
+            pageParam > 1 && relaxedKeywordRef.current?.mode === modeKey;
+          url.searchParams.set(
+            "keyword",
+            continued
+              ? relaxedKeywordRef.current?.keyword ?? searchMode.keyword
+              : searchMode.keyword,
+          );
         }
         url.searchParams.set("currentPage", pageParam.toString());
         url.searchParams.set("pageSize", "10");
@@ -86,14 +128,22 @@ export function HomeClient() {
             { code: body?.code ?? `http_${response.status}` },
           );
         }
-        const data: SimplifiedBranchResponse = await response.json();
-        return data;
+        const branches: SimplifiedBranch[] = await response.json();
+        if (pageParam > 1) return { branches, relaxed: null };
+
+        const relaxed = readRelaxed(response);
+        relaxedKeywordRef.current =
+          relaxed && searchMode.type === "keyword"
+            ? { mode: JSON.stringify(searchMode), keyword: relaxed.keyword }
+            : null;
+        return { branches, relaxed };
       },
     });
   const branches = useMemo(
-    () => data?.pages.flatMap((page) => page) ?? [],
+    () => data?.pages.flatMap((page) => page.branches) ?? [],
     [data],
   );
+  const relaxed = data?.pages[0]?.relaxed ?? null;
   // 검색 전 첫 화면에서만 요즘 많이 찾는 매장을 보여준다.
   const popularBranches = usePopularBranches(mode === null).data?.items ?? [];
   const showPopular = mode === null && popularBranches.length > 0;
@@ -136,6 +186,10 @@ export function HomeClient() {
       result_count: branches.length,
       search_mode: mode.type,
       keyword,
+      ...(relaxed && {
+        relaxed_step: relaxed.step,
+        relaxed_keyword: relaxed.keyword,
+      }),
     });
     trackJourneyStep("branch_results", {
       result_count: branches.length,
@@ -143,7 +197,7 @@ export function HomeClient() {
       // 뒤로가기로 돌아와 캐시된 결과를 다시 본 경우와 새 검색을 구분한다.
       is_restored: !didFetchRef.current,
     });
-  }, [mode, isFetching, isError, error, data, branches.length]);
+  }, [mode, isFetching, isError, error, data, branches.length, relaxed]);
 
   const getCurrentPosition = async () => {
     if (!navigator.geolocation) {
@@ -388,6 +442,40 @@ export function HomeClient() {
           }
         >
           {showPopular && <PopularBranches branches={popularBranches} />}
+          {relaxed && mode?.type === "keyword" && (
+            <p
+              role="status"
+              className={css({
+                margin: 0,
+                display: "flex",
+                alignItems: "flex-start",
+                gap: "8px",
+                padding: "10px 12px",
+                borderRadius: "var(--radius)",
+                backgroundColor: "var(--surface-2)",
+                color: "var(--ink-2)",
+                fontSize: "0.875rem",
+                lineHeight: 1.5,
+              })}
+            >
+              <IconInfoCircle
+                aria-hidden="true"
+                width={18}
+                height={18}
+                className={css({ flexShrink: 0, marginTop: "1px" })}
+              />
+              <span>
+                <span>‘{mode.keyword}’ 결과가 없어 </span>
+                <strong className={css({ color: "var(--ink)" })}>
+                  “{relaxed.keyword}”
+                </strong>
+                <span>
+                  {" "}
+                  검색 결과를 보여드려요 ({RELAX_NOTE[relaxed.step]})
+                </span>
+              </span>
+            </p>
+          )}
           {branches?.map((branch, index) => (
             <Link
               href={`/branch/${branch.code}`}
@@ -401,6 +489,8 @@ export function HomeClient() {
                   result_position: index + 1,
                   result_count: branches.length,
                   search_mode: mode?.type ?? "(none)",
+                  // 고쳐서 찾은 결과를 실제로 고르는지 보면 자동 완화가 쓸모 있는지 안다.
+                  relaxed_step: relaxed?.step ?? "none",
                 })
               }
             >
