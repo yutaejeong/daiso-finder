@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>검색 결과 0건 분석 보고서 · 다이소 파인더</title>
+<style>
+:root {
+  --bg:#fcfcfb; --surface:#ffffff; --surface-2:#f4f3f0; --ink:#0b0b0b; --ink-2:#52514e; --ink-3:#7b7a75; --line:#e4e2dd;
+  --brand:#c4002f; --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --neutral:#b9b7b0; --track:#ecebe7; --good:#1c7c54; --warn-bg:#fff4e5;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:#141413; --surface:#1d1d1b; --surface-2:#262624; --ink:#f0efec; --ink-2:#c3c2b7; --ink-3:#9a998f; --line:#383835;
+    --brand:#ff5a7a; --s1:#3987e5; --s2:#d95926; --s3:#199e70; --neutral:#6f6e68; --track:#2d2d2a; --good:#3ec28f; --warn-bg:#2b2318;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html { background: var(--bg); }
+body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.65 "Pretendard Variable","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif; word-break: keep-all; }
+.wrap { max-width: 980px; margin: 0 auto; padding: 32px 16px 80px; }
+header.hero { padding: 24px 0 8px; }
+.eyebrow { color: var(--brand); font-weight: 700; font-size: .85rem; letter-spacing: .02em; }
+h1 { font-size: clamp(1.7rem, 4vw, 2.3rem); line-height: 1.25; margin: 6px 0 10px; }
+h2 { font-size: 1.45rem; margin: 56px 0 6px; padding-top: 24px; border-top: 1px solid var(--line); line-height: 1.3; }
+h3 { font-size: 1.05rem; margin: 28px 0 8px; }
+p { margin: 8px 0; }
+.lead { color: var(--ink-2); font-size: 1.05rem; max-width: 46em; }
+.muted { color: var(--ink-2); } .small { font-size: .84rem; } .muted.small { color: var(--ink-3); }
+.kpis { display:grid; grid-template-columns: repeat(auto-fit,minmax(210px,1fr)); gap:12px; margin: 20px 0; }
+.kpi { background: var(--surface); border:1px solid var(--line); border-radius: 14px; padding: 16px; }
+.kpi .v { font-size: 2.1rem; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.kpi .v small { font-size: 1rem; font-weight: 600; color: var(--ink-2); }
+.kpi .l { color: var(--ink-2); font-size: .9rem; margin-top: 4px; }
+.callout { background: var(--surface-2); border-left: 4px solid var(--brand); border-radius: 8px; padding: 14px 18px; margin: 18px 0; }
+.callout.warn { background: var(--warn-bg); border-left-color: var(--s2); }
+.callout ul { margin: 6px 0 0; padding-left: 1.2em; }
+table { width:100%; border-collapse: collapse; margin: 12px 0; font-size: .95rem; }
+th, td { padding: 9px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+thead th { font-size: .8rem; color: var(--ink-3); font-weight: 600; border-bottom: 1px solid var(--ink-3); }
+tbody th { font-weight: 600; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tablewrap { overflow-x: auto; }
+.rate { display:flex; align-items:center; gap:10px; min-width: 150px; }
+.rate b { font-variant-numeric: tabular-nums; min-width: 3.2em; }
+.bar { flex:1; height: 10px; background: var(--track); border-radius: 5px; overflow:hidden; min-width: 70px; }
+.bar span { display:block; height:100%; background: var(--s1); border-radius: 0 4px 4px 0; }
+.bar.accent span { background: var(--s2); } .bar.good span { background: var(--s3); }
+.stack { display:flex; gap:2px; height: 30px; border-radius: 8px; overflow:hidden; margin: 14px 0 8px; }
+.seg.c1 { background: var(--s1); } .seg.c2 { background: var(--s2); } .seg.c3 { background: var(--s3); } .seg.c4 { background: var(--neutral); }
+.legend { list-style:none; padding:0; margin: 8px 0; display:grid; gap:4px; }
+.sw { display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:8px; vertical-align:-1px; }
+.sw.c1 { background: var(--s1); } .sw.c2 { background: var(--s2); } .sw.c3 { background: var(--s3); } .sw.c4 { background: var(--neutral); }
+.grid2 { display:grid; grid-template-columns: repeat(auto-fit,minmax(300px,1fr)); gap: 16px; }
+.card { background: var(--surface); border:1px solid var(--line); border-radius: 14px; padding: 16px 18px; }
+.card h3 { margin-top: 0; }
+.tag { display:inline-block; font-size:.72rem; font-weight:700; padding:2px 8px; border-radius: 99px; background: var(--surface-2); color: var(--ink-2); margin-right:4px; }
+.tag.hi { background: var(--brand); color:#fff; }
+.mock { border:1px solid var(--line); border-radius: 14px; background: var(--surface); padding: 14px; font-size: .9rem; max-width: 380px; }
+.mock .bubble { background: var(--surface-2); border-radius: 10px; padding: 10px 12px; margin: 8px 0; }
+.mock .inp { border:1px solid var(--line); border-radius: 10px; padding: 8px 12px; background: var(--bg); }
+.mock .res { border:1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin: 6px 0; }
+.mock .chip { display:inline-block; border:1px solid var(--line); border-radius: 99px; padding: 3px 11px; margin: 3px 4px 0 0; font-size:.85rem; }
+.mock .cta { display:block; text-align:center; background: var(--brand); color:#fff; border-radius: 10px; padding: 9px; font-weight: 700; margin-top: 8px; }
+.mock .cta.soft { background: var(--surface-2); color: var(--ink); }
+.mock .cap { font-size:.75rem; font-weight:700; color: var(--ink-3); margin-bottom: 6px; }
+.ba { display:grid; grid-template-columns: repeat(auto-fit,minmax(280px,1fr)); gap: 12px; margin: 12px 0 20px; }
+.toc { display:flex; flex-wrap:wrap; gap:8px; margin: 18px 0 0; padding:0; list-style:none; }
+.toc a { display:block; border:1px solid var(--line); border-radius: 99px; padding: 4px 12px; font-size:.85rem; color: var(--ink-2); text-decoration:none; background: var(--surface); }
+code { background: var(--surface-2); padding: 1px 6px; border-radius: 5px; font-size: .88em; }
+footer { margin-top: 56px; color: var(--ink-3); font-size: .85rem; border-top: 1px solid var(--line); padding-top: 16px; }
+@media (max-width: 560px) { body { font-size: 15px; } th, td { padding: 8px 6px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+  <div class="eyebrow">다이소 파인더 · 검색 로그 분석</div>
+  <h1>검색 결과가 “0건”으로 끝나는 검색,<br>어떤 패턴이고 어떻게 줄일 수 있을까</h1>
+  <p class="lead">검색어 로그 시트(2026-09-12 ~ 2026-11-11, 검색 47,176건)를 전부 내려받아 0건이 나온 검색을 분류하고, 실제 다이소 검색 API에 표본 질의를 다시 던져 “질의를 조금만 고치면 찾을 수 있었는지”를 확인했습니다.</p>
+  <ul class="toc">
+    <li><a href="#summary">요약</a></li><li><a href="#method">데이터·방법</a></li><li><a href="#overview">전체 현황</a></li>
+    <li><a href="#branch">매장 검색 패턴</a></li><li><a href="#product">상품 검색 패턴</a></li><li><a href="#after">0건 이후 행동</a></li>
+    <li><a href="#ux">UX 개선안</a></li><li><a href="#plan">우선순위·측정</a></li><li><a href="#limits">한계</a></li>
+  </ul>
+</header>
+
+<section id="summary">
+<h2>요약</h2>
+<div class="kpis">
+  <div class="kpi"><div class="v">49.1<small>%</small></div><div class="l">매장 검색 중 0건 (4,834 / 9,848건)</div></div>
+  <div class="kpi"><div class="v">52.4<small>%</small></div><div class="l">상품 검색 중 0건 (11,921 / 22,753건)</div></div>
+  <div class="kpi"><div class="v">22<small>%</small></div><div class="l">상품 0건 뒤 3분 안에 결과를 찾은 비율</div></div>
+  <div class="kpi"><div class="v">38<small>%</small></div><div class="l">상품 0건 뒤 10분 안에 후속 검색이 없는 비율</div></div>
+</div>
+<p>웹에서 이루어진 검색의 <b>절반가량이 0건</b>이고, 9주 동안 거의 변하지 않았습니다. 대부분은 “정말 없는 것”이 아니라 <b>검색 방식과 사용자의 입력이 어긋나서</b> 생깁니다.</p>
+<div class="callout">
+  <b>핵심 발견</b>
+  <ul>
+    <li><b>매장 검색은 ‘이름·주소의 글자 일치’로 동작합니다.</b> 띄어쓰기가 들어가면 97%, ‘다이소’가 들어가면 100%, 영문이면 98%가 0건입니다. 한글 1~2글자 지명(‘명동’, ‘강남’)은 83%가 성공합니다.</li>
+    <li><b>매장 검색 0건의 28%는 상품 이름을 입력한 경우</b>(‘가방’, ‘보조배터리’)입니다. 사용자는 “이 물건 어디서 파나”를 묻고 있는데 화면은 매장부터 고르게 합니다.</li>
+    <li><b>상품 검색은 길수록 안 나옵니다.</b> 1~2글자 33% → 10글자 이상 85%, 1단어 46% → 3단어 이상 83%. 표본에서 두 단어 이상 0건 질의의 57%는 단어 하나만 남겨도 후보가 나왔고, 띄어쓰기 제거는 효과가 없었습니다.</li>
+    <li><b>상품 0건 표본의 42%는 다이소에 있는 상품</b>이고 이 매장에 재고가 없을 뿐입니다(나머지 58%는 카탈로그에 없는 표현). 지금 화면은 둘 다 “검색 결과가 없습니다” 한 줄입니다.</li>
+    <li><b>사용자는 스스로 고쳐 씁니다.</b> 0건 뒤 검색어를 줄이면 56%가 성공하고 단어를 덧붙이면 1%만 성공합니다. 이 ‘줄이기’를 화면이 대신 해주면 됩니다.</li>
+  </ul>
+</div>
+<p>가장 효과가 큰 개선은 ① 상품 0건의 <b>원인 분리 + 근처 매장 재고 안내</b>, ② 서버 쪽 <b>질의 자동 완화</b>(‘다이소’ 제거, 공백 정리, 단어/접미어 분해), ③ 매장 검색창에 상품명이 들어오면 <b>상품 찾기로 연결</b>하는 것입니다. 상세는 <a href="#ux">UX 개선안</a>.</p>
+</section>
+
+<section id="method">
+<h2>데이터와 방법</h2>
+<div class="grid2">
+<div class="card"><h3>어떤 데이터인가</h3>
+<p class="small">구글 시트 <code>searches</code> 탭의 <code>branch</code>(매장 검색)·<code>product</code>(상품 검색) 행 47,176건. 웹 UI 36,534건, API·MCP·CLI 직접 호출 10,642건. 시트의 GViz 조회 쿼리로 전량을 내려받았습니다(Ctrl+F·커넥터 읽기는 일부 행만 보이므로 쓰지 않음).</p></div>
+<div class="card"><h3>분석 대상 정리</h3>
+<ul class="small" style="padding-left:1.1em;margin:0">
+<li><b>웹 검색만</b> 사용(사용자 행동 분석). API 호출은 같은 질의를 수십~백 번 반복하는 점검성 호출이 많아 제외. 참고로 API의 0건률은 매장 26% · 상품 48%.</li>
+<li><b>오류(<code>status=error</code>) 3,096건 제외.</b> 0건과 오류는 다른 문제입니다.</li>
+<li><b>9/23~9/29 상품 검색 제외.</b> 다이소 재고 API 장애(9/30 사전 인증 복구)로 이 기간 상품 검색의 약 90%가 오류였습니다.</li>
+<li><b>중복 제거</b>: 같은 (종류, 검색어, 매장)이 5분 안에 반복되면 1건으로 계산.</li>
+</ul></div>
+<div class="card"><h3>다이소 API 재질의(프로브)</h3>
+<p class="small">0건 검색어 표본(상품 150개·매장 169개, 서로 다른 검색어 기준)을 다이소 공개 검색 API에 읽기 전용으로 다시 조회했습니다(약 1,000회). “상품이 카탈로그에 있는가”, “‘다이소’ 제거·공백 제거·단어 분해 시 결과가 나오는가”를 확인했고, 결과는 <b>11/11 시점</b> 기준입니다.</p></div>
+</div>
+<div class="callout warn"><b>알아둘 점</b> 로그에는 방문자 식별자가 없어서 “0건 뒤 행동”은 <i>같은 매장에서 가까운 시각의 다음 검색</i>으로 추정했습니다. 상품 0건의 원인(재고 없음 vs 상품 없음)도 시트에는 없어 표본 재질의로 추정했습니다. 한계는 <a href="#limits">맨 아래</a>에 정리했습니다.</div>
+</section>
+
+<section id="overview">
+<h2>전체 현황</h2>
+<p>주 단위로 보면 매장 검색 41~53%, 상품 검색 49~55% 사이를 오갈 뿐 개선 추세가 없습니다. 검색량이 늘어난 10월 중순 이후 매장 검색의 0건률이 소폭 올랐습니다(검색 종류가 다양해진 영향으로 추정).</p>
+<div class="tablewrap"><table>
+<thead><tr><th>주(월요일 기준)</th><th class="num">매장 검색</th><th>0건률</th><th class="num">상품 검색</th><th>0건률</th><th></th></tr></thead>
+<tbody><tr><th scope='row'>09/07 주</th><td class="num">51</td><td><div class="rate"><div class="bar"><span style="width:47.1%"></span></div><b>47.1%</b></div></td><td class="num">264</td><td><div class="rate"><div class="bar"><span style="width:49.2%"></span></div><b>49.2%</b></div></td><td class='muted small'>수집 시작 9/12</td></tr><tr><th scope='row'>09/14 주</th><td class="num">340</td><td><div class="rate"><div class="bar"><span style="width:43.2%"></span></div><b>43.2%</b></div></td><td class="num">1,452</td><td><div class="rate"><div class="bar"><span style="width:50.8%"></span></div><b>50.8%</b></div></td><td class='muted small'></td></tr><tr><th scope='row'>09/21 주</th><td class="num">272</td><td><div class="rate"><div class="bar"><span style="width:46.7%"></span></div><b>46.7%</b></div></td><td class="num">346</td><td><div class="rate"><div class="bar"><span style="width:53.8%"></span></div><b>53.8%</b></div></td><td class='muted small'>상품: 9/23 이후 장애 구간 제외</td></tr><tr><th scope='row'>09/28 주</th><td class="num">414</td><td><div class="rate"><div class="bar"><span style="width:40.6%"></span></div><b>40.6%</b></div></td><td class="num">1,141</td><td><div class="rate"><div class="bar"><span style="width:53.5%"></span></div><b>53.5%</b></div></td><td class='muted small'>상품: 9/30부터</td></tr><tr><th scope='row'>10/05 주</th><td class="num">1,336</td><td><div class="rate"><div class="bar"><span style="width:43.6%"></span></div><b>43.6%</b></div></td><td class="num">3,004</td><td><div class="rate"><div class="bar"><span style="width:55.3%"></span></div><b>55.3%</b></div></td><td class='muted small'></td></tr><tr><th scope='row'>10/12 주</th><td class="num">2,262</td><td><div class="rate"><div class="bar"><span style="width:50.9%"></span></div><b>50.9%</b></div></td><td class="num">4,042</td><td><div class="rate"><div class="bar"><span style="width:55.0%"></span></div><b>55.0%</b></div></td><td class='muted small'></td></tr><tr><th scope='row'>10/19 주</th><td class="num">2,274</td><td><div class="rate"><div class="bar"><span style="width:50.8%"></span></div><b>50.8%</b></div></td><td class="num">4,335</td><td><div class="rate"><div class="bar"><span style="width:53.2%"></span></div><b>53.2%</b></div></td><td class='muted small'></td></tr><tr><th scope='row'>10/26 주</th><td class="num">1,445</td><td><div class="rate"><div class="bar"><span style="width:52.3%"></span></div><b>52.3%</b></div></td><td class="num">3,477</td><td><div class="rate"><div class="bar"><span style="width:48.8%"></span></div><b>48.8%</b></div></td><td class='muted small'></td></tr><tr><th scope='row'>11/02 주</th><td class="num">1,116</td><td><div class="rate"><div class="bar"><span style="width:52.5%"></span></div><b>52.5%</b></div></td><td class="num">3,255</td><td><div class="rate"><div class="bar"><span style="width:49.8%"></span></div><b>49.8%</b></div></td><td class='muted small'></td></tr><tr><th scope='row'>11/09 주</th><td class="num">338</td><td><div class="rate"><div class="bar"><span style="width:40.8%"></span></div><b>40.8%</b></div></td><td class="num">1,437</td><td><div class="rate"><div class="bar"><span style="width:52.3%"></span></div><b>52.3%</b></div></td><td class='muted small'>집계 중(11/11까지)</td></tr></tbody></table></div>
+<p class="small muted">시간대별로는 대체로 일정하지만 22~23시에는 0건률이 60%대로 올라갑니다(낮 10~20시: 매장 47%, 상품 52%). 늦은 시간에 입력이 거칠어지는 효과로 보이며 개선 우선순위는 낮습니다.</p>
+</section>
+
+<section id="branch">
+<h2>매장 검색: 0건은 어떤 입력에서 나오나</h2>
+<p>매장 검색 0건 4,834건을 입력 형태로 나눠 봤습니다(서로 겹치지 않게 위에서부터 차례로 분류). 막대는 <b>전체 0건에서 차지하는 비중</b>입니다.</p>
+<div class="tablewrap"><table>
+<thead><tr><th>입력 형태</th><th class="num">검색 수</th><th class="num">0건률</th><th>0건 중 비중</th></tr></thead>
+<tbody><tr><th scope='row'>상품 이름을 매장 검색창에 입력<div class='small muted'>가방 · 보조배터리 · 파우치 · 클립 · 변기 뚫어뻥 · 우비</div></th><td class='num'>1,452</td><td class='num'>93%</td><td><div class='rate'><div class='bar accent'><span style='width:89.3%'></span></div><b>27.9%</b></div><span class='small muted'>1,351건 · 상품 사전(성공한 상품 검색어)에 있는 단어</span></td></tr><tr><th scope='row'>그 밖의 짧은 한 단어<div class='small muted'>종각 · 망원 · 새종 · 처을 · 위려</div></th><td class='num'>3,763</td><td class='num'>23%</td><td><div class='rate'><div class='bar accent'><span style='width:56.3%'></span></div><b>17.6%</b></div><span class='small muted'>850건 · 대부분은 성공(77%). 실패분은 오타·점포 없는 지명</span></td></tr><tr><th scope='row'>띄어쓰기가 든 지역+점포명<div class='small muted'>부산 반송점 · 원주 무실 · 거제 수월 · 평택 중앙</div></th><td class='num'>819</td><td class='num'>95%</td><td><div class='rate'><div class='bar accent'><span style='width:51.5%'></span></div><b>16.1%</b></div><span class='small muted'>778건 · 공백 포함 질의는 전체 중 97%가 0건</span></td></tr><tr><th scope='row'>영문·로마자<div class='small muted'>Myeongdong · Hongdae · Sinchon · usb</div></th><td class='num'>538</td><td class='num'>98%</td><td><div class='rate'><div class='bar accent'><span style='width:34.9%'></span></div><b>10.9%</b></div><span class='small muted'>528건 · 한글이 없는 질의 98%가 0건</span></td></tr><tr><th scope='row'>'다이소' 포함<div class='small muted'>다이소 · 다이소 명동역점 · 아성다이소</div></th><td class='num'>524</td><td class='num'>100%</td><td><div class='rate'><div class='bar accent'><span style='width:34.6%'></span></div><b>10.8%</b></div><span class='small muted'>524건 · 예외 없이 100% 0건</span></td></tr><tr><th scope='row'>~역·~동·~시장 등 지명<div class='small muted'>고속터미널 · 부천역 · 하남스타필드</div></th><td class='num'>1,486</td><td class='num'>22%</td><td><div class='rate'><div class='bar accent'><span style='width:21.4%'></span></div><b>6.7%</b></div><span class='small muted'>322건 · 대부분은 성공(78%), 점포가 없는 지명이 실패</span></td></tr><tr><th scope='row'>~점으로 끝나는 점포명<div class='small muted'>꽃바위점 · 수지구청점</div></th><td class='num'>955</td><td class='num'>21%</td><td><div class='rate'><div class='bar accent'><span style='width:13.1%'></span></div><b>4.1%</b></div><span class='small muted'>200건 · 공식 점포명과 다르거나 검색 대상이 아닌 점포</span></td></tr><tr><th scope='row'>문장·긴 주소<div class='small muted'>‘…어디 있어요?’, 도로명 주소</div></th><td class='num'>183</td><td class='num'>86%</td><td><div class='rate'><div class='bar accent'><span style='width:10.2%'></span></div><b>3.2%</b></div><span class='small muted'>157건 · 15자 이상 또는 5단어 이상</span></td></tr><tr><th scope='row'>숫자만 (품번·매장코드)<div class='small muted'>7자리 숫자(상품 번호) 등</div></th><td class='num'>101</td><td class='num'>96%</td><td><div class='rate'><div class='bar accent'><span style='width:6.4%'></span></div><b>2.0%</b></div><span class='small muted'>97건 · 96%가 0건</span></td></tr><tr><th scope='row'>자모가 섞인 입력<div class='small muted'>(입력 중 깨진 글자)</div></th><td class='num'>27</td><td class='num'>100%</td><td><div class='rate'><div class='bar accent'><span style='width:1.9%'></span></div><b>0.6%</b></div><span class='small muted'>27건 · 100%가 0건</span></td></tr></tbody></table></div>
+<h3>왜 이런 일이 생기나</h3>
+<ul>
+<li><b>다이소 점포명은 ‘부산양정점’, ‘대구성서이곡점’처럼 지역과 동네를 붙여 쓰고 ‘다이소’는 들어 있지 않습니다.</b> 사용자는 “다이소 홍대입구점”, “부산 양정점”처럼 말하듯 씁니다. 표본 재질의에서 ‘다이소’를 빼면 26개 중 14개가, 단어로 나눠 찾으면 23개 중 21개가 후보를 냈고, 띄어쓰기만 지워도 9개가 찾아졌습니다(예: 부산 양정점, 평택 중앙, 거제 수월).</li>
+<li><b>잘 되는 입력은 짧은 지명입니다.</b> 한글 1~2글자는 0건률 17%, 성공 상위는 명동·강남·부산·동탄·홍대·신촌 같은 단어입니다. 공식 주소 문자열을 통째로 넣으면 성공하지만 “부산 해운대구 반송”처럼 줄여 쓰면 실패합니다.</li>
+<li><b>상품 이름을 입력하는 사람이 많습니다.</b> 매장 검색 0건 중 28%(1,351건)입니다. 이 경우 질의를 어떻게 고쳐도 매장은 나오지 않습니다(표본 재질의에서 의미 있는 후보 3/44).</li>
+<li><b>영문 입력은 6%(583건)</b>이고 98%가 실패합니다. Myeongdong·Hongdae·Sinchon처럼 관광지 로마자가 대부분이라 외국인 사용자로 보이며, 베트남어 문장 입력도 있었습니다.</li>
+<li><b>숫자 7자리</b>(상품 번호)를 매장 검색에 넣는 경우가 79건, 전부 0건입니다.</li>
+</ul>
+<div class="callout"><b>추정 개선 폭</b> ‘다이소’ 제거 · 공백 정리 · 단어 분해만 서버에서 자동으로 해도 표본 기준 0건의 약 25%(≈1,192건)에 후보를 보여줄 수 있어, 매장 검색 0건률이 <b>49.1% → 약 37.0%</b>로 내려갈 여지가 있습니다. 표본이 작고 단어 일치가 곧 의도한 점포는 아니라서 <b>상한에 가까운 값</b>으로 보세요.</div>
+</section>
+
+<section id="product">
+<h2>상품 검색: 0건은 어떤 입력에서 나오나</h2>
+<div class="grid2">
+<div><h3>길이가 길수록 0건</h3>
+<div class="tablewrap"><table><thead><tr><th>검색어 길이</th><th class="num">검색 수</th><th>0건률</th></tr></thead><tbody><tr><th scope='row'>1-2자</th><td class='num'>6,356</td><td><div class='rate'><div class='bar'><span style='width:33.4%'></span></div><b>33.4%</b></div></td></tr><tr><th scope='row'>3-4자</th><td class='num'>8,904</td><td><div class='rate'><div class='bar'><span style='width:47.6%'></span></div><b>47.6%</b></div></td></tr><tr><th scope='row'>5-6자</th><td class='num'>3,707</td><td><div class='rate'><div class='bar'><span style='width:67.7%'></span></div><b>67.7%</b></div></td></tr><tr><th scope='row'>7-9자</th><td class='num'>2,564</td><td><div class='rate'><div class='bar'><span style='width:78.1%'></span></div><b>78.1%</b></div></td></tr><tr><th scope='row'>10자+</th><td class='num'>1,222</td><td><div class='rate'><div class='bar'><span style='width:85.4%'></span></div><b>85.4%</b></div></td></tr></tbody></table></div></div>
+<div><h3>단어 수가 많을수록 0건</h3>
+<div class="tablewrap"><table><thead><tr><th>단어 수</th><th class="num">검색 수</th><th>0건률</th></tr></thead><tbody><tr><th scope='row'>1단어</th><td class='num'>17,686</td><td><div class='rate'><div class='bar'><span style='width:46.3%'></span></div><b>46.3%</b></div></td></tr><tr><th scope='row'>2단어</th><td class='num'>3,774</td><td><div class='rate'><div class='bar'><span style='width:70.4%'></span></div><b>70.4%</b></div></td></tr><tr><th scope='row'>3단어+</th><td class='num'>1,293</td><td><div class='rate'><div class='bar'><span style='width:83.3%'></span></div><b>83.3%</b></div></td></tr></tbody></table></div>
+<h3>특수한 입력</h3>
+<div class="tablewrap"><table><thead><tr><th>유형</th><th class="num">검색 수</th><th>0건률</th></tr></thead><tbody><tr><th scope='row'>7자리 품번만 입력</th><td class='num'>454</td><td><div class='rate'><div class='bar'><span style='width:72.9%'></span></div><b>72.9%</b></div></td></tr><tr><th scope='row'>한글 없이 영문만 입력</th><td class='num'>1,662</td><td><div class='rate'><div class='bar'><span style='width:77.9%'></span></div><b>77.9%</b></div></td></tr><tr><th scope='row'>문장형(‘어디 있어요?’ 등)</th><td class='num'>18</td><td><div class='rate'><div class='bar'><span style='width:100.0%'></span></div><b>100.0%</b></div></td></tr></tbody></table></div></div>
+</div>
+<h3>0건의 두 가지 얼굴: “상품이 없다” vs “이 매장에 재고가 없다”</h3>
+<p>서버는 카탈로그에서 상품을 찾은 뒤 <b>이 매장 재고가 있는 것만</b> 돌려줍니다. 그래서 0건에는 두 가지가 섞입니다. 로그에는 구분 값이 없어서(GA4에는 <code>empty_reason</code>이 있음) 세 가지 방법으로 추정했습니다.</p>
+<div class="grid2">
+<div class="card"><h3>① 같은 검색어를 여러 매장에서 본 경우</h3>
+<p class="small">3개 이상 매장에서 검색된 키워드만 비교하면, 0건 4,354건 중 <b>69%(3,008건)는 다른 매장에서는 결과가 나온 키워드</b>(재고 편차)이고 31%(1,346건)는 모든 매장에서 0건(초코펜, 택배박스, 낚시용품, 110v 등)입니다.</p></div>
+<div class="card"><h3>② 매장별 0건률 편차</h3>
+<p class="small">검색 60건 이상인 53개 매장의 상품 0건률은 <b>21% ~ 69%</b>(중앙값 41%, 상·하위 10% 57% / 27%). 같은 검색을 해도 어느 매장이냐에 따라 결과가 갈립니다.</p></div>
+<div class="card"><h3>③ 카탈로그 재조회 표본 (150개 키워드)</h3>
+<p class="small">0건이었던 서로 다른 검색어 150개 중 <b>63개(42%)는 다이소 카탈로그에 상품이 있음</b> → 재고 없음. 나머지 87개(58%)는 카탈로그에도 안 잡힘 → 표현 문제. (검색어 단위 표본이라 검색 건수 비중과는 다를 수 있음)</p></div>
+<div class="card"><h3>④ 긴 꼬리</h3>
+<p class="small">한 번만 검색된 검색어(6,975개)의 78%가 0건입니다. 상품 0건 11,921건 중 63%(7,567건)가 3개 미만 매장에서만 검색된 희귀 표현이라, 개별 키워드를 일일이 고치기보다 <b>규칙 기반 완화</b>가 맞습니다.</p></div>
+</div>
+<h3>검색어 표현 문제의 모양</h3>
+<ul>
+<li><b>합성어·긴 설명은 통째로는 안 걸립니다.</b> ‘택배박스’ 0건이지만 ‘박스’는 결과가 있습니다(‘이사박스’, ‘핀마이크’, ‘무선이어폰’도 마찬가지). 카탈로그 검색이 형태소를 나누지 않고 글자 일치에 가깝게 동작하는 것으로 보입니다.</li>
+<li><b>두 단어 이상 0건 표본 65개</b> 중 23개는 재고 없음, 42개는 카탈로그 미일치였고, 후자 중 <b>37개(88%)는 단어 하나만 남겨도 후보가 나왔습니다</b>(마지막 단어를 뺀 경우 25개). 단어 사이 공백을 지우는 건 효과가 없었습니다(0개).</li>
+<li><b>오타·표기 차이</b>가 반복됩니다: 배게→베개, 태이프→테이프, 초콜렛→초코, 임테기→임신. 같은 쌍을 서로 다른 매장에서 여러 번 고쳐 쓴 사례만 모아도 바로 쓸 수 있는 유의어·오타 사전이 됩니다.</li>
+<li><b>다이소가 팔지 않는 브랜드·콘텐츠</b>(스타벅스, 햄토리, 해외 향수 이름 등)는 어떻게 해도 0건입니다. 이 경우는 “다이소에서는 취급하지 않는 것 같아요”라고 솔직히 알려주는 편이 낫습니다.</li>
+<li><b>7자리 품번을 검색창에 넣는 사람이 454건</b>, 73%가 0건입니다. 상품 번호 입력은 분명한 의도(그 상품을 찾겠다)이므로 상품 상세로 바로 보내면 됩니다.</li>
+</ul>
+</section>
+
+<section id="after">
+<h2>0건을 만난 사용자는 어떻게 하나</h2>
+<p>상품 검색 0건 12,374건 이후, 같은 매장의 다음 검색(10분 안)을 따라가 봤습니다.</p>
+<div class="stack" role="img" aria-label="상품 0건 이후 행동 분포"><div class="seg c1" style="width:21.9%" title="3분 안에 다음 검색에서 결과를 찾음 2,713건"></div><div class="seg c2" style="width:38.3%" title="3분 안에 또 검색했지만 또 0건 4,741건"></div><div class="seg c3" style="width:2.0%" title="3~10분 뒤에 다시 검색 252건"></div><div class="seg c4" style="width:37.7%" title="10분 안에 후속 검색 없음 4,668건"></div></div>
+<ul class="legend"><li><i class="sw c1"></i>3분 안에 다음 검색에서 결과를 찾음 <b>21.9%</b> <span class="muted small">(2,713건)</span></li><li><i class="sw c2"></i>3분 안에 또 검색했지만 또 0건 <b>38.3%</b> <span class="muted small">(4,741건)</span></li><li><i class="sw c3"></i>3~10분 뒤에 다시 검색 <b>2.0%</b> <span class="muted small">(252건)</span></li><li><i class="sw c4"></i>10분 안에 후속 검색 없음 <b>37.7%</b> <span class="muted small">(4,668건)</span></li></ul>
+<p>성공한 검색 뒤에 후속 검색이 없는 비율은 약 53%(자연스러운 종료)인데, 0건 뒤에는 <b>62%가 10분 안에 다시 검색</b>합니다(60%는 3분 안). 사용자는 포기하지 않고 계속 시도하지만 <b>4명 중 3명(76%)은 다시 0건을 만나거나 결과 없이 끝납니다.</b> 연속으로 2회 이상 0건을 겪은 검색이 0건 전체의 <b>59% 이상</b>입니다(5회 이상은 5회로 계산한 하한).</p>
+<h3>다시 검색할 때 무엇을 바꾸나 (다음 검색이 성공한 비율)</h3>
+<div class="tablewrap"><table><thead><tr><th>다음 검색</th><th class="num">건수</th><th>성공률</th></tr></thead><tbody><tr><th scope='row'>검색어를 줄임<div class='small muted'>초코펜 → 초코 · 택배박스 → 박스 · 무선이어폰 → 이어폰</div></th><td class='num'>1,974</td><td><div class='rate'><div class='bar good'><span style='width:55.7%'></span></div><b>55.7%</b></div></td></tr><tr><th scope='row'>다른 단어로 바꿈<div class='small muted'>배게 → 베개 · 펠트지 → 부직포 · 허리띠 → 벨트</div></th><td class='num'>3,920</td><td><div class='rate'><div class='bar good'><span style='width:35.8%'></span></div><b>35.8%</b></div></td></tr><tr><th scope='row'>앞 글자만 같게 고침<div class='small muted'>오타 수정으로 추정</div></th><td class='num'>738</td><td><div class='rate'><div class='bar good'><span style='width:22.2%'></span></div><b>22.2%</b></div></td></tr><tr><th scope='row'>같은 검색어를 다시 검색<div class='small muted'>결과가 달라지지 않음</div></th><td class='num'>501</td><td><div class='rate'><div class='bar good'><span style='width:8.4%'></span></div><b>8.4%</b></div></td></tr><tr><th scope='row'>단어를 덧붙임<div class='small muted'>더 구체적으로 쓸수록 더 안 나옴</div></th><td class='num'>321</td><td><div class='rate'><div class='bar good'><span style='width:0.9%'></span></div><b>0.9%</b></div></td></tr></tbody></table></div>
+<ul>
+<li><b>줄이기가 가장 잘 통합니다</b>(56%). 원래 검색어가 두 단어 이상이었던 경우 후속 검색의 31%가 원래 단어 중 하나였고, 그중 70%가 성공했습니다.</li>
+<li><b>같은 검색어 재시도(8%)와 단어 덧붙이기(1%)는 거의 소용이 없습니다.</b> 화면이 아무 힌트도 주지 않으니 사용자가 시행착오를 겪는 것입니다.</li>
+<li>다른 단어로 바꾼 경우(36%)에서 유의어 후보가 나옵니다: 오뎅→어묵, 펠트지→부직포, 허리띠→벨트, 담요→이불, 루어→낚시.</li>
+</ul>
+</section>
+
+<section id="ux">
+<h2>UX 개선안</h2>
+<p>현재 0건 화면은 매장·상품 모두 돋보기 아이콘과 <b>“검색 결과가 없습니다”</b> 한 줄입니다(<code>Search.tsx</code>). 원인도, 다음 행동도 알려주지 않습니다. 아래 안은 “화면이 사용자 대신 시행착오를 해준다”는 한 가지 방향입니다.</p>
+
+<h3>A. 매장 검색</h3>
+<div class="ba">
+ <div class="mock"><div class="cap">현재 · “다이소 홍대입구점”</div><div class="inp">다이소 홍대입구점</div><div style="text-align:center;padding:18px 0;color:var(--ink-3)">🔍 검색 결과가 없습니다</div></div>
+ <div class="mock"><div class="cap">개선 · 자동 완화 + 안내</div><div class="inp">다이소 홍대입구점</div>
+  <div class="bubble">‘다이소’를 빼고 <b>“홍대입구점”</b>으로 찾았어요.</div>
+  <div class="res"><b>홍대입구점</b><div class="small muted">서울 마포구 … · 10:00~22:00</div></div></div>
+</div>
+<div class="grid2">
+<div class="card"><span class="tag hi">1순위</span><h3>A1. 서버 쪽 질의 자동 완화</h3>
+<p class="small">0건이면 순서대로 재시도하고 <b>어떻게 고쳐서 찾았는지 한 줄로 알려줍니다</b>: ① ‘아성다이소·다이소·Daiso’ 제거 ② 공백 제거 ③ 단어별 검색(숫자·1글자 단어 제외, 일치한 단어를 강조) ④ 끝의 ‘점’ 제거는 효과가 없었으므로 제외. 주소 문자열(‘…시 …구 …로 12’)은 도로명·동 단어 위주로 분해.</p>
+<p class="small muted">근거: 매장 0건의 약 25%에 후보 제시 가능. 구현: <code>/api/branches/search</code>에서 재시도 후 <code>relaxedFrom</code> 같은 필드로 반환.</p></div>
+<div class="card"><span class="tag hi">1순위</span><h3>A2. 상품명을 입력하면 상품 찾기로 안내</h3>
+<div class="mock" style="margin:8px 0"><div class="inp">보조배터리</div><div class="bubble">‘보조배터리’는 <b>상품 이름</b> 같아요.<br>가까운 매장에서 재고를 찾아볼까요?</div><span class="cta">내 주변 매장에서 ‘보조배터리’ 찾기</span><span class="cta soft">매장 이름으로 다시 검색</span></div>
+<p class="small muted">근거: 매장 0건의 28%(1,351건). 위치 권한이 있으면 가장 가까운 매장 1~3곳의 재고를 한 번에 보여주는 쪽이 이상적(큰 작업). 가벼운 1단계는 안내 문구 + “매장을 고른 뒤 상품 검색”으로 가는 링크.</p></div>
+<div class="card"><span class="tag">2순위</span><h3>A3. 로마자·역/지명 별칭, 위치 폴백</h3>
+<p class="small">Myeongdong·Hongdae·Sinchon 등 상위 로마자 30~50개를 한글 지명 별칭 표로 변환하고, ‘고속터미널’·‘종각’·‘망원’처럼 점포명에 없는 지명은 <b>지도 지오코딩 후 가까운 매장 순</b>으로 보여줍니다(‘현재 위치로 검색’ 기능을 재사용). 영문 사용자를 위해 입력창 힌트를 “예: 명동 / Myeongdong”으로.</p></div>
+<div class="card"><span class="tag">2순위</span><h3>A4. 예방: 입력창 힌트</h3>
+<p class="small">placeholder를 “지역·동네 이름으로 검색 (예: 홍대, 서면역)”으로 바꿔 공백·‘다이소’ 없는 짧은 입력으로 유도. 7자리 숫자는 “상품 번호는 매장을 고른 뒤 상품 검색에 입력해 주세요”로 안내.</p></div>
+</div>
+
+<h3>B. 상품 검색</h3>
+<div class="ba">
+ <div class="mock"><div class="cap">개선 · 이 매장 재고만 없는 경우 (not_in_store)</div><div class="inp">테이프</div>
+  <div class="bubble"><b>‘테이프’</b>는 다이소에 있지만 <b>이 매장에는 재고가 없어요.</b></div>
+  <div class="res"><b>투명 테이프 3개입</b><div class="small muted">재고 있는 가까운 매장 · 0.8km, 1.4km</div></div>
+  <span class="cta soft">재고 있는 다른 매장 보기</span></div>
+ <div class="mock"><div class="cap">개선 · 표현이 안 맞는 경우 (no_match)</div><div class="inp">유리창 세정제</div>
+  <div class="bubble"><b>‘유리창 세정제’</b> 결과가 없어요. 이 중에서 찾아볼까요?</div>
+  <span class="chip">유리창</span><span class="chip">세정제</span><span class="chip">세정</span>
+  <div class="res" style="margin-top:8px"><b>세정제로 찾은 상품 4개</b><div class="small muted">이 매장 재고 있음</div></div></div>
+</div>
+<div class="grid2">
+<div class="card"><span class="tag hi">1순위</span><h3>B1. 0건의 원인을 구분해서 말하기</h3>
+<p class="small">지금도 스트림 응답에 <code>scanned</code>(훑은 상품 수)가 있어 <code>scanned&gt;0 → 재고 없음</code>, <code>=0 → 상품 없음</code>을 이미 GA4에 보냅니다. 이를 화면 문구에 쓰기만 해도 “내 검색어가 틀렸나?”라는 혼란이 줄어듭니다. 재고 없음이면 <b>재고 있는 가까운 매장</b>(상품 상세에 이미 있는 근처 매장 로직 재사용)으로 연결합니다. 표본 기준 상품 0건의 약 40%가 이 경우.</p></div>
+<div class="card"><span class="tag hi">1순위</span><h3>B2. 검색어 자동 완화 + 칩 제안</h3>
+<p class="small">상품이 없을 때 서버가 ① 마지막 단어 제거 ② 단어별 ③ 접미어(‘택배박스→박스’, ‘무선이어폰→이어폰’) ④ 사전 치환(배게→베개, 오뎅→어묵, 임테기→임신테스트기)을 시도하고, <b>결과가 있는 후보만 칩으로</b> 보여줍니다. 칩을 누르면 바로 해당 검색. 사용자가 이미 하는 “줄이기”(성공률 56%)를 자동화하는 것입니다.</p></div>
+<div class="card"><span class="tag">2순위</span><h3>B3. 품번(7자리) → 상품 상세로 바로 이동</h3>
+<p class="small">상품 검색창에 7자리 숫자가 들어오면 <code>/branch/&lt;매장&gt;/product/&lt;번호&gt;</code>로 이동(없으면 안내). 454건 중 73%가 0건이었던 구간입니다. 가장 작은 작업으로 확실한 효과.</p></div>
+<div class="card"><span class="tag">2순위</span><h3>B4. 취급하지 않는 상품 솔직하게</h3>
+<p class="small">모든 매장에서 0건이면서 카탈로그에도 없는 질의(브랜드·콘텐츠 상품)는 “다이소에서 취급하지 않는 상품일 수 있어요. 비슷한 상품: …”으로. 현재 화면은 재시도만 유도하는 셈이라 같은 검색어 재시도 8%, 덧붙이기 1%의 헛수고를 만듭니다.</p></div>
+<div class="card"><span class="tag">3순위</span><h3>B5. 예방과 작은 개선</h3>
+<p class="small">placeholder “상품명을 입력해주세요” → “짧게 입력해보세요 (예: 박스, 건전지)”. 0건 직후 입력창 내용을 선택 상태로 유지해 바로 고쳐 쓰게 하고, 직전 검색어를 “최근 검색”으로 제공.</p></div>
+</div>
+</section>
+
+<section id="plan">
+<h2>우선순위와 측정</h2>
+<div class="tablewrap"><table>
+<thead><tr><th>#</th><th>안</th><th>영향 범위(0건 중)</th><th>난이도</th><th>비고</th></tr></thead>
+<tbody>
+<tr><th>1</th><td>B3 품번 → 상세 이동</td><td>상품 454건 + 매장 79건 규모</td><td>하</td><td>가장 빠른 승리</td></tr>
+<tr><th>2</th><td>A1 매장 질의 자동 완화</td><td>매장 0건의 약 25% (≈1,192건)</td><td>하~중</td><td>서버만 수정, 응답 필드 추가</td></tr>
+<tr><th>3</th><td>B1 원인 구분 + 근처 재고 안내</td><td>상품 0건의 약 40% (표본)</td><td>중</td><td><code>scanned</code> 이미 있음. 근처 매장 로직 재사용</td></tr>
+<tr><th>4</th><td>B2 상품 질의 완화 + 칩</td><td>두 단어 이상 0건 3,734건 중 약 절반이 후보 보유</td><td>중</td><td>완화 시 상류 API 호출 증가 → 시도 횟수 제한 필요</td></tr>
+<tr><th>5</th><td>A2 상품명 입력 → 상품 찾기 안내</td><td>매장 0건의 28% (1,351건)</td><td>중(안내만) ~ 대(근처 매장 재고)</td><td>의도 자체가 다른 입력</td></tr>
+<tr><th>6</th><td>오타·유의어 사전 + A3 로마자 별칭</td><td>상품 소수, 매장 6% 규모</td><td>하~중</td><td>로그의 ‘0건→다른 단어 성공’ 쌍으로 시작</td></tr>
+</tbody></table></div>
+
+<h3>측정 방법</h3>
+<ul>
+<li><b>지표</b>: 웹 검색 0건률(5분 중복 제거) 매장 49.1% → 목표 38% 이하, 상품 52.4% → 45% 이하 / 0건 후 3분 내 회복률 22% → 35% / 0건 후 10분 내 후속 검색 없음 38% → 낮추기 / 같은 검색어 재시도 비율.</li>
+<li><b>계측 보강(작음)</b>: 시트에 열을 추가합니다(끝에 붙이기 규칙 준수). ① <code>빈 결과 원인</code>(no_match / not_in_store / relaxed), ② <code>완화 전 검색어</code>, ③ 탭 세션 단위 무작위 <code>검색 세션</code> ID. ③이 있으면 “0건 뒤 행동”을 추정이 아니라 정확히 셀 수 있습니다. 개인정보처리방침의 수집 항목 설명도 함께 고쳐야 합니다.</li>
+<li><b>롤아웃</b>: A1·B2는 서버 완화이므로 <code>relaxed=1</code> 플래그로 일부 트래픽에만 켜서 0건률을 비교할 수 있습니다.</li>
+</ul>
+</section>
+
+<section id="limits">
+<h2>한계와 주의</h2>
+<ul class="small">
+<li>후속 검색은 <b>매장 코드 + 시각 근접</b>으로 이었습니다. 인기 매장에서는 서로 다른 사람의 검색이 섞일 수 있습니다. 매장 검색은 매장 코드가 없어 후속 행동 분석을 하지 않았습니다.</li>
+<li>입력 형태 분류는 규칙 기반입니다. ‘상품 이름’ 판정은 성공한 상품 검색어 사전에 있는지로 했기 때문에 사전에 없는 상품명은 ‘그 밖의 한 단어’로 남습니다(그 분류의 0건률은 23%로 낮아 큰 영향은 없음).</li>
+<li>다이소 API 재질의는 <b>11/11 시점의 카탈로그·검색 동작</b>이고 서로 다른 검색어를 무작위로 뽑은 표본(상품 150, 매장 169)입니다. 비율은 ±수 %p 오차가 있으며, ‘후보가 나온다’는 것이 ‘의도한 결과다’를 뜻하지는 않습니다. 상품 후보는 카탈로그 기준이라 이 매장 재고는 별도입니다.</li>
+<li>다이소 상류 검색 규칙은 문서화돼 있지 않아 관찰로 추정한 것입니다. 상류가 바뀌면 달라질 수 있습니다.</li>
+<li>시트는 60일 보관 정책(<code>archiveOldRows</code>)이 있어 이 보고서의 9/12 이후 데이터는 11/11 기준으로 일부가 월별 보관 파일로 이동할 수 있습니다. 원본 CSV는 분석 시점에 전량 내려받았습니다.</li>
+</ul>
+<h3>부록 · 0건이 많았던 검색어 (웹, 5분 중복 제거)</h3>
+<div class="grid2">
+<div class="tablewrap"><table><thead><tr><th>매장 검색어</th><th class="num">0건 횟수</th></tr></thead><tbody><tr><td>다이소</td><td class='num'>73</td></tr><tr><td>고속터미널</td><td class='num'>13</td></tr><tr><td>Myeongdong</td><td class='num'>12</td></tr><tr><td>꽃바위점</td><td class='num'>12</td></tr><tr><td>가방</td><td class='num'>8</td></tr><tr><td>파우치</td><td class='num'>7</td></tr><tr><td>보조배터리</td><td class='num'>7</td></tr><tr><td>클립</td><td class='num'>7</td></tr><tr><td>종각</td><td class='num'>6</td></tr><tr><td>Hongdae</td><td class='num'>6</td></tr><tr><td>Daiso</td><td class='num'>5</td></tr><tr><td>아성다이소</td><td class='num'>5</td></tr><tr><td>sinchon</td><td class='num'>5</td></tr><tr><td>부산 반송점</td><td class='num'>5</td></tr><tr><td>변기 뚫어뻥</td><td class='num'>5</td></tr></tbody></table></div>
+<div class="tablewrap"><table><thead><tr><th>상품 검색어</th><th class="num">0건 횟수</th></tr></thead><tbody><tr><td>usb</td><td class='num'>56</td></tr><tr><td>낚시</td><td class='num'>39</td></tr><tr><td>초코펜</td><td class='num'>38</td></tr><tr><td>카드</td><td class='num'>37</td></tr><tr><td>스타벅스</td><td class='num'>37</td></tr><tr><td>한복 액세서리</td><td class='num'>36</td></tr><tr><td>맥세이프 지갑</td><td class='num'>31</td></tr><tr><td>CD</td><td class='num'>25</td></tr><tr><td>햄토리</td><td class='num'>25</td></tr><tr><td>Lattafa Asad Bourbon</td><td class='num'>24</td></tr><tr><td>일본제 세탁비누 강판</td><td class='num'>21</td></tr><tr><td>테이프</td><td class='num'>20</td></tr><tr><td>낚시용품</td><td class='num'>20</td></tr><tr><td>가습기</td><td class='num'>20</td></tr><tr><td>택배박스</td><td class='num'>20</td></tr></tbody></table></div>
+</div>
+</section>
+<footer>작성 2026-11-11 · 데이터: 구글 시트 ‘다이소 파인더 검색어 로그’ · 방문자를 식별하는 값은 로그에 없으며, 이 보고서에도 검색어 외의 개인 정보는 담지 않았습니다.</footer>
+</div>
+</body>
+</html>
