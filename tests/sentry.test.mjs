@@ -9,6 +9,7 @@ import {
   baseSentryOptions,
   getSentryEnvironment,
   getTracesSampleRate,
+  isClientNetworkError,
   isSentryEnabled,
   isUpstreamErrorEvent,
   scrubBreadcrumb,
@@ -294,4 +295,32 @@ test("브라우저는 우리 번들에서 난 오류만 받는다", () => {
   assert.ok(
     !allowed("https://www.daiso-finder.kr/branch/10837/product/1019929"),
   );
+});
+
+test("회선이 끊겨 난 fetch 오류는 오류 바운더리에서 올리지 않는다", () => {
+  // DAISO-FINDER-S: 모바일 Chrome 에서 RSC 응답이 중간에 끊긴 경우.
+  assert.ok(isClientNetworkError(new TypeError("network error")));
+  assert.ok(isClientNetworkError(new TypeError("Failed to fetch")));
+  assert.ok(isClientNetworkError(new TypeError("Load failed")));
+  assert.ok(
+    isClientNetworkError(new TypeError("The network connection was lost.")),
+  );
+  assert.ok(
+    isClientNetworkError(
+      new TypeError("NetworkError when attempting to fetch resource."),
+    ),
+  );
+});
+
+test("네트워크 오류 판별은 메시지와 종류가 모두 맞을 때만 참이다", () => {
+  // 우리 코드가 던진 오류나 다른 TypeError 는 계속 올라가야 한다.
+  assert.ok(!isClientNetworkError(new Error("network error")));
+  assert.ok(!isClientNetworkError(new TypeError("Network error: 매장 조회")));
+  assert.ok(
+    !isClientNetworkError(
+      new TypeError("Cannot read properties of undefined (reading 'map')"),
+    ),
+  );
+  assert.ok(!isClientNetworkError("network error"));
+  assert.ok(!isClientNetworkError(null));
 });

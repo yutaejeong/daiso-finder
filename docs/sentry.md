@@ -104,6 +104,14 @@ API 라우트는 오류를 전부 잡아서 JSON 으로 바꾸기 때문에 자�
 `Maximum call stack size exceeded` 가 이슈 여섯 개로 갈라져 쌓였었다. 스택이 없는
 오류(`Failed to fetch` 등)는 이 필터에 걸리지 않고 그대로 올라온다.
 
+다만 오류 바운더리(`error.tsx`, `global-error.tsx`)까지 올라온 회선 단절 오류
+(`TypeError: network error`, `Failed to fetch`, `Load failed` 등)는 `isClientNetworkError()`
+로 걸러 올리지 않는다. 이동 중에 받던 RSC 응답이 모바일 회선과 함께 끊기면 이
+`TypeError` 가 렌더 오류처럼 바운더리에 닿는데(DAISO-FINDER-S), 사용자는 "다시 시도"
+로 복구되고 우리가 고칠 것이 없다. `error.tsx` 의 GA4 `app_error` 는 빈도를 보려고
+그대로 보낸다. 메시지 전체와 `TypeError` 가 모두 맞아야 걸러서, 우리 코드가 던진
+비슷한 메시지는 계속 올라온다.
+
 스택이 없는 확장 프로그램 오류 가운데 메시지가 고정된 것은 `IGNORED_ERRORS`
 (`ignoreErrors`)에 문자열로 넣어 뺀다. `Invalid call to runtime.sendMessage(). Tab not
 found.`(DAISO-FINDER-P)는 iOS Safari 확장이 닫힌 탭에 메시지를 보내다 나는 거부된

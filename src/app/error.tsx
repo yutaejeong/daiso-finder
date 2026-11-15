@@ -11,6 +11,7 @@ import {
   statusTitleClass,
 } from "@/components/statusStyles";
 import { trackEvent } from "@/lib/gtag";
+import { isClientNetworkError } from "@/lib/sentry";
 import Link from "next/link";
 import { useEffect } from "react";
 
@@ -25,9 +26,13 @@ export default function Error({
     console.error("화면 오류:", error);
     // GA 는 "얼마나 터지는지", Sentry 는 "무엇이 터졌는지"를 본다. 서버에서
     // 난 오류는 digest 만 넘어오므로 서버 쪽 이벤트와 이어 볼 수 있게 태그로 단다.
-    Sentry.captureException(error, {
-      tags: { boundary: "error", error_digest: error.digest },
-    });
+    // 사용자 회선이 끊긴 오류는 우리가 고칠 수 없어 올리지 않는다(DAISO-FINDER-S).
+    // GA 의 app_error 는 얼마나 자주 겪는지 보려고 그대로 남긴다.
+    if (!isClientNetworkError(error)) {
+      Sentry.captureException(error, {
+        tags: { boundary: "error", error_digest: error.digest },
+      });
+    }
     // 화면이 통째로 깨진 자리. 여정 어디에서 터졌는지는 기본 파라미터로 붙는다.
     trackEvent("app_error", {
       message: error.message.slice(0, 100),
