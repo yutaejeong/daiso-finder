@@ -91,6 +91,40 @@ export function isUpstreamErrorEvent(event: ErrorEvent, hint?: EventHint) {
   );
 }
 
+/**
+ * 브라우저가 응답을 다 받기 전에 회선이 끊겨 `fetch`/스트림이 거부될 때 내는
+ * 메시지. 엔진마다 문구가 다르다.
+ *
+ * - Chrome: `network error`(응답 본문 스트림이 중간에 끊김), `Failed to fetch`
+ * - Safari: `Load failed`, `The network connection was lost.`
+ * - Firefox: `NetworkError when attempting to fetch resource.`
+ */
+const NETWORK_FAILURE_MESSAGES = [
+  "network error",
+  "failed to fetch",
+  "load failed",
+  "the network connection was lost.",
+  "networkerror when attempting to fetch resource.",
+];
+
+/**
+ * 사용자의 회선이 끊겨서 난 오류인지. 앱 라우터가 이동 중에 받던 RSC 응답이
+ * 끊기면 이 `TypeError` 가 렌더 오류처럼 오류 바운더리까지 올라온다
+ * (DAISO-FINDER-S: 모바일 Chrome, `/branch/:code`, 스택 없음). 화면은 그대로
+ * "다시 시도" 를 보여 주면 되고, 우리가 고칠 수 있는 버그가 아니라서 Sentry 로는
+ * 올리지 않는다.
+ *
+ * 메시지 전체가 일치할 때만 본다. 부분 일치로 넓히면 `Network error: …` 로 시작하는
+ * 우리 쪽 예외까지 같이 묻힌다.
+ */
+export function isClientNetworkError(error: unknown): boolean {
+  if (!(error instanceof TypeError)) {
+    return false;
+  }
+
+  return NETWORK_FAILURE_MESSAGES.includes(error.message.trim().toLowerCase());
+}
+
 export function getSentryDsn(): string {
   return process.env.NEXT_PUBLIC_SENTRY_DSN?.trim() ?? "";
 }

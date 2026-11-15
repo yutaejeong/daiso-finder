@@ -3,6 +3,7 @@
 import { css } from "@styled-system/css";
 import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
+import { isClientNetworkError } from "@/lib/sentry";
 import "./globals.css";
 
 /**
@@ -25,6 +26,11 @@ export default function GlobalError({
 }) {
   useEffect(() => {
     console.error("치명적 오류:", error);
+    // 회선이 끊겨 라우터가 받던 응답이 중단된 경우는 우리 버그가 아니다
+    // (DAISO-FINDER-S). 화면만 보여 주고 올리지 않는다.
+    if (isClientNetworkError(error)) {
+      return;
+    }
     Sentry.captureException(error, {
       tags: { boundary: "global-error", error_digest: error.digest },
     });
