@@ -25,6 +25,7 @@ export async function generateMetadata({
   const title = `${productName} - ${branchLabel} 재고·위치`;
   const description = `${branchLabel}의 ${productName} 재고와 진열 위치를 확인하고, 해당 상품이 있는 다른 지점도 함께 살펴보세요.`;
   const url = `${getBaseUrl()}/branch/${params.code}/product/${params.id}`;
+  const imageUrl = `${url}/opengraph-image`;
 
   return {
     title,
@@ -42,13 +43,21 @@ export async function generateMetadata({
       siteName: "다이소 파인더",
       locale: "ko_KR",
       url,
-      ...(product?.image ? { images: [{ url: product.image }] } : {}),
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: `${productName} - ${branchLabel} 재고·위치`,
+          type: "image/png",
+        },
+      ],
     },
     twitter: {
-      card: product?.image ? "summary_large_image" : "summary",
+      card: "summary_large_image",
       title,
       description,
-      ...(product?.image ? { images: [product.image] } : {}),
+      images: [imageUrl],
     },
   };
 }

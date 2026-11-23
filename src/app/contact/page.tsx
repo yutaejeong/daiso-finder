@@ -13,6 +13,31 @@ export const metadata: Metadata = {
   description:
     "다이소 파인더에 버그를 제보하거나 기능을 제안하고, API·MCP 연동을 문의하는 방법을 안내합니다.",
   alternates: { canonical: "/contact" },
+  openGraph: {
+    title: `${SITE_NAME} 문의`,
+    description:
+      "다이소 파인더에 버그를 제보하거나 기능을 제안하고, API·MCP 연동을 문의하는 방법을 안내합니다.",
+    url: "/contact",
+    siteName: SITE_NAME,
+    locale: "ko_KR",
+    type: "website",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: `${SITE_NAME} 문의`,
+        type: "image/png",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${SITE_NAME} 문의`,
+    description:
+      "다이소 파인더에 버그를 제보하거나 기능을 제안하고, API·MCP 연동을 문의하는 방법을 안내합니다.",
+    images: ["/opengraph-image"],
+  },
 };
 
 export default function ContactPage() {

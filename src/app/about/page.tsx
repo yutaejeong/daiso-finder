@@ -23,6 +23,31 @@ export const metadata: Metadata = {
   description:
     "다이소 파인더가 어떤 서비스이고, 어떻게 쓰며, 어떤 데이터를 어디서 가져오고, 누가 만들고 운영하는지 안내합니다.",
   alternates: { canonical: "/about" },
+  openGraph: {
+    title: `${SITE_NAME} 소개`,
+    description:
+      "다이소 파인더가 어떤 서비스이고, 어떻게 쓰며, 어떤 데이터를 어디서 가져오고, 누가 만들고 운영하는지 안내합니다.",
+    url: "/about",
+    siteName: SITE_NAME,
+    locale: "ko_KR",
+    type: "website",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: `${SITE_NAME} 소개`,
+        type: "image/png",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${SITE_NAME} 소개`,
+    description:
+      "다이소 파인더가 어떤 서비스이고, 어떻게 쓰며, 어떤 데이터를 어디서 가져오고, 누가 만들고 운영하는지 안내합니다.",
+    images: ["/opengraph-image"],
+  },
 };
 
 const branchLinkClass = css({
