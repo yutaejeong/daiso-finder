@@ -32,6 +32,31 @@ export const metadata: Metadata = {
     "Daiso Finder OpenAPI",
     "Daiso Finder CLI",
   ],
+  openGraph: {
+    title: `${SITE_NAME} 개발자 포털 — API·MCP·CLI`,
+    description:
+      "다이소 파인더 개발자 포털: 무료 키 없는 공개 REST API, OpenAPI 스펙, MCP 서버, CLI, 샌드박스 사용법.",
+    url: "/developers",
+    siteName: SITE_NAME,
+    locale: "ko_KR",
+    type: "website",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: `${SITE_NAME} 개발자 포털`,
+        type: "image/png",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${SITE_NAME} 개발자 포털 — API·MCP·CLI`,
+    description:
+      "다이소 파인더 개발자 포털: 무료 키 없는 공개 REST API, OpenAPI 스펙, MCP 서버, CLI, 샌드박스 사용법.",
+    images: ["/opengraph-image"],
+  },
 };
 
 const endpoints = [

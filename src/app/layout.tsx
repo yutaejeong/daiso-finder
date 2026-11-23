@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 // 서브셋(@font-face + unicode-range)이라 화면에 나온 글자의 조각만 내려받는다.
 import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
 import "./globals.css";
+import { FloatingShareButton } from "@/components/FloatingShareButton";
 import { GoogleAnalytics } from "./GoogleAnalytics";
 import Provider from "./provider";
 import { WebMCP } from "./webmcp";
@@ -37,12 +38,14 @@ export const metadata: Metadata = {
     siteName: "다이소 파인더",
     locale: "ko_KR",
     type: "website",
+    url: APP_URL,
     images: [
       {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
         alt: "다이소 파인더 - 다이소 상품 찾기",
+        type: "image/png",
       },
     ],
   },
@@ -99,7 +102,10 @@ export default function RootLayout({
             __html: JSON.stringify(buildSiteJsonLd(APP_URL)),
           }}
         />
-        <Provider>{children}</Provider>
+        <Provider>
+          {children}
+          <FloatingShareButton />
+        </Provider>
         <WebMCP />
         {GA_ID && <GoogleAnalytics gaId={GA_ID} />}
       </body>

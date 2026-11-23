@@ -8,6 +8,7 @@ export const size = ogImageSize;
 export const contentType = ogImageContentType;
 export const alt = "다이소 파인더 - 다이소 상품 찾기";
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export default function Image() {
   return createDaisoOgImage({
