@@ -58,6 +58,10 @@ const nextConfig = {
         "./src/app/NotoSansCJKkr-Regular.otf",
         "./public/logo.svg",
       ],
+      "/branch/[code]/product/[id]/opengraph-image": [
+        "./src/app/NotoSansCJKkr-Regular.otf",
+        "./public/logo.svg",
+      ],
     },
   },
   images: {
