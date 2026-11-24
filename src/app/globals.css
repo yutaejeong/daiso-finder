@@ -27,6 +27,13 @@
     --ok: #166534;
     --danger: #b42318;
 
+    /* 광고(쿠팡 파트너스) 카드. 매장 상품 카드와 한눈에 갈리도록 노란 톤을 쓴다. */
+    --ad-bg: #fffbea;
+    --ad-line: #f2e1a1;
+    --ad-line-strong: #e5c964;
+    --ad-badge: #ffd43b;
+    --ad-ink: #5c4300;
+
     --radius-sm: 10px;
     --radius: 14px;
     --radius-lg: 20px;

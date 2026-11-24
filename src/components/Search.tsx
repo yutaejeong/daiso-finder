@@ -46,6 +46,11 @@ interface SearchProps {
    * 안내가 길어 결과 영역이 낮아지는 화면에서 쓴다.
    */
   scrollHeader?: ReactNode;
+  /**
+   * 결과가 없을 때 "검색 결과가 없습니다" 안내 아래에 덧붙일 내용.
+   * 매장 화면은 여기에 같은 검색어의 쿠팡 광고를 둔다.
+   */
+  emptyFooter?: ReactNode;
 }
 
 export function Search({
@@ -71,6 +76,7 @@ export function Search({
   progressLabel,
   scrollRestorationKey = null,
   scrollHeader,
+  emptyFooter,
 }: SearchProps) {
   const inputId = useId();
   const stickyForm = scrollHeader !== undefined;
@@ -309,6 +315,7 @@ export function Search({
             </div>
           )
         )}
+        {!hasError && !hasResults && emptyFooter}
       </ScrollArea>
     </>
   );

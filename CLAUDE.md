@@ -31,6 +31,7 @@ All external Daiso API calls are proxied through Next.js API routes (`src/app/ap
 - `GET /api` — machine-readable index of every operation and discovery document
 - `GET /api/sandbox/**` — fixture-backed copies of the endpoints above (`src/lib/sandboxFixtures.ts`), no upstream calls
 - `POST /api/views` — internal view beacon from the web UI (not in OpenAPI or the `/api` index)
+- `GET /api/partners/coupang?keyword=` — Coupang Partners ads for a zero-result product search (web UI only, see below)
 - `ANY /api/**` (unmatched) — `src/app/api/[...unknown]/route.ts` answers with a JSON 404 instead of Next's HTML page
 
 Store stock and shelf placement no longer come from the orval client: Daiso moved them behind
@@ -212,6 +213,28 @@ GA4 events (it imports no SDK, so tests load it directly). It came out of the ze
   and the defaults take 7, so count before adding more. Details: `docs/analytics.md`.
 - The sheet logs the keyword as typed and the result count the user actually received, so store-search
   zero rates after relaxation shipped are not comparable with earlier rows.
+
+### Coupang Partners ads
+
+When an in-store product search finishes with zero in-stock items, `BranchClient` passes
+`CoupangAds` into `Search`'s `emptyFooter` slot (rendered under "검색 결과가 없습니다"). It
+shows Coupang products for the same keyword as cards shaped like the product cards, but on
+the yellow `--ad-*` tokens with a "광고" badge on the section and on every card, plus the
+standard Coupang Partners disclosure (`COUPANG_PARTNERS_DISCLOSURE`) right under the
+heading — keep all three; the disclosure is required by the Partners terms.
+
+- `src/lib/coupangPartners.ts` signs the Open API search call (HMAC, `CEA ...` header),
+  parses it, and keeps only `https` links/images on Coupang hosts. It never throws: off,
+  failed or over budget all mean an empty list.
+- The search API allows only 50 calls/hour per key, so results are cached per keyword
+  (6 h hits / 10 min misses, in memory and via `s-maxage`) and each instance stops at 40
+  calls/hour. Off unless `COUPANG_PARTNERS_ACCESS_KEY` and `COUPANG_PARTNERS_SECRET_KEY` are
+  set; `COUPANG_PARTNERS_SUB_ID` tags the traffic in Coupang's reports.
+- Only the keyword goes to Coupang (no store code or coordinates) — the privacy page says so.
+- Links open in a new tab with `rel="sponsored nofollow noopener noreferrer"`; images load
+  straight from Coupang's CDN with a plain `<img>`, not `next/image`.
+- Web UI only, like `/api/views`: not in OpenAPI, `/api`, MCP or the sandbox. GA4 events
+  `ad_impression` / `ad_click` are described in `docs/analytics.md`.
 
 ### Error tracking
 

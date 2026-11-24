@@ -205,6 +205,20 @@ GA4 는 이탈 지점을 직접 알려주지 않으므로, 나가기 직전 상�
 가 붙어서 결과 목록의 몇 번째를 고르는지 볼 수 있다. `branch_click` 에는
 `relaxed_step` 도 붙는다(위 "매장 검색어 자동 완화").
 
+### 쿠팡 파트너스 광고 (2026-11-24 추가)
+
+매장 상품 검색이 0건이면 `CoupangAds` 가 같은 검색어의 쿠팡 상품을 광고로 붙인다
+(`/api/partners/coupang`, 키가 없으면 꺼짐).
+
+| 이벤트 | 언제 | 핵심 파라미터 |
+| --- | --- | --- |
+| `ad_impression` | 광고 묶음이 화면에 뜰 때(검색어마다 한 번) | `ad_network`(`coupang`), `ad_count`, `keyword`, `branch_code` |
+| `ad_click` | 광고 카드를 누를 때 | `ad_network`, `product_id`(쿠팡 상품 ID), `product_name`, `result_position`, `result_count`, `keyword`, `branch_code` |
+
+광고 카드는 외부 링크라 `outbound_click`(`link_domain: link.coupang.com`)도 함께
+남는다. `product_found` 와는 무관하다 — 매장에서 찾은 게 아니다.
+`ad_network` 를 측정기준으로 등록하면 이후 다른 광고를 붙여도 나눠 볼 수 있다.
+
 ## 5. GA4 콘솔 등록 현황
 
 맞춤 파라미터는 맞춤 측정기준/측정항목으로 등록해야 탐색 보고서에서 쓸 수 있다.

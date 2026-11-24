@@ -9,6 +9,7 @@ import {
 import { AppShell } from "@/components/AppShell";
 import { SiteLogo } from "@/components/SiteLogo";
 import { BranchLocationDialog } from "@/components/BranchLocationDialog";
+import { CoupangAds } from "@/components/CoupangAds";
 import { PopularProducts } from "@/components/PopularProducts";
 import { Search } from "@/components/Search";
 import { usePopularProducts } from "@/hooks/usePopular";
@@ -192,6 +193,13 @@ export function BranchClient({ code, initialBranch }: Props) {
   const popular = usePopularProducts(code, !keyword).data;
   const popularProducts = popular?.items ?? [];
   const showPopular = !keyword && popularProducts.length > 0;
+  // 검색이 끝났는데 이 매장에 재고가 있는 상품이 하나도 없을 때만 광고를 붙인다.
+  const showAds =
+    Boolean(keyword) &&
+    data !== undefined &&
+    !isFetching &&
+    !isError &&
+    products.length === 0;
 
   // 상품 검색 결과가 도착한 시점. 재고가 없어 0건으로 끝나는 경우가 잦고,
   // 그 자리가 이 서비스에서 가장 깊은 이탈 지점이라 따로 남긴다.
@@ -348,6 +356,9 @@ export function BranchClient({ code, initialBranch }: Props) {
           errorMessage={isError ? error.message : undefined}
           onRetry={keyword ? () => refetch() : undefined}
           scrollRestorationKey={keyword ? `products:${code}:${keyword}` : null}
+          emptyFooter={
+            showAds ? <CoupangAds keyword={keyword} branchCode={code} /> : null
+          }
         >
           {showPopular && (
             <PopularProducts
