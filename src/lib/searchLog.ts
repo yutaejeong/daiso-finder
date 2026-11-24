@@ -11,12 +11,16 @@
 /**
  * `branch`·`product` 는 검색, `branch_view`·`product_view` 는 상세 화면 조회.
  * 조회 행은 나중에 인기 매장·인기 상품을 뽑는 데 쓴다.
+ * `ad_impression`·`ad_click` 은 상품 검색 0건 때 붙는 쿠팡 파트너스 광고의
+ * 노출과 클릭이다(인기 순위 집계에는 쓰이지 않는다).
  */
 export type SearchLogType =
   | "branch"
   | "product"
   | "branch_view"
-  | "product_view";
+  | "product_view"
+  | "ad_impression"
+  | "ad_click";
 
 /** 매장 검색인지, 매장 안에서 상품을 찾는 검색인지 */
 export type SearchType = Extract<SearchLogType, "branch" | "product">;
@@ -26,11 +30,14 @@ export type ViewLogType = Extract<
   "branch_view" | "product_view"
 >;
 
+export type AdLogType = Extract<SearchLogType, "ad_impression" | "ad_click">;
+
 /**
  * 웹 UI 에서 들어온 검색인지, API·MCP·CLI 로 직접 들어온 호출인지.
- * 웹 UI 는 `x-search-source: web` 헤더를 붙여 스스로를 밝힌다.
+ * 웹 UI 는 `x-search-source: web` 헤더를 붙여 스스로를 밝힌다. 검색 행은
+ * `web`·`api` 둘뿐이고(MCP 검색도 `api`), `mcp` 는 MCP 응답에 실린 광고 행에만 쓴다.
  */
-export type SearchLogSource = "web" | "api";
+export type SearchLogSource = "web" | "api" | "mcp";
 
 export type SearchLogStatus = "ok" | "error";
 
@@ -52,6 +59,26 @@ export interface ViewLogEntry {
   /** 상품 조회라면 상품 번호 */
   productId?: string | null;
   /** 상품 조회라면 화면에 보인 상품명. 시트를 눈으로 읽기 위한 값이다. */
+  productName?: string | null;
+}
+
+/**
+ * 쿠팡 파트너스 광고 노출·클릭 한 건. 기존 열을 그대로 쓴다:
+ * 결과 수 = 노출된 광고 수, 상품 번호·상품명 = 누른 쿠팡 상품(클릭만).
+ */
+export interface AdLogEntry {
+  type: AdLogType;
+  /** 광고를 띄운 상품 검색어 */
+  keyword: string;
+  /** 웹 화면(`web`) 또는 MCP `search_products` 응답(`mcp`) */
+  source: Extract<SearchLogSource, "web" | "mcp">;
+  /** 검색한 매장 코드 */
+  branchCode?: string | null;
+  /** 노출된 광고 수 */
+  adCount?: number | null;
+  /** 클릭이라면 쿠팡 상품 ID */
+  productId?: string | null;
+  /** 클릭이라면 쿠팡 상품명 */
   productName?: string | null;
 }
 
@@ -184,6 +211,91 @@ export function buildViewLogRow(
   };
 }
 
+/** 한 번에 노출하는 광고 수의 상한. 쿠팡 검색 API 의 limit 상한과 같다. */
+const MAX_AD_COUNT = 10;
+
+function readAdCount(value: unknown): number | null {
+  const count = typeof value === "number" ? value : Number.NaN;
+  return Number.isInteger(count) && count >= 1 && count <= MAX_AD_COUNT
+    ? count
+    : null;
+}
+
+/**
+ * 광고 노출·클릭 비콘 본문을 읽는다. `POST /api/views` 로 들어오므로 웹 화면에서
+ * 온 것으로 본다. 누구나 보낼 수 있는 본문이라 형태가 어긋나면 `null` 이다.
+ */
+export function parseAdLogEntry(body: unknown): AdLogEntry | null {
+  if (!body || typeof body !== "object") {
+    return null;
+  }
+  const record = body as Record<string, unknown>;
+  const branchCode = readCode(record.branchCode);
+  const keyword =
+    typeof record.keyword === "string" ? record.keyword.trim() : "";
+  if (!branchCode || !keyword) {
+    return null;
+  }
+
+  if (record.type === "ad_impression") {
+    const adCount = readAdCount(record.adCount);
+    if (adCount === null) {
+      return null;
+    }
+    return {
+      type: "ad_impression",
+      source: "web",
+      keyword,
+      branchCode,
+      adCount,
+    };
+  }
+
+  if (record.type === "ad_click") {
+    const productId = readCode(record.productId);
+    if (!productId) {
+      return null;
+    }
+    const productName =
+      typeof record.productName === "string" ? record.productName : null;
+    return {
+      type: "ad_click",
+      source: "web",
+      keyword,
+      branchCode,
+      productId,
+      productName,
+    };
+  }
+
+  return null;
+}
+
+/** 광고 행을 만든다. 검색어가 없으면 무엇에 붙은 광고인지 모르므로 `null`. */
+export function buildAdLogRow(
+  entry: AdLogEntry,
+  now: Date = new Date(),
+): SearchLogRow | null {
+  const keyword = entry.keyword?.trim() ?? "";
+  if (!keyword) {
+    return null;
+  }
+  const branchCode = entry.branchCode?.trim() ?? "";
+  const adCount = readAdCount(entry.adCount);
+
+  return {
+    timestamp: now.toISOString(),
+    type: entry.type,
+    keyword: keyword.slice(0, MAX_KEYWORD_LENGTH),
+    branchCode: CODE_PATTERN.test(branchCode) ? branchCode : "",
+    resultCount: adCount ?? "",
+    source: entry.source,
+    status: "ok",
+    productId: entry.productId?.trim() ?? "",
+    productName: (entry.productName?.trim() ?? "").slice(0, MAX_KEYWORD_LENGTH),
+  };
+}
+
 function getWebhookConfig() {
   const url = process.env.SEARCH_LOG_WEBHOOK_URL?.trim();
   if (!url) {
@@ -301,4 +413,10 @@ export function logSearch(entry: SearchLogEntry): Promise<void> {
 /** 매장·상품 상세 조회 한 건을 기록한다. */
 export function logView(entry: ViewLogEntry): Promise<void> {
   return recordRow(buildViewLogRow(entry));
+}
+
+/** 쿠팡 파트너스 광고 노출·클릭 한 건을 기록한다. */
+export function logAd(entry: AdLogEntry): Promise<void> {
+  const row = buildAdLogRow(entry);
+  return row ? recordRow(row) : Promise.resolve();
 }

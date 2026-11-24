@@ -215,6 +215,8 @@ GA4 는 이탈 지점을 직접 알려주지 않으므로, 나가기 직전 상�
 | `ad_impression` | 광고 묶음이 화면에 뜰 때(검색어마다 한 번) | `ad_network`(`coupang`), `ad_count`, `keyword`, `branch_code` |
 | `ad_click` | 광고 카드를 누를 때 | `ad_network`, `product_id`(쿠팡 상품 ID), `product_name`, `result_position`, `result_count`, `keyword`, `branch_code` |
 
+`ad_impression` 은 첫 광고 카드가 절반 이상 화면에 들어왔을 때 보낸다. 같은 노출·클릭은
+스프레드시트에도 `ad_impression`/`ad_click` 행으로 쌓인다(`docs/search-logs.md`).
 광고 카드는 외부 링크라 `outbound_click`(`link_domain: link.coupang.com`)도 함께
 남는다. `product_found` 와는 무관하다 — 매장에서 찾은 게 아니다.
 `ad_network` 를 측정기준으로 등록하면 이후 다른 광고를 붙여도 나눠 볼 수 있다.

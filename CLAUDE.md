@@ -171,7 +171,7 @@ are the raw data for future popular-store/popular-product rankings. See
 - The two API routes (`/api/branches/search`, `/api/products`) call it after the results
   are in, and only for the first page — later pages of infinite scroll are the same search.
 - Location-only store searches have no keyword, so nothing is recorded for them.
-- Views come only from the web UI: `src/lib/viewBeacon.ts` sends `POST /api/views` with
+- Views (and Coupang ad impressions/clicks) come only from the web UI: `src/lib/viewBeacon.ts` sends `POST /api/views` with
   `sendBeacon`, once per screen per tab session. Do not count `/api/branches/[code]` or
   `/api/products/[id]` responses instead — React Query refetches on window focus.
 - Popular stores/products: the Apps Script (`docs/apps-script/Code.gs`, run under test by
@@ -243,6 +243,12 @@ heading — keep all three; the disclosure is required by the Partners terms.
   and `public/agent-instructions.md` say the same. MCP calls use
   `COUPANG_PARTNERS_MCP_SUB_ID` (falls back to `COUPANG_PARTNERS_SUB_ID`) and are cached
   separately per subId, sharing the same hourly budget as the web.
+- Impressions and clicks also go to the search-log sheet as `ad_impression` / `ad_click`
+  rows (`logAd()` in `src/lib/searchLog.ts`, same 9 columns, so no Apps Script redeploy).
+  Web rows come through `POST /api/views` via `sendViewBeacon` — an impression only once
+  the first ad card is ≥50% visible (IntersectionObserver), deduped per tab session per
+  store+keyword like views. MCP writes `source: "mcp"` impressions whenever it ships a
+  `sponsored` block. `docs/search-logs.md` has the QUERY formulas for counting them.
 
 ### Error tracking
 

@@ -1,6 +1,6 @@
 /**
- * 매장·상품 상세 조회를 서버(`POST /api/views`)에 알린다. 서버는 이를
- * 스프레드시트와 Vercel 런타임 로그에 쌓는다(`src/lib/searchLog.ts`).
+ * 매장·상품 상세 조회와 쿠팡 파트너스 광고의 노출·클릭을 서버(`POST /api/views`)에
+ * 알린다. 서버는 이를 스프레드시트와 Vercel 런타임 로그에 쌓는다(`src/lib/searchLog.ts`).
  *
  * 같은 탭 세션 안에서 같은 화면은 한 번만 보낸다. 뒤로 가기로 다시 들어오거나
  * 새로고침해도 한 사람이 한 번 본 것으로 세야 인기 순위가 반복 방문에 휘둘리지
@@ -17,12 +17,33 @@ export type ViewBeacon =
       branchCode: string;
       productId: string;
       productName?: string | null;
+    }
+  | {
+      type: "ad_impression";
+      branchCode: string;
+      keyword: string;
+      adCount: number;
+    }
+  | {
+      type: "ad_click";
+      branchCode: string;
+      keyword: string;
+      /** 쿠팡 상품 ID */
+      productId: string;
+      productName: string;
     };
 
 function viewKey(view: ViewBeacon) {
-  return view.type === "product_view"
-    ? `${SENT_KEY_PREFIX}${view.type}:${view.branchCode}:${view.productId}`
-    : `${SENT_KEY_PREFIX}${view.type}:${view.branchCode}`;
+  switch (view.type) {
+    case "product_view":
+      return `${SENT_KEY_PREFIX}${view.type}:${view.branchCode}:${view.productId}`;
+    case "ad_impression":
+      return `${SENT_KEY_PREFIX}${view.type}:${view.branchCode}:${view.keyword}`;
+    case "ad_click":
+      return `${SENT_KEY_PREFIX}${view.type}:${view.branchCode}:${view.keyword}:${view.productId}`;
+    default:
+      return `${SENT_KEY_PREFIX}${view.type}:${view.branchCode}`;
+  }
 }
 
 /** 이번 세션에 처음 보는 화면이면 표시해 두고 true. 저장소가 막혀 있으면 매번 보낸다. */

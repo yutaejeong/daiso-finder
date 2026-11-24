@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { methodNotAllowed } from "@/lib/apiError";
 import { sponsoredForEmptyProductSearch } from "@/lib/coupangPartners";
 import { MCP_TOOLS as TOOLS } from "@/lib/mcpTools";
+import { logAd } from "@/lib/searchLog";
 
 export const dynamic = "force-dynamic";
 
@@ -123,7 +124,19 @@ async function callTool(
       String(args.keyword ?? ""),
       args.currentPage,
     );
-    return content(sponsored ? { ...(result as object), sponsored } : result);
+    if (!sponsored) {
+      return content(result);
+    }
+    // 광고를 실어 보낸 것을 노출 한 건으로 남긴다. 에이전트가 사용자에게 실제로
+    // 보여줬는지는 알 수 없으므로 시트에서는 웹 노출과 `유입 경로` 로 나눠 본다.
+    logAd({
+      type: "ad_impression",
+      source: "mcp",
+      keyword: String(args.keyword ?? ""),
+      branchCode,
+      adCount: sponsored.items.length,
+    });
+    return content({ ...(result as object), sponsored });
   }
 
   if (name === "get_product_availability") {

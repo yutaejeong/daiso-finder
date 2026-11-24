@@ -3,12 +3,15 @@ import { afterEach, test } from "node:test";
 import {
   CONSOLE_LOG_NAME,
   SEARCH_SOURCE_HEADER,
+  buildAdLogRow,
   buildSearchLogRow,
   buildViewLogRow,
   isConsoleLogEnabled,
   isSearchLogEnabled,
+  logAd,
   logSearch,
   logView,
+  parseAdLogEntry,
   parseViewLogEntry,
   searchLogSource,
 } from "@/lib/searchLog";
@@ -333,4 +336,144 @@ test("runtime log lines stay off locally by default", async () => {
   }
 
   assert.equal(output.lines.length, 0);
+});
+
+test("ad beacons are parsed strictly and always count as web", () => {
+  assert.deepEqual(
+    parseAdLogEntry({
+      type: "ad_impression",
+      branchCode: " 11199 ",
+      keyword: " 발매트 ",
+      adCount: 4,
+    }),
+    {
+      type: "ad_impression",
+      source: "web",
+      keyword: "발매트",
+      branchCode: "11199",
+      adCount: 4,
+    },
+  );
+  assert.deepEqual(
+    parseAdLogEntry({
+      type: "ad_click",
+      branchCode: "11199",
+      keyword: "발매트",
+      productId: "7432112",
+      productName: "규조토 발매트",
+      source: "mcp", // 본문이 주장해도 받아들이지 않는다
+    }),
+    {
+      type: "ad_click",
+      source: "web",
+      keyword: "발매트",
+      branchCode: "11199",
+      productId: "7432112",
+      productName: "규조토 발매트",
+    },
+  );
+
+  for (const body of [
+    null,
+    { type: "ad_impression", branchCode: "11199", keyword: "발매트" },
+    {
+      type: "ad_impression",
+      branchCode: "11199",
+      keyword: "발매트",
+      adCount: 0,
+    },
+    {
+      type: "ad_impression",
+      branchCode: "11199",
+      keyword: "발매트",
+      adCount: 11,
+    },
+    { type: "ad_impression", branchCode: "11199", keyword: "  ", adCount: 4 },
+    {
+      type: "ad_impression",
+      branchCode: "../x",
+      keyword: "발매트",
+      adCount: 4,
+    },
+    { type: "ad_click", branchCode: "11199", keyword: "발매트" },
+    { type: "ad_other", branchCode: "11199", keyword: "발매트", adCount: 4 },
+  ]) {
+    assert.equal(parseAdLogEntry(body), null, JSON.stringify(body));
+  }
+  // 조회 비콘은 광고로 읽히지 않는다.
+  assert.equal(
+    parseAdLogEntry({ type: "branch_view", branchCode: "11199" }),
+    null,
+  );
+});
+
+test("ad rows reuse the existing columns", () => {
+  const now = new Date("2026-11-24T10:00:00.000Z");
+  assert.deepEqual(
+    buildAdLogRow(
+      {
+        type: "ad_impression",
+        source: "mcp",
+        keyword: " 발매트 ",
+        branchCode: "11199",
+        adCount: 3,
+      },
+      now,
+    ),
+    {
+      timestamp: "2026-11-24T10:00:00.000Z",
+      type: "ad_impression",
+      keyword: "발매트",
+      branchCode: "11199",
+      resultCount: 3,
+      source: "mcp",
+      status: "ok",
+      productId: "",
+      productName: "",
+    },
+  );
+
+  const click = buildAdLogRow(
+    {
+      type: "ad_click",
+      source: "web",
+      keyword: "발매트",
+      branchCode: "not a code!",
+      productId: "7432112",
+      productName: "규".repeat(300),
+    },
+    now,
+  );
+  assert.equal(click.branchCode, "");
+  assert.equal(click.resultCount, "");
+  assert.equal(click.productId, "7432112");
+  assert.equal(click.productName.length, 200);
+
+  assert.equal(
+    buildAdLogRow({ type: "ad_impression", source: "web", keyword: "" }),
+    null,
+  );
+});
+
+test("an ad impression posts one row through the same webhook", async () => {
+  const webhook = stubWebhook();
+
+  try {
+    await logAd({
+      type: "ad_impression",
+      source: "web",
+      keyword: "발매트",
+      branchCode: "11199",
+      adCount: 4,
+    });
+
+    assert.equal(webhook.calls.length, 1);
+    const body = JSON.parse(webhook.calls[0].init.body);
+    assert.equal(body.rows[0].type, "ad_impression");
+    assert.equal(body.rows[0].keyword, "발매트");
+    assert.equal(body.rows[0].resultCount, 4);
+    assert.equal(body.rows[0].source, "web");
+  } finally {
+    webhook.restore();
+  }
 });

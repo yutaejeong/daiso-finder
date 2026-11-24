@@ -9,6 +9,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useId, useRef, useState } from "react";
 import { trackEvent } from "@/lib/gtag";
+import { sendViewBeacon } from "@/lib/viewBeacon";
 import type { CoupangAd, CoupangAdList } from "@/lib/coupangPartners";
 
 interface Props {
@@ -115,20 +116,46 @@ export function CoupangAds({ keyword, branchCode }: Props) {
 
   const ads = data?.items ?? [];
 
-  // 광고가 화면에 뜬 것을 검색어마다 한 번만 남긴다.
+  // 노출은 첫 광고 카드가 절반 이상 화면에 들어왔을 때 검색어마다 한 번만 센다.
+  // 광고 묶음은 "검색 결과가 없습니다" 아래에 있어 그려졌다고 보인 것은 아니다.
+  // 스프레드시트 쪽은 탭 세션 안에서 같은 매장·검색어를 한 번만 센다(viewBeacon).
+  const firstAdRef = useRef<HTMLAnchorElement | null>(null);
   const reportedRef = useRef<string | null>(null);
+  const adCount = ads.length;
   useEffect(() => {
-    if (ads.length === 0) return;
+    const target = firstAdRef.current;
+    if (adCount === 0 || !target) return;
     const key = `${branchCode}:${keyword}`;
     if (reportedRef.current === key) return;
-    reportedRef.current = key;
-    trackEvent("ad_impression", {
-      ad_network: AD_NETWORK,
-      ad_count: ads.length,
-      keyword,
-      branch_code: branchCode,
-    });
-  }, [ads.length, keyword, branchCode]);
+
+    const report = () => {
+      if (reportedRef.current === key) return;
+      reportedRef.current = key;
+      trackEvent("ad_impression", {
+        ad_network: AD_NETWORK,
+        ad_count: adCount,
+        keyword,
+        branch_code: branchCode,
+      });
+      sendViewBeacon({ type: "ad_impression", branchCode, keyword, adCount });
+    };
+
+    if (typeof IntersectionObserver === "undefined") {
+      report();
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          observer.disconnect();
+          report();
+        }
+      },
+      { threshold: 0.5 },
+    );
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [adCount, keyword, branchCode]);
 
   if (ads.length === 0 || !data) {
     return null;
@@ -189,11 +216,12 @@ export function CoupangAds({ keyword, branchCode }: Props) {
       {ads.map((ad, index) => (
         <a
           key={ad.id}
+          ref={index === 0 ? firstAdRef : undefined}
           href={ad.url}
           target="_blank"
           rel="sponsored nofollow noopener noreferrer"
           aria-label={`광고: ${ad.name}, ${ad.price.toLocaleString()}원, 쿠팡에서 보기 (새 창)`}
-          onClick={() =>
+          onClick={() => {
             trackEvent("ad_click", {
               ad_network: AD_NETWORK,
               product_id: ad.id,
@@ -202,8 +230,15 @@ export function CoupangAds({ keyword, branchCode }: Props) {
               result_count: ads.length,
               keyword,
               branch_code: branchCode,
-            })
-          }
+            });
+            sendViewBeacon({
+              type: "ad_click",
+              branchCode,
+              keyword,
+              productId: ad.id,
+              productName: ad.name,
+            });
+          }}
           className={css({
             padding: "14px",
             backgroundColor: "var(--ad-bg)",
