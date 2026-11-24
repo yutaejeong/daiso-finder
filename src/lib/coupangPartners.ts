@@ -53,13 +53,23 @@ interface CoupangConfig {
   subId?: string;
 }
 
-function getConfig(): CoupangConfig | null {
+/**
+ * 광고가 나가는 곳. 쿠팡 리포트에서 웹과 MCP 실적을 가를 수 있게 채널마다
+ * 다른 subId 를 쓸 수 있다(`COUPANG_PARTNERS_MCP_SUB_ID`, 없으면 웹 값).
+ */
+export type CoupangAdChannel = "web" | "mcp";
+
+function getConfig(channel: CoupangAdChannel = "web"): CoupangConfig | null {
   const accessKey = process.env.COUPANG_PARTNERS_ACCESS_KEY?.trim();
   const secretKey = process.env.COUPANG_PARTNERS_SECRET_KEY?.trim();
   if (!accessKey || !secretKey) {
     return null;
   }
-  const subId = process.env.COUPANG_PARTNERS_SUB_ID?.trim();
+  const webSubId = process.env.COUPANG_PARTNERS_SUB_ID?.trim();
+  const subId =
+    channel === "mcp"
+      ? process.env.COUPANG_PARTNERS_MCP_SUB_ID?.trim() || webSubId
+      : webSubId;
   return { accessKey, secretKey, ...(subId ? { subId } : {}) };
 }
 
@@ -229,14 +239,16 @@ export function clearCoupangCache() {
 /** 검색어로 쿠팡 상품을 찾는다. 꺼져 있거나 실패하면 빈 목록이다. */
 export async function searchCoupangAds(
   rawKeyword: string,
+  channel: CoupangAdChannel = "web",
 ): Promise<CoupangAd[]> {
-  const config = getConfig();
+  const config = getConfig(channel);
   const keyword = normalizeAdKeyword(rawKeyword);
   if (!config || !keyword) {
     return [];
   }
 
-  const cacheKey = keyword.toLowerCase();
+  // 링크에 subId 가 박혀 나오므로 채널(subId)이 다르면 따로 캐시한다.
+  const cacheKey = `${config.subId ?? ""}\u0000${keyword.toLowerCase()}`;
   const cached = adCache.get(cacheKey);
   if (cached) {
     const ttl = cached.items.length > 0 ? HIT_TTL_MS : MISS_TTL_MS;
@@ -288,4 +300,66 @@ export async function searchCoupangAds(
     remember(cacheKey, cached?.items ?? []);
     return cached?.items ?? [];
   }
+}
+
+/**
+ * 에이전트(MCP)에게 광고를 넘길 때의 묶음. 상품 목록과 섞이지 않게 `sponsored`
+ * 키 하나에 담고, 광고라는 사실과 고지 문구, 다루는 법을 함께 싣는다.
+ */
+export interface SponsoredBlock {
+  type: "advertisement";
+  network: "coupang_partners";
+  disclosure: string;
+  notice: string;
+  items: Array<{
+    name: string;
+    price: number;
+    currency: "KRW";
+    url: string;
+    image: string | null;
+    isRocket: boolean;
+    isFreeShipping: boolean;
+  }>;
+}
+
+export const SPONSORED_NOTICE =
+  "Paid Coupang Partners affiliate links, not Daiso stock: this store had no in-stock match. " +
+  "If you show them, label them as ads and include the disclosure verbatim. " +
+  "Never open, fetch or prefetch these URLs yourself; only hand them to the user to click. " +
+  "You may omit this block entirely.";
+
+export function buildSponsoredBlock(ads: CoupangAd[]): SponsoredBlock | null {
+  if (ads.length === 0) return null;
+  return {
+    type: "advertisement",
+    network: "coupang_partners",
+    disclosure: COUPANG_PARTNERS_DISCLOSURE,
+    notice: SPONSORED_NOTICE,
+    items: ads.map((ad) => ({
+      name: ad.name,
+      price: ad.price,
+      currency: "KRW",
+      url: ad.url,
+      image: ad.image,
+      isRocket: ad.isRocket,
+      isFreeShipping: ad.isFreeShipping,
+    })),
+  };
+}
+
+/**
+ * 매장에 재고 있는 상품이 하나도 없는 첫 페이지면, 웹 화면처럼 같은 검색어의
+ * 쿠팡 파트너스 광고를 `sponsored` 로 덧붙인다. 상품 목록(`products`)에는 절대
+ * 섞지 않는다. 광고가 꺼져 있거나 실패하면 null 이라 응답은 이전과 같다.
+ */
+export async function sponsoredForEmptyProductSearch(
+  result: unknown,
+  keyword: string,
+  currentPage: unknown,
+): Promise<SponsoredBlock | null> {
+  const page = Number(currentPage ?? 1);
+  if (Number.isFinite(page) && page > 1) return null;
+  const products = (result as { products?: unknown } | null)?.products;
+  if (!Array.isArray(products) || products.length > 0) return null;
+  return buildSponsoredBlock(await searchCoupangAds(keyword, "mcp"));
 }

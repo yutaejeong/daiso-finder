@@ -61,6 +61,12 @@ it as a remote server and call the tools directly:
 Manifest: `/.well-known/mcp.json`. Protocol versions: `2025-06-18`, `2025-03-26`,
 `2024-11-05`.
 
+When `search_products` finds nothing in stock, its result may also carry a `sponsored`
+object: Coupang Partners affiliate ads for the same keyword. They are **not** Daiso stock
+and are never mixed into `products`. If you show them, label them as ads and include
+`sponsored.disclosure` verbatim; do not open or prefetch their URLs yourself. Omitting
+them is fine.
+
 ### CLI
 
 `npx daiso-finder-cli stores 강남` — the same data from a shell, no install step.

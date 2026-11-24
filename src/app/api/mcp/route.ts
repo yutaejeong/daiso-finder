@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { methodNotAllowed } from "@/lib/apiError";
+import { sponsoredForEmptyProductSearch } from "@/lib/coupangPartners";
 import { MCP_TOOLS as TOOLS } from "@/lib/mcpTools";
 
 export const dynamic = "force-dynamic";
@@ -116,7 +117,13 @@ async function callTool(
     url.searchParams.set("branchCode", branchCode);
     url.searchParams.set("keyword", String(args.keyword ?? ""));
     url.searchParams.set("currentPage", String(args.currentPage ?? 1));
-    return content(await fetchJson(url));
+    const result = await fetchJson(url);
+    const sponsored = await sponsoredForEmptyProductSearch(
+      result,
+      String(args.keyword ?? ""),
+      args.currentPage,
+    );
+    return content(sponsored ? { ...(result as object), sponsored } : result);
   }
 
   if (name === "get_product_availability") {

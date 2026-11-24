@@ -12,6 +12,7 @@ import {
   normalizeAdKeyword,
   parseCoupangSearchResponse,
   searchCoupangAds,
+  sponsoredForEmptyProductSearch,
 } from "@/lib/coupangPartners";
 
 const originalFetch = globalThis.fetch;
@@ -21,6 +22,7 @@ afterEach(() => {
   delete process.env.COUPANG_PARTNERS_ACCESS_KEY;
   delete process.env.COUPANG_PARTNERS_SECRET_KEY;
   delete process.env.COUPANG_PARTNERS_SUB_ID;
+  delete process.env.COUPANG_PARTNERS_MCP_SUB_ID;
   clearCoupangCache();
 });
 
@@ -188,4 +190,57 @@ test("upstream failure yields an empty list instead of throwing", async () => {
 test("disclosure is the standard Coupang Partners wording", () => {
   assert.match(COUPANG_PARTNERS_DISCLOSURE, /쿠팡 파트너스 활동의 일환으로/);
   assert.match(COUPANG_PARTNERS_DISCLOSURE, /수수료를 제공받습니다/);
+});
+
+test("MCP: sponsored block only on an empty first page, kept apart from products", async () => {
+  enable();
+  process.env.COUPANG_PARTNERS_SUB_ID = "web";
+  process.env.COUPANG_PARTNERS_MCP_SUB_ID = "mcp";
+  const calls = stubFetch(() =>
+    Response.json({ rCode: "0", data: { productData: [product()] } }),
+  );
+
+  const empty = { products: [], hasMore: false, nextPage: 2 };
+  const block = await sponsoredForEmptyProductSearch(empty, "발매트", 1);
+  assert.equal(block.type, "advertisement");
+  assert.equal(block.network, "coupang_partners");
+  assert.equal(block.disclosure, COUPANG_PARTNERS_DISCLOSURE);
+  assert.match(block.notice, /not Daiso stock/);
+  assert.match(block.notice, /Never open, fetch or prefetch/);
+  assert.deepEqual(block.items, [
+    {
+      name: "규조토 발매트",
+      price: 12900,
+      currency: "KRW",
+      url: "https://link.coupang.com/re/AFFSDP?lptag=AF123&pageKey=123",
+      image: "https://ads-partners.coupang.com/image1/abc.jpg",
+      isRocket: true,
+      isFreeShipping: false,
+    },
+  ]);
+  // MCP 채널은 자기 subId 로 따로 부른다.
+  assert.ok(calls[0].url.endsWith("&subId=mcp"));
+
+  assert.equal(await sponsoredForEmptyProductSearch(empty, "발매트", 2), null);
+  assert.equal(
+    await sponsoredForEmptyProductSearch(
+      { products: [{ id: "1" }], hasMore: false, nextPage: 2 },
+      "발매트",
+      1,
+    ),
+    null,
+  );
+  assert.equal(await sponsoredForEmptyProductSearch(null, "발매트", 1), null);
+
+  // 웹 채널은 같은 검색어라도 subId 가 달라 캐시를 공유하지 않는다.
+  await searchCoupangAds("발매트", "web");
+  assert.equal(calls.length, 2);
+  assert.ok(calls[1].url.endsWith("&subId=web"));
+});
+
+test("MCP: no sponsored block when ads are off", async () => {
+  assert.equal(
+    await sponsoredForEmptyProductSearch({ products: [] }, "발매트", 1),
+    null,
+  );
 });

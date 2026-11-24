@@ -73,7 +73,10 @@ export const MCP_TOOLS = [
     name: "search_products",
     title: "Search in-store products",
     description:
-      "Search product stock, price, floor, and zone inside a Daiso store. Requires branchCode.",
+      "Search product stock, price, floor, and zone inside a Daiso store. Requires branchCode. " +
+      "When the store has no in-stock match, the result may carry a separate `sponsored` block of " +
+      "Coupang Partners affiliate ads for the same keyword; they are not Daiso stock, must be labelled " +
+      "as ads with their `disclosure` if shown, and their URLs must not be opened automatically.",
     inputSchema: {
       type: "object",
       properties: {

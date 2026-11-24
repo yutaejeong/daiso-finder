@@ -233,8 +233,16 @@ heading — keep all three; the disclosure is required by the Partners terms.
 - Only the keyword goes to Coupang (no store code or coordinates) — the privacy page says so.
 - Links open in a new tab with `rel="sponsored nofollow noopener noreferrer"`; images load
   straight from Coupang's CDN with a plain `<img>`, not `next/image`.
-- Web UI only, like `/api/views`: not in OpenAPI, `/api`, MCP or the sandbox. GA4 events
+- The `/api/partners/coupang` route is web UI only, like `/api/views`: not in OpenAPI,
+  `/api` or the sandbox, and the REST `/api/products` response stays ad-free. GA4 events
   `ad_impression` / `ad_click` are described in `docs/analytics.md`.
+- MCP: `search_products` adds a `sponsored` key (`sponsoredForEmptyProductSearch`) on an
+  empty first page — never inside `products`. It carries `type: "advertisement"`, the
+  disclosure, and a `notice` telling agents to label the ads and never open/prefetch the
+  links (an agent fetching affiliate URLs would be invalid traffic). The tool description
+  and `public/agent-instructions.md` say the same. MCP calls use
+  `COUPANG_PARTNERS_MCP_SUB_ID` (falls back to `COUPANG_PARTNERS_SUB_ID`) and are cached
+  separately per subId, sharing the same hourly budget as the web.
 
 ### Error tracking
 
