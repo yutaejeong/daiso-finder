@@ -1,7 +1,9 @@
 import { getOnlyMethodNotAllowed, internalError } from "@/lib/apiError";
+import { getFixedCoupangAds } from "@/lib/coupangFixedAds";
 import {
   COUPANG_PARTNERS_DISCLOSURE,
   type CoupangAdList,
+  isCoupangPartnersEnabled,
   searchCoupangAds,
 } from "@/lib/coupangPartners";
 
@@ -12,12 +14,27 @@ export const dynamic = "force-dynamic";
  * 웹 화면 전용이라(`/api/views`, `/api/popular/*` 처럼) OpenAPI 문서, `/api` 목록,
  * MCP, 샌드박스에는 넣지 않는다. 광고는 부가 요소라 꺼져 있거나 쿠팡이 실패해도
  * 오류 대신 빈 목록을 돌려준다.
+ *
+ * Open API 키가 없으면(파트너스 최종 승인 전) 검색어와 무관한 고정 링크
+ * (`src/lib/coupangFixedAds.ts`)를 `kind: "fixed"` 로 돌려준다.
  */
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
+    if (!isCoupangPartnersEnabled()) {
+      const body: CoupangAdList = {
+        kind: "fixed",
+        items: getFixedCoupangAds(),
+        disclosure: COUPANG_PARTNERS_DISCLOSURE,
+      };
+      return Response.json(body, {
+        headers: { "Cache-Control": "public, s-maxage=600" },
+      });
+    }
+
     const items = await searchCoupangAds(searchParams.get("keyword") ?? "");
     const body: CoupangAdList = {
+      kind: "search",
       items,
       disclosure: COUPANG_PARTNERS_DISCLOSURE,
     };

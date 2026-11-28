@@ -230,6 +230,12 @@ heading — keep all three; the disclosure is required by the Partners terms.
   (6 h hits / 10 min misses, in memory and via `s-maxage`) and each instance stops at 40
   calls/hour. Off unless `COUPANG_PARTNERS_ACCESS_KEY` and `COUPANG_PARTNERS_SECRET_KEY` are
   set; `COUPANG_PARTNERS_SUB_ID` tags the traffic in Coupang's reports.
+- Before final Partners approval there are no Open API keys, so `/api/partners/coupang`
+  answers `kind: "fixed"` with hand-made short links from `src/lib/coupangFixedAds.ts`
+  (name/price copied from the Partners link generator; incomplete entries are hidden) and
+  the heading switches to "쿠팡 추천 상품". Never fetch those links to fill in data — that
+  registers as a click. Once the keys are set the route goes back to `kind: "search"`;
+  delete the fixed list then.
 - Only the keyword goes to Coupang (no store code or coordinates) — the privacy page says so.
 - Links open in a new tab with `rel="sponsored nofollow noopener noreferrer"`; images load
   straight from Coupang's CDN with a plain `<img>`, not `next/image`.

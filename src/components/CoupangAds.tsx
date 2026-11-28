@@ -197,7 +197,11 @@ export function CoupangAds({ keyword, branchCode }: Props) {
             height={18}
             className={css({ flexShrink: 0, color: "var(--ad-ink)" })}
           />
-          <span>이 매장엔 없지만, 쿠팡에서 찾아봤어요</span>
+          <span>
+            {data.kind === "fixed"
+              ? "이 매장엔 없지만, 쿠팡 추천 상품도 둘러보세요"
+              : "이 매장엔 없지만, 쿠팡에서 찾아봤어요"}
+          </span>
           <AdBadge />
         </h2>
         <p

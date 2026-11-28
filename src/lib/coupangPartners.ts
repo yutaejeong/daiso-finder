@@ -42,6 +42,11 @@ export interface CoupangAd {
 }
 
 export interface CoupangAdList {
+  /**
+   * `search`: 검색어로 찾은 상품(Open API). `fixed`: API 키가 없을 때 보여주는
+   * 고정 링크(`src/lib/coupangFixedAds.ts`) — 검색어와 무관하므로 문구가 다르다.
+   */
+  kind: "search" | "fixed";
   items: CoupangAd[];
   /** 광고가 있을 때 함께 보여줄 고지 문구 */
   disclosure: string;

@@ -244,3 +244,38 @@ test("MCP: no sponsored block when ads are off", async () => {
     null,
   );
 });
+
+test("fixed ads: only complete Coupang links are shown, id from the short link", async () => {
+  const { getFixedCoupangAds, COUPANG_FIXED_AD_LINKS } = await import(
+    "@/lib/coupangFixedAds"
+  );
+  // 저장소에 들어간 고정 링크는 모두 쿠팡 단축 링크여야 한다.
+  for (const link of COUPANG_FIXED_AD_LINKS) {
+    assert.match(link.url, /^https:\/\/link\.coupang\.com\/a\/[0-9A-Za-z]+$/);
+  }
+
+  assert.deepEqual(
+    getFixedCoupangAds([
+      {
+        url: "https://link.coupang.com/a/i2qc1TH33Q",
+        name: "규조토 발매트",
+        price: 12900,
+        image: "https://thumbnail6.coupangcdn.com/a.jpg",
+        isRocket: true,
+      },
+      { url: "https://link.coupang.com/a/i2qd9aoZ3Y", name: "", price: 0 },
+      { url: "https://evil.example/a/x", name: "가짜", price: 1000 },
+    ]),
+    [
+      {
+        id: "i2qc1TH33Q",
+        name: "규조토 발매트",
+        price: 12900,
+        image: "https://thumbnail6.coupangcdn.com/a.jpg",
+        url: "https://link.coupang.com/a/i2qc1TH33Q",
+        isRocket: true,
+        isFreeShipping: false,
+      },
+    ],
+  );
+});
