@@ -26,9 +26,30 @@ interface FixedAdLink {
 }
 
 export const COUPANG_FIXED_AD_LINKS: FixedAdLink[] = [
-  { url: "https://link.coupang.com/a/i2qc1TH33Q", name: "", price: 0 },
-  { url: "https://link.coupang.com/a/i2qd9aoZ3Y", name: "", price: 0 },
-  { url: "https://link.coupang.com/a/i2qgpvlebA", name: "", price: 0 },
+  {
+    url: "https://link.coupang.com/a/i2vbdzaulw",
+    name: "코멧 클리어 리빙박스, 3개",
+    price: 12770,
+    image:
+      "https://t4c.coupangcdn.com/thumbnails/remote/212x212ex/image/retail/images/89451763824438-8bf91f61-0b4d-4d0b-bf14-3b01554c0529.png",
+    isRocket: true,
+  },
+  {
+    url: "https://link.coupang.com/a/i2vcKzVNOC",
+    name: "엠비코 국내산 다용도 팬트리 정리함, 화이트, 4개",
+    price: 8890,
+    image:
+      "https://thumbnail3.coupangcdn.com/thumbnails/remote/212x212ex/image/retail/images/385698572403693-9f03c8be-7a1f-43fb-bff4-22009a130530.png",
+    isRocket: true,
+  },
+  {
+    url: "https://link.coupang.com/a/i2vdG9Ucwe",
+    name: "틸하우스 틈새 다용도 정리함, 화이트, 10개",
+    price: 5190,
+    image:
+      "https://thumbnail9.coupangcdn.com/thumbnails/remote/212x212ex/image/retail/images/16762133197189-427c4966-7a8e-4a47-bd37-88761a260f72.png",
+    isRocket: true,
+  },
 ];
 
 /** 짧은 링크의 마지막 경로 조각을 광고 ID 로 쓴다(클릭 기록의 상품 번호 열). */
